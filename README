@@ -1,0 +1,41 @@
+
+                                 librtas 
+              ------------------------------------------------
+
+Technical contacts: 
+	librtas.so - John Rose <johnrose@us.ibm.com>
+	librtasevent.so - Nathan Fontenot <nfont@austin.ibm.com>
+
+Admin contacts:
+	Micheal Strosaker <strosake@us.ibm.com>
+	Nathan Fontenot <nfont@austin.ibm.com>
+                      
+May 2005
+
+Librtas provides a set of libraries for user-space access to the
+Run-Time Abstraction Services (RTAS) on the ppc64 architecture.
+
+librtas.so
+This library that allows user-space programs to make RTAS calls which 
+provide support for low-level system hardware configuration and operations, 
+such as getting hardware sensor (temp, fan speed, etc.) data, setting the 
+operator panel LEDS, getting hardware error logs, injecting artificial 
+hardware errors (for testing), getting VPD (Vital Product Data), and 
+loading new firmware.
+
+librtasevent.so
+This library provides a set of definitions and useful routines for
+analyzing RTAS events, such as parsing out the sections of an RTAS event
+and printing the contents of a RTAS event in human-readable form (used
+by many of the RAS tools on ppc64).
+
+Building & Installing:
+----------------------
+To compile, do the following:
+
+make 
+su - root
+make install
+/sbin/ldconfig
+
+

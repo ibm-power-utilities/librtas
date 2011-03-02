@@ -1,0 +1,30 @@
+Changelog for librtas-1.3.4
+=======================================
+    - Several minor fixes from Olaf Hering; use correct open mode for O_CREAT,
+      fix out-of-bounds access in parse_post_scn() and alloc the trailing null 
+      in open_prop_file().
+    - Update rules.mk to install 64-bit libraries to /usr/lib64
+    - Update librtasevent for recent PAPR+ updates.
+    - Add libofdt
+
+Changelog for librtas-1.3.3
+=======================================
+    - Changed ibm,get-vpd call to reuse the same RMO buffer for both
+      input and output.  Obtaining two RMO buffers (one for input and one
+      for output) was failing on large-page systems.
+
+Changelog for librtas-1.3.2
+=======================================
+    - Fixed rtas_mem_scn and rtas_ibmsp_scn reserved padding bits and 
+      variable initialization to get rid of compiler warnings.
+    - Add support for ibm,get_config_addr_info2 rtas call (librtas.so).
+    - Add update_os_id_scn() interface to allow systems to update the dump
+      section of RTAS events with the dump file name before writing the
+      RTAS event out (librtasevent.so)
+
+Changelog for librtas-1.3.0
+=======================================
+    - Applied patch from David Boutcher for Partition Migration changes.
+    - Large re-design to the API for librtasevent. 
+    - Correct the dumping of raw sections in librtasevent to use unsigned chars
+    - Added devball target in Makefile

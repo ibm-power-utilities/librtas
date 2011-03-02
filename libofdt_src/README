@@ -1,0 +1,57 @@
+
+In most linux systems, most of the hardware bindings and values are exported
+through /proc/devic-tree. This needs to be accessed frequently to query values
+to enable or disable many functions on the system. Here, We attempt to provide
+an API to read values and parse data that maybe required for many utilities
+to do commonly required operations. Please note that this API only reads
+and parses values. It does not modify anything.
+
+The API is as follows:
+
+1: 
+void ofdt_get(const char *path)
+This function accepts a relative path to the deivce-tree. It can also be
+NULL. If the value is null, the base path to the device-tree 
+/proc/device-tree is assumed. If the value is non null, a relative path
+is assumed and /proc/device-tree is added to the path to fully qualify it.
+
+This function builds a complete tree from the given path. It processes
+sub-directories and will also parse ibm,indexes file and find appropriate
+values for "ibm,drc-name", "ibm,drc-type" & "ibm,drc-powerdomain" for the
+approprate "ibm,my-drc-index" files. It fills these out and sends back
+a pointer to the the head of the tree. 
+
+It is always nice to call ofdt_put after this function has been called
+with the right head pointer.
+
+
+2:
+void ofdt_put(struct node *delete)
+
+This function takes a node pointer type, normally this is the head of 
+a tree structure that needs to be freed. It is normally a good idea
+to free the stuff allocated. But just incase you forget, there is a
+fini_routine that takes care of it.
+
+3:
+struct property *ofdt_get_property(struct node *prop_node,
+						const char * name);
+
+This function takes a path to the property and a node pointer. The node
+pointer is normally the head of a fully populated tree structure formed
+by ofdt_get() with appropriate values. The function returns the requested
+property from the given tree. 
+
+4:
+struct property * ofdt_get_property_by_name(const char * path);
+
+This function returns a structure of type property. It builds and
+returns the property from the given path. It does not build a tree.
+It will also not return any property that does not exist like
+for eg: when a ibm,my-drc-index exists and other properties do not, it
+will return a NULL pointer.
+
+5:
+void ofdt_property_put(struct property * to_delete);
+
+This function frees all properties that are passed in to this function.
