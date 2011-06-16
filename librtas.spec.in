@@ -53,17 +53,17 @@ the contents of RTAS events.
 
 %post
 # Post-install script -------------------------------------------------
-ln -sf @LIB_DIR@/librtas.so.%{version} /usr/lib/librtas.so
-ln -sf @LIB_DIR@/librtas.so.%{version} /usr/lib/librtas.so.1
-ln -sf @LIB_DIR@/librtasevent.so.%{version} /usr/lib/librtasevent.so
-ln -sf @LIB_DIR@/libofdt.so.%{version} /usr/lib/libofdt.so
+ln -sf @LIB_DIR@/librtas.so.%{version} @LIB_DIR@/librtas.so
+ln -sf @LIB_DIR@/librtas.so.%{version} @LIB_DIR@/librtas.so.1
+ln -sf @LIB_DIR@/librtasevent.so.%{version} @LIB_DIR@/librtasevent.so
+ln -sf @LIB_DIR@/libofdt.so.%{version} @LIB_DIR@/libofdt.so
 ldconfig
 
 %postun
 # Post-uninstall script -----------------------------------------------
 if [ "$1" = "0" ] ; then        # last uninstall
-    rm -f /usr/lib/librtas.so
-    rm -f /usr/lib/librtasevent.so
+    rm -f @LIB_DIR@/librtas.so
+    rm -f @LIB_DIR@/librtasevent.so
     rm -f @LIB_DIR@/libofdt.so
 fi
 ldconfig
