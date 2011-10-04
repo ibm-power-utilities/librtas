@@ -282,6 +282,7 @@ struct rtas_epow_scn {
 #define RTAS_EPOW_MOD_NORMAL_SHUTDOWN       0x01
 #define RTAS_EPOW_MOD_UTILITY_POWER_LOSS    0x02
 #define RTAS_EPOW_MOD_CRIT_FUNC_LOSS        0x03
+#define RTAS_EPOW_MOD_AMBIENT_TEMP          0x04
 
     uint32_t    /* reserved */ :16;
     char        reason_code[8];         /**< platform specific reason code */

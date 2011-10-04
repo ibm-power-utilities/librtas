@@ -146,21 +146,26 @@ print_v6_epow(struct scn_header *shdr, int verbosity)
     len += rtas_print(PRNT_FMT_R, "EPOW Event:", epow->event_modifier);
 
     switch (epow->event_modifier) {
-        case 0x00:
+        case RTAS_EPOW_MOD_NA:
 	    break;
             
-        case 0x01:
+        case RTAS_EPOW_MOD_NORMAL_SHUTDOWN:
 	    len += rtas_print(" - Normal System Shutdown with no "
                               "additional delay.\n");
 	    break;
             
-        case 0x02:
+        case RTAS_EPOW_MOD_UTILITY_POWER_LOSS:
 	    len += rtas_print(" - Loss of utility power, system is "
                               "running on UPS/battery.\n");
 	    break;
             
-        case 0x03:
+        case RTAS_EPOW_MOD_CRIT_FUNC_LOSS:
 	    len += rtas_print(" - Loss of system critical functions, "
+                              "system should be shutdown.\n");
+	    break;
+
+	case RTAS_EPOW_MOD_AMBIENT_TEMP:
+	    len += rtas_print(" - Ambient temperature too high, "
                               "system should be shutdown.\n");
 	    break;
 
