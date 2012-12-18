@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include "common.h"
@@ -56,10 +57,13 @@ static int read_kregion_bounds(struct region *kregion)
 
 	rc = read_entire_file(fd, &buf, NULL);
 	close(fd);
-	if (rc)
+	if (rc) {
+		free(buf);
 		return rc;
+	}
 
 	sscanf(buf, "%llx %x", &kregion->addr, &kregion->size);
+	free(buf);
 
 	if (!(kregion->size && kregion->addr) ||
 	    (kregion->size > (PAGE_SIZE * MAX_PAGES))) {
