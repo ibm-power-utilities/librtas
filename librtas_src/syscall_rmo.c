@@ -137,7 +137,7 @@ static int acquire_file_lock(off_t start, size_t size)
 	flock.l_len = size;
 	flock.l_pid = getpid();
 
-	rc = fcntl(wa_config.lockfile_fd, F_SETLK, &flock);
+	rc = fcntl(wa_config.lockfile_fd, F_SETLKW, &flock);
 	if (rc < 0) {
 		/* Expected to fail for regions used by other processes */
 		dbg1("fcntl failed for [0x%lx, 0x%x]\n", start, size);
