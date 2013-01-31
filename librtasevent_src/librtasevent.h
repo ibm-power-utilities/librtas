@@ -169,6 +169,7 @@ struct rtas_event_hdr {
 #define RTAS_HDR_TYPE_ECC_UNCORRECTED   9
 #define RTAS_HDR_TYPE_ECC_CORRECTED     10 
 #define RTAS_HDR_TYPE_EPOW              64 
+#define RTAS_HDR_TYPE_PRRN		160
 #define RTAS_HDR_TYPE_PLATFORM_ERROR    224
 #define RTAS_HDR_TYPE_IBM_IO_EVENT      225
 #define RTAS_HDR_TYPE_PLATFORM_INFO     226

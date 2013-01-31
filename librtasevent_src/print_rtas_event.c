@@ -241,6 +241,7 @@ rtas_error_type(int type)
 
     switch (type) {
         case 64:    return "EPOW";
+	case 160:   return "Platform Resource Reassignment";
         case 224:   return "Platform Error";
         case 225:   return "I/O Event";
         case 226:   return "Platform Information Event";
