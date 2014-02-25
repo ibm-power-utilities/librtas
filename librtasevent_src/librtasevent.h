@@ -75,8 +75,9 @@ struct scn_header {
 #define RTAS_PSRC_SCN		16
 #define RTAS_SSRC_SCN		17
 #define RTAS_GENERIC_SCN        18
+#define RTAS_HP_SCN		19
 
-#define RTAS_MAX_SCN_ID		19 
+#define RTAS_MAX_SCN_ID		20
 
 /**
  * @struct rtas_event
@@ -175,6 +176,7 @@ struct rtas_event_hdr {
 #define RTAS_HDR_TYPE_PLATFORM_INFO     226
 #define RTAS_HDR_TYPE_RESOURCE_DEALLOC  227
 #define RTAS_HDR_TYPE_DUMP_NOTIFICATION 228
+#define RTAS_HDR_TYPE_HOTPLUG		229
 
     uint32_t ext_log_length:32;   /**< length in bytes */
 };
@@ -414,6 +416,8 @@ struct rtas_dump_scn * rtas_get_dump_scn(struct rtas_event *);
 struct rtas_lri_scn * rtas_get_lri_scn(struct rtas_event *);
 struct rtas_mt_scn * rtas_get_mt_scn(struct rtas_event *);
 struct rtas_src_scn * rtas_get_src_scn(struct rtas_event *);
+
+struct rtas_hotplug_scn * rtas_get_hotplug_scn(struct rtas_event *);
 
 int update_os_id_scn(struct rtas_event *, const char *);
 

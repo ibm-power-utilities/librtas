@@ -66,6 +66,7 @@ static int (*re_print_fns[])() = {
     print_re_src_scn,
     print_re_src_scn,
     print_re_generic_scn,
+    print_re_hotplug_scn
 };
 
 /**

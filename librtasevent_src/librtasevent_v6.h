@@ -43,6 +43,7 @@ struct rtas_v6_hdr {
 #define RTAS_SSRC_SCN_ID    "SS"
 #define RTAS_SW_SCN_ID      "SW"
 #define RTAS_UDD_SCN_ID     "UD"
+#define RTAS_HP_SCN_ID      "HP"
 
 /**
  * @struct rtas_v6_main_ascn_
@@ -351,6 +352,40 @@ struct rtas_v6_generic {
     struct rtas_v6_hdr v6hdr;
     char    *data;
 };
+
+/**
+ * @struct rtas_hotplug_scn
+ * @brief RTAS version 6 Hotplug section
+ */
+struct rtas_hotplug_scn {
+    struct scn_header shdr;
+    struct rtas_v6_hdr v6hdr;
+
+    uint32_t    type:8;
+#define RTAS_HP_TYPE_CPU	1
+#define RTAS_HP_TYPE_MEMORY	2
+#define RTAS_HP_TYPE_SLOT	3
+#define RTAS_HP_TYPE_PHB	4
+#define RTAS_HP_TYPE_PCI	5
+
+    uint32_t	action:8;
+#define RTAS_HP_ACTION_ADD	1
+#define RTAS_HP_ACTION_REMOVE	2
+
+    uint32_t    identifier:8;
+#define RTAS_HP_ID_DRC_NAME	1
+#define RTAS_HP_ID_DRC_INDEX	2
+#define RTAS_HP_ID_DRC_COUNT	3
+
+    uint32_t    reserved:8;
+    union {
+        uint32_t    drc_index:32;
+        uint32_t    count:32;
+        char        drc_name[1];
+    } u1;
+};
+
+#define RE_HOTPLUG_SCN_SZ	16
 
 #endif 
 
