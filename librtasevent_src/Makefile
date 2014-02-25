@@ -12,7 +12,7 @@ LIBRE = $(LIBRE_SONAME).$(VERSION)
 
 LIBRE_OBJS = get_rtas_event.o print_rtas_event.o rtas_cpu.o rtas_dump.o	\
 	     rtas_epow.o rtas_io.o rtas_lri.o rtas_mem.o rtas_post.o	\
-	     rtas_sp.o rtas_srcfru.o rtas_v6_misc.o rtas_vend.o
+	     rtas_sp.o rtas_srcfru.o rtas_v6_misc.o rtas_vend.o rtas_hotplug.o
 
 LIBRE_HDRS = librtasevent.h librtasevent_v4.h librtasevent_v6.h
 HEADERS = $(LIBRE_HDRS) rtas_event.h

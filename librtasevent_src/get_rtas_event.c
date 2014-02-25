@@ -163,6 +163,8 @@ re_scn_id(struct rtas_v6_hdr *v6hdr)
         return RTAS_PSRC_SCN;
     if (strncmp(v6hdr->id, RTAS_SSRC_SCN_ID, 2) == 0)
         return RTAS_SSRC_SCN;
+    if (strncmp(v6hdr->id, RTAS_HP_SCN_ID, 2) == 0)
+	return RTAS_HP_SCN;
 
     return -1;
 }
@@ -275,6 +277,10 @@ parse_v6_rtas_event(struct rtas_event *re)
             case RTAS_SSRC_SCN:
                 rc = parse_src_scn(re);
                 break;
+
+	    case RTAS_HP_SCN:
+		rc = parse_hotplug_scn(re);
+		break;
         
             default:
                 rc = parse_generic_v6_scn(re);

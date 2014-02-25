@@ -36,6 +36,7 @@ int parse_sp_scn(struct rtas_event *);
 int parse_vend_errlog_scn(struct rtas_event *);
 int parse_generic_v6_scn(struct rtas_event *);
 void parse_mtms(struct rtas_event *, struct rtas_mtms *);
+int parse_hotplug_scn(struct rtas_event *);
 
 /* print routines */
 int print_re_hdr_scn(struct scn_header *, int);
@@ -55,6 +56,7 @@ int print_re_lri_scn(struct scn_header *, int);
 int print_re_mt_scn(struct scn_header *, int);
 int print_re_src_scn(struct scn_header *, int);
 int print_re_generic_scn(struct scn_header *, int);
+int print_re_hotplug_scn(struct scn_header *, int);
 
 int print_mtms(struct rtas_mtms *);
 
