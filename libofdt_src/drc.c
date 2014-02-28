@@ -12,7 +12,18 @@
 #include <string.h>
 #include <dirent.h>
 #include <stdint.h>
+#include <endian.h>
+#include <byteswap.h>
 #include "common.h"
+
+static inline unsigned int ofdt_swap_int(unsigned int data)
+{
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+       return bswap_32(data);
+#else
+       return data;
+#endif
+}
 
 /**
  * get_property
@@ -89,7 +100,7 @@ static int get_of_list_prop(const char *full_path, char *prop_name,
 		return -1;
 	}
 
-	prop->n_entries = *(uint *)prop->_data;
+	prop->n_entries = ofdt_swap_int(*(uint *)prop->_data);
 	prop->val = prop->_data + sizeof(uint);
 
 	return 0;
@@ -277,6 +288,7 @@ void create_drc_properties(struct node *node, struct dr_connector *drc_list)
 			  sizeof(drc_index));
 	if (rc)
 		return;
+	drc_index = ofdt_swap_int(drc_index);
 
 	for (drc = drc_list; drc; drc = drc->next) {
 		if (drc_index == drc->index)

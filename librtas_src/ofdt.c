@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <endian.h>
+#include <byteswap.h>
 #include "librtas.h"
 #include "common.h"
 
@@ -95,7 +97,11 @@ int rtas_token(const char *call_name)
 	if (rc < 0) 
 		return RTAS_UNKNOWN_OP;
 
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+	rc = bswap_32(*(int *)prop_buf);
+#else
 	rc = *(int *)prop_buf;
+#endif
 	free(prop_buf);
 
 	return rc;
