@@ -1,3 +1,42 @@
+Changelog for librtas-1.3.9
+=======================================
+commit 9c5bccb93aa734796df111c2e7c051860b8b30de
+Author: Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
+Date:   Fri Feb 28 07:49:59 2014 -0600
+
+    librtas, libofdt: fix endianness issues when accessing the device tree
+    
+    Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
+
+commit 399a1962534342c1a153445b587d3fd0c95cfc78
+Merge: e2de13f a057c98
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Wed Feb 26 08:22:33 2014 -0600
+
+    Merge branch 'master' of ssh://nfont@git.code.sf.net/p/librtas/code
+
+commit e2de13f77b36aff9d55d97ec862261a329262d4a
+Author: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+Date:   Tue Feb 25 10:09:54 2014 -0600
+
+    librtasevent: Add hotplug event implementation
+    
+    Add event definition and helper functions for hotplug events. This is
+    intended for qemu to notify a pseries guest of a hotplug event.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+
+commit a057c984394ac5c0a043ecc250073b8606cd38a1
+Author: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+Date:   Tue Feb 25 10:09:54 2014 -0600
+
+    librtasevent: Add hotplug event implementation
+    
+    Add event definition and helper functions for hotplug events. This is
+    intended for qemu to notify a pseries guest of a hotplug event.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+
 Changelog for librtas-1.3.8
 =======================================
 commit cd1868315f728ea5e8399df5fb7689a88870d7da
