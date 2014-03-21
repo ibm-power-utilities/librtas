@@ -99,6 +99,12 @@ struct rtas_event {
  * @brief definition of date format in rtas events
  */
 struct rtas_date {
+    uint32_t    year;
+    uint32_t    month;
+    uint32_t    day;
+};
+
+struct rtas_date_raw {
     uint32_t    year:16;
     uint32_t    month:8;
     uint32_t    day:8;
@@ -109,6 +115,13 @@ struct rtas_date {
  * @brief definition of timestamp in rtas events
  */
 struct rtas_time {
+    uint32_t    hour;
+    uint32_t    minutes;
+    uint32_t    seconds;
+    uint32_t    hundredths;
+};
+
+struct rtas_time_raw {
     uint32_t    hour:8;
     uint32_t    minutes:8;
     uint32_t    seconds:8;
@@ -125,8 +138,8 @@ struct rtas_time {
  */
 struct rtas_event_hdr {
     struct scn_header shdr;
-    uint32_t version:8;           /**< Architectural version */
-    uint32_t severity:3;          /**< Severity level of error */
+    uint32_t version;           /**< Architectural version */
+    uint32_t severity;          /**< Severity level of error */
 #define RTAS_HDR_SEV_NO_ERROR           0
 #define RTAS_HDR_SEV_EVENT              1
 #define RTAS_HDR_SEV_WARNING            2
@@ -135,14 +148,13 @@ struct rtas_event_hdr {
 #define RTAS_HDR_SEV_FATAL              5
 #define RTAS_HDR_SEV_ALREADY_REPORTED   6
 
-    uint32_t disposition:2;       /**< Degree of recovery */
+    uint32_t disposition;       /**< Degree of recovery */
 #define RTAS_HDR_DISP_FULLY_RECOVERED   0
 #define RTAS_HDR_DISP_LIMITED_RECOVERY  1
 #define RTAS_HDR_DISP_NOT_RECOVERED     2
     
-    uint32_t extended:1;          /**< extended log present? */
-    uint32_t /* reserved */ :2;
-    uint32_t initiator:4;         /**< Initiator of event */
+    uint32_t extended;          /**< extended log present? */
+    uint32_t initiator;         /**< Initiator of event */
 #define RTAS_HDR_INIT_UNKNOWN           0
 #define RTAS_HDR_INIT_CPU               1
 #define RTAS_HDR_INIT_PCI               2
@@ -150,7 +162,7 @@ struct rtas_event_hdr {
 #define RTAS_HDR_INIT_MEMORY            4
 #define RTAS_HDR_INIT_HOT_PLUG          5
 
-    uint32_t target:4;            /**< Target of failed operation */
+    uint32_t target;            /**< Target of failed operation */
 #define RTAS_HDR_TARGET_UNKNOWN         0
 #define RTAS_HDR_TARGET_CPU             1
 #define RTAS_HDR_TARGET_PCI             2
@@ -158,7 +170,7 @@ struct rtas_event_hdr {
 #define RTAS_HDR_TARGET_MEMORY          4
 #define RTAS_HDR_TARGET_HOT_PLUG        5
 
-    uint32_t type:8;              /**< General event or error*/
+    uint32_t type;              /**< General event or error*/
 #define RTAS_HDR_TYPE_RETRY             1
 #define RTAS_HDR_TYPE_TCE_ERR           2
 #define RTAS_HDR_TYPE_INTERN_DEV_FAIL   3
@@ -178,8 +190,16 @@ struct rtas_event_hdr {
 #define RTAS_HDR_TYPE_DUMP_NOTIFICATION 228
 #define RTAS_HDR_TYPE_HOTPLUG		229
 
-    uint32_t ext_log_length:32;   /**< length in bytes */
+    uint32_t ext_log_length;   /**< length in bytes */
 };
+
+struct rtas_event_hdr_raw {
+    uint32_t version:8;
+    uint32_t data1:8;
+    uint32_t data2:8;
+    uint32_t type:8;
+    uint32_t ext_log_length;
+} __attribute__((__packed__));
 
 #define RE_EVENT_HDR_SZ    8
 
@@ -189,23 +209,20 @@ struct rtas_event_hdr {
  */
 struct rtas_event_exthdr {
     struct scn_header shdr;
-    uint32_t valid:1;
-    uint32_t unrecoverable:1;
-    uint32_t recoverable:1;
-    uint32_t unrecoverable_bypassed:1;  
-    uint32_t predictive:1;
-    uint32_t newlog:1;
-    uint32_t bigendian:1; 
-    uint32_t /* reserved */:1;
+    uint32_t valid;
+    uint32_t unrecoverable;
+    uint32_t recoverable;
+    uint32_t unrecoverable_bypassed;  
+    uint32_t predictive;
+    uint32_t newlog;
+    uint32_t bigendian; 
 
-    uint32_t platform_specific:1;       /**< only in version 3+ */
-    uint32_t /* reserved */:3;
-    uint32_t platform_value:4;          /**< valid iff platform_specific */
+    uint32_t platform_specific;       /**< only in version 3+ */
+    uint32_t platform_value;          /**< valid iff platform_specific */
 
-    uint32_t power_pc:1;               
-    uint32_t /* reserved */:2;
-    uint32_t addr_invalid:1;     
-    uint32_t format_type:4;
+    uint32_t power_pc;               
+    uint32_t addr_invalid;     
+    uint32_t format_type;
 #define RTAS_EXTHDR_FMT_CPU             1
 #define RTAS_EXTHDR_FMT_MEMORY          2
 #define RTAS_EXTHDR_FMT_IO              3
@@ -217,19 +234,30 @@ struct rtas_event_exthdr {
 #define RTAS_EXTHDR_FMT_VEND_SPECIFIC_2 15
 
     /* This group is in version 3+ only */
-    uint32_t non_hardware:1;     /**<  Firmware or software is suspect */
-    uint32_t hot_plug:1;         
-    uint32_t group_failure:1;    
-    uint32_t /* reserved */:1;
+    uint32_t non_hardware;     /**<  Firmware or software is suspect */
+    uint32_t hot_plug;         
+    uint32_t group_failure;    
 
-    uint32_t residual:1;         /**< Residual error from previous boot */
-    uint32_t boot:1;             /**< Error during boot */
-    uint32_t config_change:1;    /**< Configuration chang since last boot */
-    uint32_t post:1;
+    uint32_t residual;         /**< Residual error from previous boot */
+    uint32_t boot;             /**< Error during boot */
+    uint32_t config_change;    /**< Configuration chang since last boot */
+    uint32_t post;
 
     struct rtas_time time;       /**< Time of error in BCD HHMMSS00 */
     struct rtas_date date;       /**< Time of error in BCD YYYYMMDD */
 };
+
+struct rtas_event_exthdr_raw {
+    uint32_t data1:8;
+    uint32_t data2:8;
+    uint32_t data3:8;
+
+    /* This group is in version 3+ only */
+    uint32_t data4:8;
+
+    struct rtas_time_raw time;  
+    struct rtas_date_raw date; 
+}__attribute__((__packed__));
 
 #define RE_EXT_HDR_SZ   12
 
@@ -278,18 +306,24 @@ struct rtas_epow_scn {
     /* The following represent a version 6 RTAS EPOW event */
     struct rtas_v6_hdr v6hdr;
  
-    uint32_t    _v6_sensor_value:4;
-    uint32_t    _v6_action_code:4;
-    uint32_t    event_modifier:8;       /**< EPOW event modifier */
+    uint32_t    event_modifier;       /**< EPOW event modifier */
 #define RTAS_EPOW_MOD_NA                    0x00
 #define RTAS_EPOW_MOD_NORMAL_SHUTDOWN       0x01
 #define RTAS_EPOW_MOD_UTILITY_POWER_LOSS    0x02
 #define RTAS_EPOW_MOD_CRIT_FUNC_LOSS        0x03
 #define RTAS_EPOW_MOD_AMBIENT_TEMP          0x04
 
-    uint32_t    /* reserved */ :16;
     char        reason_code[8];         /**< platform specific reason code */
 };
+
+struct rtas_v6_epow_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+
+    uint32_t	data1:8;
+    uint32_t    event_modifier:8;
+
+    char        reason_code[8];
+}__attribute__((__packed__));
 
 /* defines used for copying in data from the RTAS event */
 #define RE_EPOW_V6_SCN_SZ   20
@@ -361,17 +395,17 @@ struct rtas_io_scn {
     /* The following represents the version 6 rtas event */
     struct rtas_v6_hdr v6hdr;
    
-    uint32_t    event_type:8;           /**< I/O event type */
+    uint32_t    event_type;           /**< I/O event type */
 #define RTAS_IO_TYPE_DETECTED       0x01
 #define RTAS_IO_TYPE_RECOVERED      0x02
 #define RTAS_IO_TYPE_EVENT          0x03
 #define RTAS_IO_TYPE_RPC_PASS_THRU  0x04
 
-    uint32_t    rpc_length:8;           /**< RPC field length.  The RPC data
+    uint32_t    rpc_length;           /**< RPC field length.  The RPC data
                                              is optional and appears after
                                              this structure in the event if
                                              present */
-    uint32_t    scope:8;                /**< event scope */
+    uint32_t    scope;                /**< event scope */
 #define RTAS_IO_SCOPE_NA            0x00
 #define RTAS_IO_SCOPE_RIO_HUB       0x36
 #define RTAS_IO_SCOPE_RIO_BRIDGE    0x37
@@ -379,16 +413,28 @@ struct rtas_io_scn {
 #define RTAS_IO_SCOPE_EADS_GLOBAL   0x39
 #define RTAS_IO_SCOPE_EADS_SLOT     0x3A
     
-    uint32_t    subtype:8;              /**< I/O event sub-type */
+    uint32_t    subtype;              /**< I/O event sub-type */
 #define RTAS_IO_SUBTYPE_NA              0x00
 #define RTAS_IO_SUBTYPE_REBALANCE       0x01
 #define RTAS_IO_SUBTYPE_NODE_ONLINE     0x02
 #define RTAS_IO_SUBTYPE_NODE_OFFLINE    0x04
 #define RTAS_IO_SUBTYPE_PLAT_DUMP_SZ	0x05
 
-    uint32_t    drc_index:32;           /**< DRC index */
+    uint32_t    drc_index;           /**< DRC index */
     char        rpc_data[216];
 };
+
+struct rtas_v6_io_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+
+    uint32_t    event_type:8;
+    uint32_t    rpc_length:8;
+    uint32_t    scope:8;
+    uint32_t    subtype:8;
+
+    uint32_t    drc_index;
+    char        rpc_data[216];
+}__attribute__((__packed__));
     
 #define RE_IO_V6_SCN_OFFSET     (RE_SCN_HDR_SZ + RE_V4_SCN_SZ)
 

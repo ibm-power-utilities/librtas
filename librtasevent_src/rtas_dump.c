@@ -24,6 +24,7 @@ int
 parse_dump_scn(struct rtas_event *re)
 {
     struct rtas_dump_scn *dump;
+    struct rtas_dump_scn_raw *rawhdr;
 
     dump = malloc(sizeof(*dump));
     if (dump == NULL) {
@@ -33,7 +34,22 @@ parse_dump_scn(struct rtas_event *re)
 
     dump->shdr.raw_offset = re->offset;
 
-    rtas_copy(RE_SHDR_OFFSET(dump), re, RE_V6_DUMP_SCN_SZ);
+    rawhdr = (struct rtas_dump_scn_raw *)(re->buffer + re->offset);
+
+    parse_v6_hdr(&dump->v6hdr, &rawhdr->v6hdr);
+    dump->id = be32toh(rawhdr->id);
+
+    dump->location = (rawhdr->data1 & 0x80) >> 7;
+    dump->fname_type = (rawhdr->data1 & 0x40) >> 6;
+    dump->size_valid = (rawhdr->data1 & 0x20) >> 5;
+    dump->id_len = rawhdr->id_len;
+
+    dump->size_hi = be32toh(rawhdr->size_hi);
+    dump->size_lo = be32toh(rawhdr->size_lo);
+
+    memcpy(dump->os_id, rawhdr->os_id, 40);
+
+    re->offset += RE_V6_DUMP_SCN_SZ;
     add_re_scn(re, dump, RTAS_DUMP_SCN);
 
     return 0;

@@ -543,9 +543,11 @@ print_re_src_scn(struct scn_header *shdr, int verbosity)
     src = (struct rtas_src_scn *)shdr;
 
     if (strncmp(src->v6hdr.id, RTAS_PSRC_SCN_ID, 2) == 0)
-        len += print_v6_hdr("Primary SRC Section", &src->v6hdr, verbosity);
+        len += print_v6_hdr("Primary SRC Section",
+			    (struct rtas_v6_hdr *)&src->v6hdr, verbosity);
     else
-        len += print_v6_hdr("Secondary SRC Section", &src->v6hdr, verbosity);
+        len += print_v6_hdr("Secondary SRC Section",
+			    (struct rtas_v6_hdr *)&src->v6hdr, verbosity);
 
     if (verbosity >= 2) {
         len += rtas_print(PRNT_FMT_2"\n", "SRC Version:", src->version,

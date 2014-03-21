@@ -37,13 +37,21 @@ parse_io_scn(struct rtas_event *re)
 
     if (re->version < 6) {
         rtas_copy(RE_SHDR_OFFSET(io), re, RE_V4_SCN_SZ);
-    }
-    else {
-        struct rtas_v6_hdr *v6hdr;
+    } else {
+        struct rtas_v6_io_scn_raw *rawhdr;
 
-        v6hdr = (struct rtas_v6_hdr *)RE_EVENT_OFFSET(re);
+	rawhdr = (struct rtas_v6_io_scn_raw *)(re->buffer + re->offset);
+	parse_v6_hdr(&io->v6hdr, &rawhdr->v6hdr);
 
-        rtas_copy(RE_SHDR_OFFSET(io) + RE_V4_SCN_SZ, re, v6hdr->length);
+	io->event_type = rawhdr->event_type; 
+	io->rpc_length = rawhdr->rpc_length;
+	io->scope = rawhdr->scope;
+	io->subtype = rawhdr->subtype;
+
+	io->drc_index = be32toh(rawhdr->drc_index);
+	memcpy(io->rpc_data, rawhdr->rpc_data, 216);
+
+	re->offset += io->v6hdr.length;
     }
 
     add_re_scn(re, io, RTAS_IO_SCN);

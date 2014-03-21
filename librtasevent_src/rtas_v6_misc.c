@@ -26,6 +26,33 @@ static char *months[] = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
                          "Aug", "Sep", "", "", "", "", "", "", "Oct", "Nov", 
                          "Dec"};
 
+void parse_rtas_date(struct rtas_date *rtas_date,
+		     struct rtas_date_raw *rawdate)
+{
+    rtas_date->year = be16toh(rawdate->year);
+    rtas_date->month = rawdate->month;
+    rtas_date->day = rawdate->day;
+}
+
+void parse_rtas_time(struct rtas_time *rtas_time, struct rtas_time_raw *rawtime)
+{
+    rtas_time->hour = rawtime->hour;
+    rtas_time->minutes = rawtime->minutes;
+    rtas_time->seconds = rawtime->seconds;
+    rtas_time->hundredths = rawtime->hundredths;
+}
+
+void parse_v6_hdr(struct rtas_v6_hdr *v6hdr, struct rtas_v6_hdr_raw *rawv6)
+{
+    v6hdr->id[0] = rawv6->id[0];
+    v6hdr->id[1] = rawv6->id[1];
+
+    v6hdr->length = be16toh(rawv6->length);
+    v6hdr->version = rawv6->version;
+    v6hdr->subtype = rawv6->subtype;
+    v6hdr->creator_comp_id = be16toh(rawv6->creator_comp_id);
+}
+
 /**
  * print_v6_scn_hdr
  * @brief print the generic version 6 section header
@@ -63,6 +90,7 @@ int
 parse_priv_hdr_scn(struct rtas_event *re)
 {
     struct rtas_priv_hdr_scn *privhdr;
+    struct rtas_priv_hdr_scn_raw *rawhdr;
 
     privhdr = malloc(sizeof(*privhdr));
     if (privhdr == NULL) {
@@ -73,10 +101,19 @@ parse_priv_hdr_scn(struct rtas_event *re)
     memset(privhdr, 0, sizeof(*privhdr));
     privhdr->shdr.raw_offset = re->offset;
 
-    /* Copy up through the creator subsection id.  Sinc the subsection
-     * id can be ascii we null terminate it then copy the stuff after it.
-     */
-    rtas_copy(RE_SHDR_OFFSET(privhdr), re, 48);
+    rawhdr = (struct rtas_priv_hdr_scn_raw *)(re->buffer + re->offset);
+    parse_v6_hdr(&privhdr->v6hdr, &rawhdr->v6hdr);
+    parse_rtas_date(&privhdr->date, &rawhdr->date);
+    parse_rtas_time(&privhdr->time, &rawhdr->time);
+
+    privhdr->creator_id = rawhdr->creator_id;
+    privhdr->scn_count = rawhdr->scn_count;
+
+    privhdr->creator_subid_hi = be32toh(rawhdr->creator_subid_hi);
+    privhdr->creator_subid_lo = be32toh(rawhdr->creator_subid_lo);
+
+    privhdr->plid = be32toh(rawhdr->plid);
+    privhdr->log_entry_id = be32toh(rawhdr->log_entry_id);
 
     /* If the creator id is 'E', the the subsystem version is in ascii,
      * copy this info to a null terminated string.
@@ -87,6 +124,7 @@ parse_priv_hdr_scn(struct rtas_event *re)
         privhdr->creator_subid_name[8] = '\0';
     }
 
+    re->offset += 48;
     add_re_scn(re, privhdr, RTAS_PRIV_HDR_SCN);
     return 0;
 }
@@ -127,16 +165,11 @@ print_re_priv_hdr_scn(struct scn_header *shdr, int verbosity)
 
     len += print_v6_hdr("Private Header", &privhdr->v6hdr, verbosity);
     
-    if (verbosity < 2) {
-        len += rtas_print("%-20s%x %s %x\n", "Date:", privhdr->date.day,
-                          months[privhdr->date.month], privhdr->date.year);
-        len += rtas_print("%-20s%x:%x:%x:%x\n", "Time:", 
-                          privhdr->time.hour, privhdr->time.minutes, 
-                          privhdr->time.seconds, privhdr->time.hundredths);
-    } else {
-        len += rtas_print(PRNT_FMT_2, "Date:", privhdr->date,
-                          "Time:", privhdr->time);
-    }
+    len += rtas_print("%-20s%x %s %x\n", "Date:", privhdr->date.day,
+                      months[privhdr->date.month], privhdr->date.year);
+    len += rtas_print("%-20s%x:%x:%x:%x\n", "Time:", 
+                      privhdr->time.hour, privhdr->time.minutes, 
+                      privhdr->time.seconds, privhdr->time.hundredths);
 
     len += rtas_print("%-20s", "Creator ID:");
     switch(privhdr->creator_id) {
@@ -196,6 +229,7 @@ int
 parse_usr_hdr_scn(struct rtas_event *re)
 {
     struct rtas_usr_hdr_scn *usrhdr;
+    struct rtas_usr_hdr_scn_raw *rawhdr;
 
     usrhdr = malloc(sizeof(*usrhdr));
     if (usrhdr == NULL) {
@@ -206,7 +240,16 @@ parse_usr_hdr_scn(struct rtas_event *re)
     memset(usrhdr, 0, sizeof(*usrhdr));
     usrhdr->shdr.raw_offset = re->offset;
 
-    rtas_copy(RE_SHDR_OFFSET(usrhdr), re, RE_USR_HDR_SCN_SZ);
+    rawhdr = (struct rtas_usr_hdr_scn_raw *)(re->buffer + re->offset);
+    parse_v6_hdr(&usrhdr->v6hdr, &rawhdr->v6hdr);
+    
+    usrhdr->subsystem_id = rawhdr->subsystem_id;
+    usrhdr->event_data = rawhdr->event_data;
+    usrhdr->event_severity = rawhdr->event_severity;
+    usrhdr->event_type = rawhdr->event_type;
+    usrhdr->action = be16toh(rawhdr->action);
+
+    re->offset += RE_USR_HDR_SCN_SZ;
     add_re_scn(re, usrhdr, RTAS_USR_HDR_SCN);
 
     return 0;
@@ -521,7 +564,7 @@ parse_mt_scn(struct rtas_event *re)
 
     memset(mt, 0, sizeof(*mt));
     mt->shdr.raw_offset = re->offset;
-    rtas_copy(RE_SHDR_OFFSET(mt), re, sizeof(struct rtas_v6_hdr));
+    rtas_copy(RE_SHDR_OFFSET(mt), re, sizeof(struct rtas_v6_hdr_raw));
     
     parse_mtms(re, &mt->mtms);
     add_re_scn(re, mt, RTAS_MT_SCN);
@@ -563,7 +606,7 @@ print_re_mt_scn(struct scn_header *shdr, int verbosity)
 
     mt = (struct rtas_mt_scn *)shdr;
     
-    len += print_v6_hdr("Machine Type", &mt->v6hdr, verbosity);
+    len += print_v6_hdr("Machine Type", (struct rtas_v6_hdr *)&mt->v6hdr, verbosity);
     len += print_mtms(&mt->mtms);
     len += rtas_print("\n");
 
@@ -578,7 +621,7 @@ int
 parse_generic_v6_scn(struct rtas_event *re)
 {
     struct rtas_v6_generic  *gen;
-    uint32_t copy_sz = sizeof(struct rtas_v6_hdr);
+    struct rtas_v6_hdr_raw *rawhdr;
 
     gen = malloc(sizeof(*gen));
     if (gen == NULL) {
@@ -589,10 +632,12 @@ parse_generic_v6_scn(struct rtas_event *re)
     memset(gen, 0, sizeof(*gen));
     gen->shdr.raw_offset = re->offset;
 
-    rtas_copy(RE_SHDR_OFFSET(gen), re, copy_sz);
-    
-    if (gen->v6hdr.length > copy_sz) {
-        uint32_t    data_sz = gen->v6hdr.length - copy_sz;
+    rawhdr = (struct rtas_v6_hdr_raw *)(re->buffer + re->offset);
+    parse_v6_hdr(&gen->v6hdr, rawhdr);
+    re->offset += RTAS_V6_HDR_SIZE;
+
+    if (gen->v6hdr.length > RTAS_V6_HDR_SIZE) {
+        uint32_t    data_sz = gen->v6hdr.length - RTAS_V6_HDR_SIZE;
         gen->data = malloc(data_sz);
         if (gen->data == NULL) {
             errno = ENOMEM;
@@ -629,7 +674,7 @@ print_re_generic_scn(struct scn_header *shdr, int verbosity)
     if (gen->data != NULL) {
         len += rtas_print("Raw Section Data:\n");
         len += print_raw_data(gen->data, 
-                              gen->v6hdr.length - sizeof(struct rtas_v6_hdr));
+                              gen->v6hdr.length - sizeof(struct rtas_v6_hdr_raw));
     }
 
     len += rtas_print("\n");

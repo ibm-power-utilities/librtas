@@ -147,7 +147,7 @@ add_re_scn(struct rtas_event *re, void *scn, int scn_id)
  * @return section identifier on success, -1 on failure
  */
 int
-re_scn_id(struct rtas_v6_hdr *v6hdr) 
+re_scn_id(struct rtas_v6_hdr_raw *v6hdr) 
 {
     if (strncmp(v6hdr->id, RTAS_DUMP_SCN_ID, 2) == 0)
         return RTAS_DUMP_SCN;
@@ -211,6 +211,67 @@ get_re_scn(struct rtas_event *re, int scn_id)
     return _get_re_scn(re->event_scns, scn_id);
 }
 
+/**
+ * parse_re_hdr
+ */
+static void parse_re_hdr(struct rtas_event *re, struct rtas_event_hdr *re_hdr)
+{
+    struct rtas_event_hdr_raw *rawhdr;
+
+    rawhdr = (struct rtas_event_hdr_raw *)(re->buffer + re->offset);
+
+    re_hdr->version = rawhdr->version; 
+
+    re_hdr->severity = (rawhdr->data1 & 0xE0) >> 5;
+    re_hdr->disposition = (rawhdr->data1 & 0x1C) >> 3;
+    re_hdr->extended = (rawhdr->data1 & 0x04) >> 2;
+
+    re_hdr->initiator = (rawhdr->data2 & 0xF0) >> 4;
+    re_hdr->target = rawhdr->data2 & 0x0F;
+    re_hdr->type = rawhdr->type;
+
+    re_hdr->ext_log_length = be32toh(rawhdr->ext_log_length);
+
+    re->offset += RE_EVENT_HDR_SZ;
+    add_re_scn(re, re_hdr, RTAS_EVENT_HDR);
+}
+
+static void parse_re_exthdr(struct rtas_event *re,
+			    struct rtas_event_exthdr *rex_hdr)
+{
+    struct rtas_event_exthdr_raw *rawhdr;
+
+    rawhdr = (struct rtas_event_exthdr_raw *)(re->buffer + re->offset);
+
+    rex_hdr->valid = (rawhdr->data1 & 0x80) >> 7;
+    rex_hdr->unrecoverable = (rawhdr->data1 & 0x40) >> 6;
+    rex_hdr->recoverable = (rawhdr->data1 & 0x20) >> 5;
+    rex_hdr->unrecoverable_bypassed = (rawhdr->data1 & 0x10) >> 4;
+    rex_hdr->predictive = (rawhdr->data1 & 0x08) >> 3;
+    rex_hdr->newlog = (rawhdr->data1 & 0x04) >> 2;
+    rex_hdr->bigendian = (rawhdr->data1 & 0x02) >> 1;
+
+    rex_hdr->platform_specific = (rawhdr->data2 & 0x80) >> 7;
+    rex_hdr->platform_value = rawhdr->data2 & 0x0F;
+
+    rex_hdr->power_pc = (rawhdr->data3 & 0x80) >> 7;
+    rex_hdr->addr_invalid = (rawhdr->data3 & 0x10) >> 4;
+    rex_hdr->format_type = rawhdr->data3 & 0x0F;
+
+    rex_hdr->non_hardware = (rawhdr->data4 & 0x80) >> 7;
+    rex_hdr->hot_plug = (rawhdr->data4 & 0x40) >> 6;
+    rex_hdr->group_failure = (rawhdr->data4 & 0x20) >> 5;
+    rex_hdr->residual = (rawhdr->data4 & 0x08) >> 3;
+    rex_hdr->boot = (rawhdr->data4 & 0x04) >> 2;
+    rex_hdr->config_change = (rawhdr->data4 & 0x02) >> 1;
+    rex_hdr->post = rawhdr->data4 & 0x01;
+
+    parse_rtas_time(&rex_hdr->time, &rawhdr->time);
+    parse_rtas_date(&rex_hdr->date, &rawhdr->date);
+
+    re->offset += RE_EXT_HDR_SZ;
+    add_re_scn(re, rex_hdr, RTAS_EVENT_EXT_HDR);
+}
 
 /**
  * parse_v6_rtas_event
@@ -222,7 +283,7 @@ get_re_scn(struct rtas_event *re, int scn_id)
 struct rtas_event *
 parse_v6_rtas_event(struct rtas_event *re)
 {
-    struct rtas_v6_hdr *v6hdr;
+    struct rtas_v6_hdr_raw *v6hdr;
     char *ibm;
     
     ibm = re->buffer + re->offset;
@@ -248,7 +309,7 @@ parse_v6_rtas_event(struct rtas_event *re)
 
     while (re->offset < re->event_length) {
         int scn_id, rc;
-        v6hdr = (struct rtas_v6_hdr *)(re->buffer + re->offset);
+        v6hdr = (struct rtas_v6_hdr_raw *)(re->buffer + re->offset);
 
         scn_id = re_scn_id(v6hdr);
 
@@ -275,7 +336,12 @@ parse_v6_rtas_event(struct rtas_event *re)
 
             case RTAS_PSRC_SCN:
             case RTAS_SSRC_SCN:
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+		fprintf(stderr, "Parsing RTAS SRC Sections on little endian not supported\n");
+		rc = -1;
+#else
                 rc = parse_src_scn(re);
+#endif
                 break;
 
 	    case RTAS_HP_SCN:
@@ -330,8 +396,7 @@ parse_rtas_event(char *buf, int buflen)
 	    return NULL;
     }
 
-    rtas_copy(RE_SHDR_OFFSET(re_hdr), re, RE_EVENT_HDR_SZ);
-    add_re_scn(re, re_hdr, RTAS_EVENT_HDR);
+    parse_re_hdr(re, re_hdr);
 
     /* Validate the length of the buffer passed in. */
     re->event_length = re_hdr->ext_log_length + RE_EVENT_HDR_SZ;
@@ -352,8 +417,7 @@ parse_rtas_event(char *buf, int buflen)
         return NULL;
     }
 
-    rtas_copy(RE_SHDR_OFFSET(rex_hdr), re, RE_EXT_HDR_SZ);
-    add_re_scn(re, rex_hdr, RTAS_EVENT_EXT_HDR);
+    parse_re_exthdr(re, rex_hdr);
 
     if (re_hdr->version == 6) 
         return parse_v6_rtas_event(re);

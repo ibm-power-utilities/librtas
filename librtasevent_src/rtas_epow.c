@@ -25,6 +25,7 @@ int
 parse_epow_scn(struct rtas_event *re)
 {
     struct rtas_epow_scn *epow;
+    struct rtas_v6_epow_scn_raw *rawhdr;
 
     epow = malloc(sizeof(*epow));
     if (epow == NULL) {
@@ -39,9 +40,15 @@ parse_epow_scn(struct rtas_event *re)
     if (re->version < 6) {
         rtas_copy(RE_SHDR_OFFSET(epow), re, RE_V4_SCN_SZ);
     } else {
-        rtas_copy(RE_SHDR_OFFSET(epow) + RE_V4_SCN_SZ, re, RE_EPOW_V6_SCN_SZ);
-        epow->sensor_value = epow->_v6_sensor_value;
-        epow->action_code = epow->_v6_action_code;
+	rawhdr = (struct rtas_v6_epow_scn_raw *)(re->buffer + re->offset);
+
+	parse_v6_hdr(&epow->v6hdr, &rawhdr->v6hdr);
+	epow->sensor_value = (rawhdr->data1 & 0xF0) >> 4;
+	epow->action_code = rawhdr->data1 & 0x0F;
+	epow->event_modifier = rawhdr->event_modifier;
+
+	memcpy(epow->reason_code, rawhdr->reason_code, 8);
+	re->offset += RE_EPOW_V6_SCN_SZ;
     }
 
     add_re_scn(re, epow, RTAS_EPOW_SCN);

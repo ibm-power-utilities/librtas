@@ -24,6 +24,7 @@ int
 parse_lri_scn(struct rtas_event *re)
 {
     struct rtas_lri_scn *lri;
+    struct rtas_lri_scn_raw *rawhdr;
     
     lri = malloc(sizeof(*lri));
     if (lri == NULL) {
@@ -33,7 +34,16 @@ parse_lri_scn(struct rtas_event *re)
 
     lri->shdr.raw_offset = re->offset;
 
-    rtas_copy(RE_SHDR_OFFSET(lri), re, RE_LRI_SCN_SZ);
+    rawhdr = (struct rtas_lri_scn_raw *)(re->buffer + re->offset);
+
+    parse_v6_hdr(&lri->v6hdr, &rawhdr->v6hdr);
+    lri->resource = rawhdr->resource;
+    lri->capacity = be16toh(rawhdr->capacity);
+
+    lri->lri_mem_addr_lo = be32toh(rawhdr->lri_mem_addr_lo);
+    lri->lri_mem_addr_hi = be32toh(rawhdr->lri_mem_addr_hi);
+
+    re->offset += RE_LRI_SCN_SZ;
     add_re_scn(re, lri, RTAS_LRI_SCN);
 
     return 0;

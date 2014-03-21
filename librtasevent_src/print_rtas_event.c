@@ -248,6 +248,7 @@ rtas_error_type(int type)
         case 226:   return "Platform Information Event";
         case 227:   return "Resource Deallocation Event";
         case 228:   return "Dump Notification Event";
+	case 229:   return "Hotplug Event";
     }
 
     return rtas_event_error_type[0];
