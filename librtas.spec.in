@@ -1,5 +1,5 @@
 %define name librtas
-%define version 1.3.9
+%define version 1.3.10
 %define release 1
 Summary: Libraries to provide access to RTAS calls and RTAS events.
 Name: %{name}
