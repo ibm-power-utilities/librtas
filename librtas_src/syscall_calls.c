@@ -167,22 +167,30 @@ static unsigned int handle_delay(int status, uint64_t * elapsed)
  */
 static void display_rtas_buf(struct rtas_args *args, int after)
 {
-	int i;
+	int i, ninputs, nret;
 
 	if (config.debug < 2)
 		return;
 
+	ninputs = be32toh(args->ninputs);
+	nret    = be32toh(args->nret);
+
+	/* It doesn't make sense to byte swap the input and return arguments
+	 * as we don't know here what they really mean (it could be a 64 bit
+	 * value split accross two 32 bit arguments). Printing them as hex
+	 * values is enough for debugging purposes.
+	 */
 	if (!after) {
-		printf("RTAS call args.token = %d\n", args->token);
-		printf("RTAS call args.ninputs = %d\n", args->ninputs);
-		printf("RTAS call args.nret = %d\n", args->nret);
-		for (i = 0; i < args->ninputs; i++)
-			printf("RTAS call input[%d] = 0x%x\n", i, 
+		printf("RTAS call args.token = %d\n", be32toh(args->token));
+		printf("RTAS call args.ninputs = %d\n", ninputs);
+		printf("RTAS call args.nret = %d\n", nret);
+		for (i = 0; i < ninputs; i++)
+			printf("RTAS call input[%d] = 0x%x (BE)\n", i,
 			       args->args[i]);
 	} else {
-		for (i = args->ninputs; i < args->ninputs + args->nret; i++)
-			printf("RTAS call output[%d] = 0x%x\n", 
-			       i - args->ninputs, args->args[i]);
+		for (i = ninputs; i < ninputs + nret; i++)
+			printf("RTAS call output[%d] = 0x%x (BE)\n",
+			       i - ninputs, args->args[i]);
 	}
 }
 
@@ -206,9 +214,9 @@ static int sc_rtas_call(int token, int ninputs, int nret, ...)
 	int rc;
 	int i;
 
-	args.token = token;
-	args.ninputs = ninputs;
-	args.nret = nret;
+	args.token = htobe32(token);
+	args.ninputs = htobe32(ninputs);
+	args.nret = htobe32(nret);
 
 	va_start(ap, nret);
 	for (i = 0; i < ninputs; i++)
@@ -234,7 +242,10 @@ static int sc_rtas_call(int token, int ninputs, int nret, ...)
 
 	/* Assign rets */
 	if (nret) {
-		for (i = 0; i < nret; i++)
+		/* All RTAS calls return a status in rets[0] */
+		*(rets[0]) = be32toh(args.args[ninputs]);
+
+		for (i = 1; i < nret; i++)
 			*(rets[i]) = args.args[ninputs + i];
 	}
 
@@ -294,7 +305,8 @@ int sc_cfg_connector(int token, char *workarea)
 	memcpy(kernbuf, workarea, PAGE_SIZE);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, workarea_pa, extent_pa, &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+				  htobe32(extent_pa), &status);
 		if (rc < 0)
 			break;
 		
@@ -657,16 +669,20 @@ int sc_get_power_level(int token, int powerdomain, int *level)
 int sc_get_sensor(int token, int sensor, int index, int *state)
 {
 	uint64_t elapsed = 0;
+	uint32_t be_state;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, sensor, index, &status, state);
+		rc = sc_rtas_call(token, 2, 2, htobe32(sensor),
+				  htobe32(index), &status, &be_state);
 		if (rc)
 			return rc;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*state = be32toh(be_state);
 
 	dbg1("(%d, %d, %p) = %d, %d\n", sensor, index, state, rc ? rc : status,
 	     *state);
@@ -1078,8 +1094,9 @@ int sc_set_indicator(int token, int indicator, int index, int new_value)
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, indicator, index,
-				  new_value, &status);
+		rc = sc_rtas_call(token, 3, 1, htobe32(indicator),
+				  htobe32(index),
+				  htobe32(new_value), &status);
 		if (rc)
 			return rc;
 
@@ -1103,17 +1120,20 @@ int sc_set_indicator(int token, int indicator, int index, int new_value)
 int sc_set_power_level(int token, int powerdomain, int level, int *setlevel)
 {
 	uint64_t elapsed = 0;
+	uint32_t be_setlevel;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, powerdomain, level, &status,
-				  setlevel);
+		rc = sc_rtas_call(token, 2, 2, htobe32(powerdomain),
+				  htobe32(level), &status, &be_setlevel);
 		if (rc)
 			return rc;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*setlevel = be32toh(be_setlevel);
 
 	dbg1("(%d, %d, %p) = %d, %d\n", powerdomain, level, setlevel,
 	     rc ? rc : status, *setlevel);
