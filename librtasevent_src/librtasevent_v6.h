@@ -24,11 +24,21 @@
  */
 struct rtas_v6_hdr {
     char        id[2];              /**< section id */
-    uint32_t    length:16;          /**< section length */
-    uint32_t    version:8;          /**< section version */
-    uint32_t    subtype:8;          /**< section sub-type id */
-    uint32_t    creator_comp_id:16; /**< component id of section creator */
+    uint32_t    length;             /**< section length */
+    uint32_t    version;            /**< section version */
+    uint32_t    subtype;            /**< section sub-type id */
+    uint32_t    creator_comp_id;    /**< component id of section creator */
 };
+
+struct rtas_v6_hdr_raw {
+    char        id[2];
+    uint32_t    length:16;
+    uint32_t    version:8;
+    uint32_t    subtype:8;
+    uint32_t    creator_comp_id:16;
+}__attribute__((__packed__));
+
+#define RTAS_V6_HDR_SIZE	16
 
 /* defines for the rtas_event_scn id */
 #define RTAS_DUMP_SCN_ID    "DH"
@@ -56,27 +66,44 @@ struct rtas_priv_hdr_scn {
     struct rtas_date date;
     struct rtas_time time;
  
-    uint32_t    /* reserved */:32;
-    uint32_t    /* reserved */:32;
-
     char	creator_id;         /**< subsystem creator id */
 #define RTAS_PH_CREAT_SERVICE_PROC   'E'
 #define RTAS_PH_CREAT_HYPERVISOR     'H'
 #define RTAS_PH_CREAT_POWER_CONTROL  'W'
 #define RTAS_PH_CREAT_PARTITION_FW   'L'
 
-    uint32_t    /* reserved */ :16;
-    uint32_t    scn_count:8;        /**< number of sections in log */
-    uint32_t    /* reserved */ :32;
-    
+    uint32_t    scn_count;        /**< number of sections in log */
     uint32_t    creator_subid_hi;
     uint32_t    creator_subid_lo;
 
     uint32_t    plid;               /**< platform log id */
     uint32_t    log_entry_id;       /**< Unique log entry id */
-    
     char        creator_subid_name[9];
 };
+
+struct rtas_priv_hdr_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+    
+    struct rtas_date_raw date;
+    struct rtas_time_raw time;
+ 
+    uint32_t    /* reserved */:32;
+    uint32_t    /* reserved */:32;
+
+    char	creator_id;
+    uint32_t    /* reserved */ :16;
+    uint32_t    scn_count:8;
+
+    uint32_t    /* reserved */ :32;
+    
+    uint32_t    creator_subid_hi;
+    uint32_t    creator_subid_lo;
+
+    uint32_t    plid;
+    uint32_t    log_entry_id;
+    
+    char        creator_subid_name[9];
+}__attribute__((__packed__));
 
 /**
  * @struct rtas_v6_main_b_scn
@@ -86,10 +113,10 @@ struct rtas_usr_hdr_scn {
     struct scn_header shdr;
     struct rtas_v6_hdr v6hdr;
     
-    uint32_t    subsystem_id:8;     /**< subsystem id */
-    uint32_t    event_data:8;
-    uint32_t    event_severity:8;
-    uint32_t    event_type:8;       /**< error/event severity */
+    uint32_t    subsystem_id;     /**< subsystem id */
+    uint32_t    event_data;
+    uint32_t    event_severity;
+    uint32_t    event_type;       /**< error/event severity */
 #define RTAS_UH_TYPE_NA                   0x00
 #define RTAS_UH_TYPE_INFO_ONLY            0x01
 #define RTAS_UH_TYPE_DUMP_NOTIFICATION    0x08
@@ -105,19 +132,30 @@ struct rtas_usr_hdr_scn {
 #define RTAS_UH_TYPE_NORMAL_SHUTDOWN      0xD0
 #define RTAS_UH_TYPE_ABNORMAL_SHUTDOWN    0xE0
 
-    uint32_t    /* reserved */:32;
-    uint32_t    /* reserved */:16;
-
-    uint32_t    action:16;          /**< erro action code */
+    uint32_t    action;          /**< erro action code */
 #define RTAS_UH_ACTION_SERVICE           0x8000
 #define RTAS_UH_ACTION_HIDDEN            0x4000
 #define RTAS_UH_ACTION_REPORT_EXTERNALLY 0x2000
 #define RTAS_UH_ACTION_HMC_ONLY          0x1000
 #define RTAS_UH_ACTION_CALL_HOME         0x0800
 #define RTAS_UH_ACTION_ISO_INCOMPLETE    0x0400
+};
+
+struct rtas_usr_hdr_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+    
+    uint32_t    subsystem_id:8;
+    uint32_t    event_data:8;
+    uint32_t    event_severity:8;
+    uint32_t    event_type:8;
+
+    uint32_t    /* reserved */:32;
+
+    uint32_t    /* reserved */:16;
+    uint32_t	action:16;
 
     uint32_t    /* reserved */ :32;
-};
+}__attribute__((__packed__));
 
 #define RE_USR_HDR_SCN_SZ     24
 
@@ -142,21 +180,34 @@ struct rtas_dump_scn {
 #define RTAS_DUMP_SUBTYPE_PARTDUMP  0x06
 #define RTAS_DUMP_SUBTYPE_PLATDUMP  0x07
 
-    uint32_t    id:32;                  /**< dump id */
-    uint32_t    location:1;             /**< 0 => dump sent to HMC
+    uint32_t    id;                  /**< dump id */
+    uint32_t    location;            /**< 0 => dump sent to HMC
                                              1 => dump sent to partition */
-    uint32_t    fname_type:1;           /**< 0 => file name in ASCII
+    uint32_t    fname_type;          /**< 0 => file name in ASCII
                                              1 => file name in hex */
-    uint32_t    size_valid:1;           /**< dump size field valid */
+    uint32_t    size_valid;          /**< dump size field valid */
     
-    uint32_t    /* reserved */ :5;
-    uint32_t    /* reserved */ :16;
-    uint32_t    id_len:8;               /**< OS assigned dump id length */
+    uint32_t    id_len;              /**< OS assigned dump id length */
     
-    uint32_t    size_hi:32;             /**< dump size (hi-bits) */
-    uint32_t    size_lo:32;             /**< dump size (low bits) */
-    char        os_id[40];              /**< OS assigned dump id */
+    uint32_t    size_hi;             /**< dump size (hi-bits) */
+    uint32_t    size_lo;             /**< dump size (low bits) */
+    char        os_id[40];           /**< OS assigned dump id */
 };
+
+struct rtas_dump_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+
+    uint32_t    id;
+
+    uint32_t	data1:8;
+    
+    uint32_t    /* reserved */ :16;
+    uint32_t    id_len:8;
+
+    uint32_t    size_hi;
+    uint32_t    size_lo;
+    char        os_id[40];
+}__attribute__((__packed__));
 
 #define RE_V6_DUMP_SCN_SZ	64
 
@@ -169,28 +220,43 @@ struct rtas_lri_scn {
     struct scn_header shdr;
     struct rtas_v6_hdr v6hdr;
     
-    uint32_t    resource:8;             /**< resource type */
+    uint32_t    resource;             /**< resource type */
 #define RTAS_LRI_RES_PROC           0x10
 #define RTAS_LRI_RES_SHARED_PROC    0x11
 #define RTAS_LRI_RES_MEM_PAGE       0x40
 #define RTAS_LRI_RES_MEM_LMB        0x41
 
-    uint32_t    /* reserved */ :8;
-    uint32_t    capacity:16;            /**< entitled capacity */
+    uint32_t    capacity;            /**< entitled capacity */
     
     union {
-        uint32_t _lri_cpu_id:32;        /**< logical CPU id (type = proc) */
-	uint32_t _lri_drc_index:32;     /**< DRC index (type = mem LMB) */
-	uint32_t _lri_mem_addr_lo;      /**< mem logical addr low bits
+        uint32_t _lri_cpu_id;        /**< logical CPU id (type = proc) */
+	uint32_t _lri_drc_index;     /**< DRC index (type = mem LMB) */
+	uint32_t _lri_mem_addr_lo;   /**< mem logical addr low bits
                                              (type = mem page) */
     } _lri_u1;
 #define lri_cpu_id	_lri_u1._lri_cpu_id
 #define	lri_drc_index	_lri_u1._lri_drc_index
 #define lri_mem_addr_lo _lri_u1._lri_mem_addr_lo
 
-    uint32_t    lri_mem_addr_hi:32;     /**< mem logical addr high bits
+    uint32_t    lri_mem_addr_hi;     /**< mem logical addr high bits
                                              (type = mem page) */
 };
+
+struct rtas_lri_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+    
+    uint32_t	resource:8;
+    uint32_t	/* reserved */:8;
+    uint32_t	capacity:16;
+
+    union {
+        uint32_t _lri_cpu_id:32;
+        uint32_t _lri_drc_index:32;
+        uint32_t _lri_mem_addr_lo;
+    } _lri_u1;    
+    
+    uint32_t    lri_mem_addr_hi;
+}__attribute__((__packed__));
 
 #define RE_LRI_SCN_SZ   20
 
@@ -306,7 +372,7 @@ struct rtas_fru_scn {
  */
 struct rtas_src_scn {
     struct scn_header shdr;
-    struct rtas_v6_hdr v6hdr;
+    struct rtas_v6_hdr_raw v6hdr;
 
     uint32_t    version:8;          /**< SRC version */ 
     char        src_platform_data[7];   /**< platform specific data */
@@ -340,7 +406,7 @@ struct rtas_src_scn {
  */
 struct rtas_mt_scn {
     struct scn_header shdr;
-    struct rtas_v6_hdr v6hdr;
+    struct rtas_v6_hdr_raw v6hdr;
     struct rtas_mtms mtms;
 };
 
@@ -384,6 +450,21 @@ struct rtas_hotplug_scn {
         char        drc_name[1];
     } u1;
 };
+
+struct rtas_hotplug_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+
+    uint32_t    type:8;
+    uint32_t    action:8;
+    uint32_t    identifier:8;
+    uint32_t    /* reserved */:8;
+
+    union {
+        uint32_t    drc_index:32;
+        uint32_t    count:32;
+        char        drc_name[1];
+    } u1;
+}__attribute__((__packed__));
 
 #define RE_HOTPLUG_SCN_SZ	16
 

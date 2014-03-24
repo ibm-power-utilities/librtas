@@ -19,6 +19,10 @@
 void rtas_copy(void *, struct rtas_event *, uint32_t);
 
 /* parse routines */
+void parse_rtas_date(struct rtas_date *, struct rtas_date_raw *);
+void parse_rtas_time(struct rtas_time *, struct rtas_time_raw *);
+void parse_v6_hdr(struct rtas_v6_hdr *, struct rtas_v6_hdr_raw *);
+
 int parse_priv_hdr_scn(struct rtas_event *);
 int parse_usr_hdr_scn(struct rtas_event *);
 int parse_epow_scn(struct rtas_event *);
@@ -66,6 +70,6 @@ int print_raw_data(char *, int);
 int rtas_print(char *fmt, ...);
 struct scn_header * get_re_scn(struct rtas_event *, int);
 void add_re_scn(struct rtas_event *, void *, int);
-int re_scn_id(struct rtas_v6_hdr *);
+int re_scn_id(struct rtas_v6_hdr_raw *);
 
 #endif
