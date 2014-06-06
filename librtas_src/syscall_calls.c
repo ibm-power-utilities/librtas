@@ -15,6 +15,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <linux/unistd.h>
+#include <linux/types.h>
 #include "common.h"
 #include "syscall.h"
 #include "librtas.h"
@@ -398,7 +399,7 @@ int sc_display_msg(int token, char *buf)
 	strcpy(kernbuf, buf);
 
 	do {
-		rc = sc_rtas_call(token, 1, 1, kernbuf_pa, &status);
+		rc = sc_rtas_call(token, 1, 1, htobe32(kernbuf_pa), &status);
 		if (rc < 0)
 			break;
 
@@ -438,8 +439,8 @@ int sc_errinjct(int token, int etoken, int otoken, char *workarea)
 	memcpy(kernbuf, workarea, ERRINJCT_BUF_SIZE);
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, etoken, otoken, kernbuf_pa,
-				  &status);
+		rc = sc_rtas_call(token, 3, 1, htobe32(etoken), htobe32(otoken),
+				  htobe32(kernbuf_pa), &status);
 		if (rc < 0 )
 			break;
 
@@ -470,7 +471,7 @@ int sc_errinjct_close(int token, int otoken)
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 1, 1, otoken, &status);
+		rc = sc_rtas_call(token, 1, 1, htobe32(otoken), &status);
 		if (rc)
 			return rc;
 
@@ -492,16 +493,19 @@ int sc_errinjct_close(int token, int otoken)
 int sc_errinjct_open(int token, int *otoken)
 {
 	uint64_t elapsed = 0;
+	__be32 be_otoken;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 0, 2, otoken, &status);
+		rc = sc_rtas_call(token, 0, 2, &be_otoken, &status);
 		if (rc)
 			return rc;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*otoken = be32toh(be_otoken);
 
 	dbg1("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
 	return rc ? rc : status;
@@ -522,17 +526,22 @@ int sc_get_config_addr_info2(int token, uint32_t config_addr,
     uint64_t phb_id, uint32_t func, uint32_t *info)
 {
 	uint64_t elapsed = 0;
+	__be32 be_info;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 4, 2, config_addr,
-		        BITS32_HI(phb_id), BITS32_LO(phb_id), func, &status, info);
+		rc = sc_rtas_call(token, 4, 2, htobe32(config_addr),
+				  BITS32_HI(htobe64(phb_id)),
+				  BITS32_LO(htobe64(phb_id)),
+				  htobe32(func), &status, &be_info);
 		if (rc)
 			break;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*info = be32toh(be_info);
 
 	dbg1("(0x%x, 0x%llx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
 	     rc ? rc : status, *info);
@@ -555,6 +564,7 @@ int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
 	uint64_t elapsed = 0;
 	void *locbuf;
 	uint32_t size;
+	__be32 be_state;
 	int status;
 	int rc;
 
@@ -567,8 +577,8 @@ int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
 	memcpy(locbuf, loc_code, size);
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, sensor, loc_pa,
-				  &status, state);
+		rc = sc_rtas_call(token, 2, 2, htobe32(sensor), htobe32(loc_pa),
+				  &status, &be_state);
 		if (rc < 0)
 			break;
 
@@ -576,6 +586,8 @@ int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
 	} while (rc == CALL_AGAIN);
 
 	(void) sc_free_rmo_buffer(locbuf, loc_pa, size);
+
+	*state = be32toh(be_state);
 
 	dbg1("(%d, %s, %p) = %d, %d\n", sensor, (char *)loc_code, state,
 	     rc ? rc : status, *state);
@@ -601,6 +613,7 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 {
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
+	__be32 be_next;
 	void *kernbuf;
 	int status;
 	int rc;
@@ -610,8 +623,10 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 		return rc;
 
 	do {
-		rc = sc_rtas_call(token, 5, 2, is_sensor, type, kernbuf_pa,
-				  size, start, &status, next);
+		rc = sc_rtas_call(token, 5, 2, htobe32(is_sensor),
+				  htobe32(type), htobe32(kernbuf_pa),
+				  htobe32(size), htobe32(start),
+				  &status, &be_next);
 		if (rc < 0)
 			break;
 
@@ -622,6 +637,8 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 		memcpy(workarea, kernbuf, size);
 
 	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, size);
+
+	*next = be32toh(be_next);
 
 	dbg1("(%d, %d, %p, %d, %d, %p) = %d, %d\n", is_sensor, type, workarea,
 	     size, start, next, rc ? rc : status, *next);
@@ -640,16 +657,20 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 int sc_get_power_level(int token, int powerdomain, int *level)
 {
 	uint64_t elapsed = 0;
+	__be32 be_level;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 1, 2, powerdomain, &status, level);
+		rc = sc_rtas_call(token, 1, 2, htobe32(powerdomain),
+				  &status, &be_level);
 		if (rc)
 			return rc;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*level = be32toh(be_level);
 
 	dbg1("(%d, %p) = %d, %d\n", powerdomain, level, rc ? rc : status,
 	     *level);
@@ -669,7 +690,7 @@ int sc_get_power_level(int token, int powerdomain, int *level)
 int sc_get_sensor(int token, int sensor, int index, int *state)
 {
 	uint64_t elapsed = 0;
-	uint32_t be_state;
+	__be32 be_state;
 	int status;
 	int rc;
 
@@ -714,7 +735,8 @@ sc_get_sysparm(int token, unsigned int parameter, unsigned int length,
 		return rc;
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, parameter, kernbuf_pa, length,
+		rc = sc_rtas_call(token, 3, 1, htobe32(parameter),
+				  htobe32(kernbuf_pa), htobe32(length),
 				  &status);
 		if (rc < 0)
 			break;
@@ -761,6 +783,14 @@ int sc_get_time(int token, uint32_t *year, uint32_t *month, uint32_t *day,
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
 
+	*year = be32toh(*year);
+	*month = be32toh(*month);
+	*day = be32toh(*day);
+	*hour = be32toh(*hour);
+	*min = be32toh(*min);
+	*sec = be32toh(*sec);
+	*nsec = be32toh(*nsec);
+
 	dbg1("() = %d, %d, %d, %d, %d, %d, %d, %d\n", rc ? rc : status, *year,
 			*month, *day, *hour, *min, *sec, *nsec);
 	return rc ? rc : status;
@@ -803,11 +833,13 @@ int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size,
 	/* If user didn't set loc_code, copy a NULL string */
 	strncpy(locbuf, loc_code ? loc_code : "", PAGE_SIZE);
 	
-	*seq_next = sequence;
+	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = sc_rtas_call(token, 4, 3, loc_pa, kernbuf_pa, size, 
-				sequence, &status, seq_next, bytes_ret);
+		rc = sc_rtas_call(token, 4, 3, htobe32(loc_pa),
+				  htobe32(kernbuf_pa), htobe32(size),
+				  sequence, &status, seq_next,
+				  bytes_ret);
 		if (rc < 0)
 			break;
 		
@@ -819,6 +851,9 @@ int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size,
 
 	(void) sc_free_rmo_buffer(rmobuf, rmo_pa, size + PAGE_SIZE);
 	
+	*seq_next = be32toh(*seq_next);
+	*bytes_ret = be32toh(*bytes_ret);
+
 	dbg1("(%s, 0x%p, %d, %d) = %d, %d, %d", loc_code ? loc_code : "NULL",
 	    	workarea, size, sequence, status, *seq_next, *bytes_ret);
 	return rc ? rc : status;	
@@ -851,10 +886,11 @@ int sc_lpar_perftools(int token, int subfunc, char *workarea,
 
 	memcpy(kernbuf, workarea, PAGE_SIZE);
 
-	*seq_next = sequence;
+	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = sc_rtas_call(token, 5, 2, subfunc, 0, kernbuf_pa, length,
+		rc = sc_rtas_call(token, 5, 2, htobe32(subfunc), 0,
+				  htobe32(kernbuf_pa), htobe32(length),
 				  sequence, &status, seq_next);
 		if (rc < 0)
 			break;
@@ -866,6 +902,8 @@ int sc_lpar_perftools(int token, int subfunc, char *workarea,
 		memcpy(workarea, kernbuf, length);
 
 	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
+
+	*seq_next = be32toh(*seq_next);
 
 	dbg1("(%d, %p, %d, %d, %p) = %d, %d\n", subfunc, workarea,
 	     length, sequence, seq_next, rc ? rc : status, *seq_next);
@@ -902,12 +940,14 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 			return rc;
 	}
 
-	*seq_next = sequence;
+	*seq_next = htobe64(sequence);
 	do {
 		sequence = *seq_next;
-		rc = sc_rtas_call(token, 6, 5, BITS32_HI(dump_tag),
-				  BITS32_LO(dump_tag), BITS32_HI(sequence),
-				  BITS32_LO(sequence), kernbuf_pa, length,
+		rc = sc_rtas_call(token, 6, 5, BITS32_HI(htobe64(dump_tag)),
+				  BITS32_LO(htobe64(dump_tag)),
+				  BITS32_HI(sequence),
+				  BITS32_LO(sequence),
+				  htobe32(kernbuf_pa), htobe32(length),
 				  &status, &next_hi, &next_lo, &bytes_hi,
 				  &bytes_lo);
 		if (rc < 0)
@@ -925,7 +965,12 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	if (kernbuf)
 		(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	*bytes_ret = BITS64(bytes_hi, bytes_lo);
+	next_hi = be32toh(next_hi);
+	next_lo = be32toh(next_lo);
+	bytes_hi = be32toh(bytes_hi);
+	bytes_lo = be32toh(bytes_lo);
+
+	*bytes_ret = BITS64(be32toh(bytes_hi), be32toh(bytes_lo));
 
 	dbg1("(0x%llx, 0x%llx, %p, %d, %p, %p) = %d, 0x%llx, 0x%llx\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
@@ -953,13 +998,18 @@ sc_read_slot_reset(int token, uint32_t cfg_addr, uint64_t phbid, int *state,
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 3, 3, cfg_addr, BITS32_HI(phbid),
-				  BITS32_LO(phbid), &status, state, eeh);
+		rc = sc_rtas_call(token, 3, 3, htobe32(cfg_addr),
+				  BITS32_HI(htobe64(phbid)),
+				  BITS32_LO(htobe64(phbid)), &status,
+				  state, eeh);
 		if (rc)
 			return rc;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
+
+	*state = be32toh(*state);
+	*eeh = be32toh(*eeh);
 
 	dbg1("(0x%x, 0x%llx, %p, %p) = %d, %d, %d\n", cfg_addr, phbid, state,
 	     eeh, rc ? rc : status, *state, *eeh);
@@ -988,7 +1038,8 @@ int sc_scan_log_dump(int token, void *buffer, size_t length)
 
 	memcpy(kernbuf, buffer, length);
 	do {
-		rc = sc_rtas_call(token, 2, 1, kernbuf_pa, length, &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(kernbuf_pa),
+				  htobe32(length), &status);
 		if (rc < 0)
 			break;
 
@@ -1032,8 +1083,8 @@ int sc_set_dynamic_indicator(int token, int indicator, int new_value,
 	memcpy(locbuf, loc_code, size);
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, indicator, new_value,
-				  loc_pa, &status);
+		rc = sc_rtas_call(token, 3, 1, htobe32(indicator),
+				  htobe32(new_value), htobe32(loc_pa), &status);
 		if (rc < 0)
 			break;
 
@@ -1065,8 +1116,10 @@ sc_set_eeh_option(int token, uint32_t cfg_addr, uint64_t phbid, int function)
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 4, 1, cfg_addr, BITS32_HI(phbid),
-				  BITS32_LO(phbid), function, &status);
+		rc = sc_rtas_call(token, 4, 1, htobe32(cfg_addr),
+				  BITS32_HI(htobe64(phbid)),
+				  BITS32_LO(htobe64(phbid)),
+				  htobe32(function), &status);
 		if (rc)
 			return rc;
 
@@ -1095,8 +1148,7 @@ int sc_set_indicator(int token, int indicator, int index, int new_value)
 
 	do {
 		rc = sc_rtas_call(token, 3, 1, htobe32(indicator),
-				  htobe32(index),
-				  htobe32(new_value), &status);
+				  htobe32(index), htobe32(new_value), &status);
 		if (rc)
 			return rc;
 
@@ -1120,7 +1172,7 @@ int sc_set_indicator(int token, int indicator, int index, int new_value)
 int sc_set_power_level(int token, int powerdomain, int level, int *setlevel)
 {
 	uint64_t elapsed = 0;
-	uint32_t be_setlevel;
+	__be32 be_setlevel;
 	int status;
 	int rc;
 
@@ -1162,8 +1214,9 @@ sc_set_poweron_time(int token, uint32_t year, uint32_t month, uint32_t day,
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 7, 1, year, month, day, hour, min,
-				  sec, nsec, &status);
+		rc = sc_rtas_call(token, 7, 1, htobe32(year), htobe32(month),
+				  htobe32(day), htobe32(hour), htobe32(min),
+				  htobe32(sec), htobe32(nsec), &status);
 		if (rc)
 			return rc;
 
@@ -1200,7 +1253,8 @@ int sc_set_sysparm(int token, unsigned int parameter, char *data)
 	memcpy(kernbuf, data, size + sizeof(short));
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, parameter, kernbuf_pa, &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(parameter),
+				  htobe32(kernbuf_pa), &status);
 		if (rc < 0)
 			break;
 
@@ -1234,8 +1288,9 @@ int sc_set_time(int token, uint32_t year, uint32_t month, uint32_t day,
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 7, 1, year, month, day, hour, min, 
-				sec, nsec, &status);
+		rc = sc_rtas_call(token, 7, 1, htobe32(year), htobe32(month),
+				htobe32(day), htobe32(hour), htobe32(min),
+				htobe32(sec), htobe32(nsec), &status);
 		if (rc)
 			return rc;
 
@@ -1260,8 +1315,8 @@ int sc_suspend_me(int token, uint64_t streamid)
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, BITS32_HI(streamid), 
-				  BITS32_LO(streamid), &status);
+		rc = sc_rtas_call(token, 2, 1, BITS32_HI(htobe64(streamid)),
+				  BITS32_LO(htobe64(streamid)), &status);
 		if (rc)
 			return rc;
 
@@ -1299,7 +1354,8 @@ int sc_update_nodes(int token, char *workarea, unsigned int scope)
 	memcpy(kernbuf, workarea, 4096);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, workarea_pa, scope, &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+				  htobe32(scope), &status);
 		if (rc < 0)
 			break;
 
@@ -1342,7 +1398,8 @@ int sc_update_properties(int token, char *workarea, unsigned int scope)
 	memcpy(kernbuf, workarea, 4096);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, workarea_pa, scope, &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+				  htobe32(scope), &status);
 		if (rc < 0)
 			break;
 
