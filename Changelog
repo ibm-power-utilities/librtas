@@ -1,3 +1,38 @@
+Changelog for librtas-1.3.11
+=======================================
+commit 129fdb4875c8c679418b70c55df9b8b7fe8d6180
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Wed Jun 25 09:55:52 2014 -0500
+
+    README: documentation on handling endianness
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
+commit b13d14ff2dcbe54af61cab19d09be22edc9d74c0
+Author: Maran Pakkirisamy <maranp@linux.vnet.ibm.com>
+Date:   Fri Jun 6 14:04:27 2014 -0500
+
+    librtas: avoid bashism in rules.mk
+    
+    Ubuntu has made dash as its default shell (/bin/sh). This leads to build
+    being broken on ubuntu.
+    More information at: https://wiki.ubuntu.com/DashAsBinSh
+    This patch removes bashism and hence fixes the build breakage.
+    
+    Signed-off-by: Maran Pakkirisamy <maranp@linux.vnet.ibm.com>
+
+commit f9b806b19bbc4df56df6b5dbab1bf9060508b5d9
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Fri Jun 6 14:02:40 2014 -0500
+
+    librtas: Little endian support in syscalls
+    
+    This patch attempts to make rtas syscalls compatible for Little
+    Endian systems by ensuring rtas call parameters are Big Endian and
+    return values are host endian.
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
 Changelog for librtas-1.3.10
 =======================================
 commit e0c097d3e0ab65433d4fdc6e18a820c82d909464
