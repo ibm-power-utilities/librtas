@@ -38,4 +38,20 @@ su - root
 make install
 /sbin/ldconfig
 
+Endian Concerns:
+----------------
+RTAS expects integer values to be in a 32 bit, big endian format.  This
+requirement will be handled by librtas except when values are passed
+to or from RTAS via a buffer.  In this case, we expect the caller to handle
+the endianess of these values.  The librtas calls that employ this 
+method are listed below:
 
+rtas_cfg_connector
+rtas_errinjct
+rtas_get_indices
+rtas_get_sysparm
+rtas_get_vpd
+rtas_lpar_perftools
+rtas_set_sysparm
+rtas_update_nodes
+rtas_update_properties
