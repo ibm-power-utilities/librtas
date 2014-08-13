@@ -568,7 +568,7 @@ int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
 	int status;
 	int rc;
 
-	size = *(uint32_t *)loc_code + sizeof(uint32_t);
+	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
 	rc = sc_get_rmo_buffer(size, &locbuf, &loc_pa);
 	if (rc)
@@ -1071,7 +1071,7 @@ int sc_set_dynamic_indicator(int token, int indicator, int new_value,
 	int status;
 	int rc;
 
-	size = *(uint32_t *)loc_code + sizeof(uint32_t);
+	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
 	rc = sc_get_rmo_buffer(size, &locbuf, &loc_pa);
 	if (rc)
