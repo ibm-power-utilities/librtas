@@ -965,12 +965,9 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	if (kernbuf)
 		(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	next_hi = be32toh(next_hi);
-	next_lo = be32toh(next_lo);
-	bytes_hi = be32toh(bytes_hi);
-	bytes_lo = be32toh(bytes_lo);
-
-	*bytes_ret = BITS64(be32toh(bytes_hi), be32toh(bytes_lo));
+	*bytes_ret = BITS64(bytes_hi, bytes_lo);
+	*seq_next = be64toh(*seq_next);
+	*bytes_ret = be64toh(*bytes_ret);
 
 	dbg1("(0x%llx, 0x%llx, %p, %d, %p, %p) = %d, 0x%llx, 0x%llx\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
