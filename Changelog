@@ -1,3 +1,31 @@
+Changelog for librtas-1.3.12
+=======================================
+commit 1f045d8df135cfdc232a49f0992ab60913c0b043
+Author: Anshuman Khandual <khandual@linux.vnet.ibm.com>
+Date:   Wed Aug 13 13:04:29 2014 -0500
+
+    get_sensor, set_sensor: Handle big endian data in little endian
+    
+    This patch handles big endian location code length data in little endian
+    platform. This enables the tools to work on little endian platform after
+    having passed big endian buffer data.
+    
+    Signed-off-by: Anshuman Khandual <khandual@linux.vnet.ibm.com>
+    Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+
+commit 18f353d3477fb137e9773bcda0c1f60fb071d5b7
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Wed Aug 13 13:02:17 2014 -0500
+
+    librtas: fix for sc_platform_dump endian handling
+    
+    Some mistakes were made in adding little endian support for the
+    sc_platform_dump function. As the values being handled are 64-bit integers,
+    it makes much more sense to use the 64-bit byteswap function. The
+    endianness of seq_next also needs to be handled.
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
 Changelog for librtas-1.3.11
 =======================================
 commit 129fdb4875c8c679418b70c55df9b8b7fe8d6180
