@@ -930,6 +930,7 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	uint32_t kernbuf_pa = 0;
 	uint32_t next_hi, next_lo;
 	uint32_t bytes_hi, bytes_lo;
+	uint32_t dump_tag_hi, dump_tag_lo;
 	void *kernbuf;
 	int status;
 	int rc;
@@ -939,22 +940,29 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 		if (rc)
 			return rc;
 	}
+	/*
+	 * Converting a 64bit host value to 32bit BE, _hi and _lo
+	 * pair is tricky: we should convert the _hi and _lo 32bits
+	 * of the 64bit host value.
+	 */
+	dump_tag_hi = htobe32(BITS32_HI(dump_tag));
+	dump_tag_lo = htobe32(BITS32_LO(dump_tag));
 
-	*seq_next = htobe64(sequence);
+	next_hi = htobe32(BITS32_HI(sequence));
+	next_lo = htobe32(BITS32_LO(sequence));
+
 	do {
-		sequence = *seq_next;
-		rc = sc_rtas_call(token, 6, 5, BITS32_HI(htobe64(dump_tag)),
-				  BITS32_LO(htobe64(dump_tag)),
-				  BITS32_HI(sequence),
-				  BITS32_LO(sequence),
+		rc = sc_rtas_call(token, 6, 5, dump_tag_hi,
+				  dump_tag_lo,
+				  next_hi,
+				  next_lo,
 				  htobe32(kernbuf_pa), htobe32(length),
 				  &status, &next_hi, &next_lo, &bytes_hi,
 				  &bytes_lo);
 		if (rc < 0)
 			break;
-		
-		*seq_next = BITS64(next_hi, next_lo);
-		dbg1("%s: seq_next = 0x%llx\n", __FUNCTION__, *seq_next);
+		sequence = BITS64(be32toh(next_hi), be32toh(next_lo));
+		dbg1("%s: seq_next = 0x%llx\n", __FUNCTION__, sequence);
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
@@ -965,9 +973,10 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	if (kernbuf)
 		(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
+	*seq_next = sequence;
+	bytes_hi = be32toh(bytes_hi);
+	bytes_lo = be32toh(bytes_lo);
 	*bytes_ret = BITS64(bytes_hi, bytes_lo);
-	*seq_next = be64toh(*seq_next);
-	*bytes_ret = be64toh(*bytes_ret);
 
 	dbg1("(0x%llx, 0x%llx, %p, %d, %p, %p) = %d, 0x%llx, 0x%llx\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
