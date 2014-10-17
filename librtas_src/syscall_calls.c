@@ -532,8 +532,8 @@ int sc_get_config_addr_info2(int token, uint32_t config_addr,
 
 	do {
 		rc = sc_rtas_call(token, 4, 2, htobe32(config_addr),
-				  BITS32_HI(htobe64(phb_id)),
-				  BITS32_LO(htobe64(phb_id)),
+				  htobe32(BITS32_HI(phb_id)),
+				  htobe32(BITS32_LO(phb_id)),
 				  htobe32(func), &status, &be_info);
 		if (rc)
 			break;
@@ -1005,8 +1005,8 @@ sc_read_slot_reset(int token, uint32_t cfg_addr, uint64_t phbid, int *state,
 
 	do {
 		rc = sc_rtas_call(token, 3, 3, htobe32(cfg_addr),
-				  BITS32_HI(htobe64(phbid)),
-				  BITS32_LO(htobe64(phbid)), &status,
+				  htobe32(BITS32_HI(phbid)),
+				  htobe32(BITS32_LO(phbid)), &status,
 				  state, eeh);
 		if (rc)
 			return rc;
@@ -1123,8 +1123,8 @@ sc_set_eeh_option(int token, uint32_t cfg_addr, uint64_t phbid, int function)
 
 	do {
 		rc = sc_rtas_call(token, 4, 1, htobe32(cfg_addr),
-				  BITS32_HI(htobe64(phbid)),
-				  BITS32_LO(htobe64(phbid)),
+				  htobe32(BITS32_HI(phbid)),
+				  htobe32(BITS32_LO(phbid)),
 				  htobe32(function), &status);
 		if (rc)
 			return rc;
@@ -1321,8 +1321,8 @@ int sc_suspend_me(int token, uint64_t streamid)
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, BITS32_HI(htobe64(streamid)),
-				  BITS32_LO(htobe64(streamid)), &status);
+		rc = sc_rtas_call(token, 2, 1, htobe32(BITS32_HI(streamid)),
+				  htobe32(BITS32_LO(streamid)), &status);
 		if (rc)
 			return rc;
 

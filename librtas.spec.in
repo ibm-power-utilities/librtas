@@ -34,36 +34,36 @@ the contents of RTAS events.
 
 %files
 %defattr(-, root, root)
-/usr/share/doc/packages/%{name}/COPYRIGHT
-/usr/share/doc/packages/%{name}/README
-/usr/include/common.h
-/usr/include/librtas.h
-@LIB_DIR@/librtas.so.%{version}
-@LIB_DIR@/libofdt.so
-@LIB_DIR@/librtas.so
-@LIB_DIR@/librtasevent.so
-@LIB_DIR@/librtasevent.so.1
-@LIB_DIR@/librtasevent.so.%{version}
-/usr/include/librtasevent.h
-/usr/include/librtasevent_v4.h
-/usr/include/librtasevent_v6.h
+%{_docdir}/%{name}/COPYRIGHT
+%{_docdir}/%{name}/README
+%{_includedir}/common.h
+%{_includedir}/librtas.h
+%{_libdir}/librtas.so.%{version}
+%{_libdir}/libofdt.so
+%{_libdir}/librtas.so
+%{_libdir}/librtasevent.so
+%{_libdir}/librtasevent.so.1
+%{_libdir}/librtasevent.so.%{version}
+%{_includedir}/librtasevent.h
+%{_includedir}/librtasevent_v4.h
+%{_includedir}/librtasevent_v6.h
 
-@LIB_DIR@/libofdt.so.%{version}
-/usr/include/libofdt.h
+%{_libdir}/libofdt.so.%{version}
+%{_includedir}/libofdt.h
 
 %post
 # Post-install script -------------------------------------------------
-ln -sf @LIB_DIR@/librtas.so.%{version} @LIB_DIR@/librtas.so
-ln -sf @LIB_DIR@/librtas.so.%{version} @LIB_DIR@/librtas.so.1
-ln -sf @LIB_DIR@/librtasevent.so.%{version} @LIB_DIR@/librtasevent.so
-ln -sf @LIB_DIR@/libofdt.so.%{version} @LIB_DIR@/libofdt.so
+ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so
+ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so.1
+ln -sf %{_libdir}/librtasevent.so.%{version} %{_libdir}/librtasevent.so
+ln -sf %{_libdir}/libofdt.so.%{version} %{_libdir}/libofdt.so
 ldconfig
 
 %postun
 # Post-uninstall script -----------------------------------------------
 if [ "$1" = "0" ] ; then        # last uninstall
-    rm -f @LIB_DIR@/librtas.so
-    rm -f @LIB_DIR@/librtasevent.so
-    rm -f @LIB_DIR@/libofdt.so
+    rm -f %{_libdir}/librtas.so
+    rm -f %{_libdir}/librtasevent.so
+    rm -f %{_libdir}/libofdt.so
 fi
 ldconfig
