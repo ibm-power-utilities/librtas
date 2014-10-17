@@ -56,7 +56,7 @@ parse_fru_id_scn(struct rtas_event *re)
 
     memset(fru_id, 0, sizeof(*fru_id));
 
-    fru_id_raw = (struct rtas_fru_id_scn_raw *)re->buffer + re->offset;
+    fru_id_raw = (struct rtas_fru_id_scn_raw *)(re->buffer + re->offset);
     parse_fru_hdr(&fru_id->fruhdr, &fru_id_raw->fruhdr);
     re->offset += RE_FRU_HDR_SZ;
 
@@ -105,7 +105,7 @@ parse_fru_pe_scn(struct rtas_event *re)
     }
 
     memset(fru_pe, 0, sizeof(*fru_pe));
-    fru_pe_raw = (struct rtas_fru_pe_scn_raw *)re->buffer + re->offset;
+    fru_pe_raw = (struct rtas_fru_pe_scn_raw *)(re->buffer + re->offset);
     parse_fru_hdr(&fru_pe->fruhdr, &fru_pe_raw->fruhdr);
     re->offset += RE_FRU_HDR_SZ;
 
@@ -138,7 +138,7 @@ parse_fru_mr_scn(struct rtas_event *re)
     }
 
     memset(fru_mr, 0, sizeof(*fru_mr));
-    fru_mr_raw = (struct rtas_fru_mr_scn_raw *)re->buffer + re->offset;
+    fru_mr_raw = (struct rtas_fru_mr_scn_raw *)(re->buffer + re->offset);
     parse_fru_hdr(&fru_mr->fruhdr, &fru_mr_raw->fruhdr);
     re->offset += RE_FRU_HDR_SZ;
 
@@ -186,17 +186,23 @@ parse_src_scn(struct rtas_event *re)
     struct rtas_src_scn_raw *src_raw;
     struct rtas_fru_scn *fru, *last_fru;
     int total_len, srcsub_len;
-
     src = malloc(sizeof(*src));
     if (src == NULL) {
         errno = ENOMEM;
         return 1;
     }
+
+    src_raw = malloc(sizeof(*src_raw));
+    if (src_raw == NULL) {
+        errno = ENOMEM;
+        return 1;
+    }
            
     memset(src, 0, sizeof(*src));
+    memset(src_raw, 0, sizeof(*src_raw));
     src->shdr.raw_offset = re->offset;
 
-    src_raw = (struct rtas_src_scn_raw *)(re->buffer + re->offset);
+    rtas_copy(src_raw, re, RE_SRC_SCN_SZ);
     parse_v6_hdr(&src->v6hdr, &src_raw->v6hdr);
 
     src->version = src_raw->version;
@@ -216,16 +222,16 @@ parse_src_scn(struct rtas_event *re)
     memcpy(&src->primary_refcode, &src_raw->primary_refcode,
 	   sizeof(src->primary_refcode));
 
-    re->offset += RE_SRC_SCN_SZ;
     add_re_scn(re, src, re_scn_id(&src_raw->v6hdr));
 
     if (!src_subscns_included(src))
         return 0;
 
+    rtas_copy( (char *) src_raw + RE_SRC_SCN_SZ + 4, re, RE_SRC_SUBSCN_SZ);
+
     src->subscn_id = src_raw->subscn_id;
     src->subscn_platform_data = src_raw->subscn_platform_data;
     src->subscn_length = be16toh(src_raw->subscn_length);
-    re->offset += RE_SRC_SUBSCN_SZ;
 
     srcsub_len = src->subscn_length * 4; /*get number of bytes */
     total_len = RE_SRC_SUBSCN_SZ;
@@ -236,7 +242,6 @@ parse_src_scn(struct rtas_event *re)
 	uint32_t fru_len, fru_end;
 	struct rtas_fru_hdr *last_fruhdr = NULL;
 	struct rtas_fru_scn_raw *rawfru;
-	
         fru = malloc(sizeof(*fru));
         if (fru == NULL) {
             cleanup_rtas_event(re);
@@ -245,7 +250,7 @@ parse_src_scn(struct rtas_event *re)
         }
 
         memset(fru, 0, sizeof(*fru));
-        
+
 	rawfru = (struct rtas_fru_scn_raw *)(re->buffer + re->offset);
 	parse_fru_scn(re, fru, rawfru);
 

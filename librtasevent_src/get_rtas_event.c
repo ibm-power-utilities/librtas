@@ -336,12 +336,7 @@ parse_v6_rtas_event(struct rtas_event *re)
 
             case RTAS_PSRC_SCN:
             case RTAS_SSRC_SCN:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-		fprintf(stderr, "Parsing RTAS SRC Sections on little endian not supported\n");
-		rc = -1;
-#else
                 rc = parse_src_scn(re);
-#endif
                 break;
 
 	    case RTAS_HP_SCN:
