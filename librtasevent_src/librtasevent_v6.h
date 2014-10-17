@@ -267,9 +267,15 @@ struct rtas_lri_scn_raw {
 struct rtas_fru_hdr {
     struct rtas_fru_hdr *next;
     char        id[2];
+    uint32_t    length;
+    uint32_t    flags;
+};
+
+struct rtas_fru_hdr_raw {
+    char        id[2];
     uint32_t    length:8;
     uint32_t    flags:8;
-};
+}__attribute__((__packed__));
 
 #define RE_FRU_HDR_SZ           4
 #define RE_FRU_HDR_OFFSET(x)    ((char *)(x) + sizeof(struct rtas_fru_hdr *))
@@ -307,6 +313,16 @@ struct rtas_fru_id_scn {
     char serial_no[13];
 };
 
+struct rtas_fru_id_scn_raw {
+    struct rtas_fru_hdr_raw fruhdr;
+
+    /* The following fields may not be present */
+    char part_no[8];
+    char procedure_id[8];
+    char ccin[5];
+    char serial_no[13];
+}__attribute__((__packed__));
+
 /**
  * @struct rtas_fru_pe_scn
  * @brief contents of the FRU Power Enclosure Substructure
@@ -317,11 +333,22 @@ struct rtas_fru_pe_scn {
     char pce_name[32];
 };
 
+struct rtas_fru_pe_scn_raw {
+    struct rtas_fru_hdr_raw fruhdr;
+    struct rtas_mtms pce_mtms;
+    char pce_name[32];
+}__attribute__((__packed__));
+
 /**
  * @struct fru_mru
  * @brief FRU MR Description structs
  */
 struct fru_mru {
+    char        priority;
+    uint32_t    id;
+};
+
+struct fru_mru_raw {
     uint32_t    /* reserved */:24;
     char        priority;
     uint32_t    id;
@@ -339,18 +366,24 @@ struct rtas_fru_mr_scn {
     uint32_t    /* reserved */:32;
     struct fru_mru  mrus[15];
 };
+
+struct rtas_fru_mr_scn_raw {
+    struct rtas_fru_hdr_raw fruhdr;
+    uint32_t    /* reserved */:32;
+    struct fru_mru_raw  mrus[15];
+};
     
 /**
  * @struct rtas_v6_fru_scn
  * @brief RTAS version 6 FRU callout section
  */
 struct rtas_fru_scn {
-    uint32_t    length:8;               /**< call-out length */
-    uint32_t    type:4;                 /**< callout type */
-    uint32_t    fru_id_included:1;      /**< fru id subsection included */
-    uint32_t    fru_subscn_included:3;
+    uint32_t    length;               /**< call-out length */
+    uint32_t    type;                 /**< callout type */
+    uint32_t    fru_id_included;      /**< fru id subsection included */
+    uint32_t    fru_subscn_included;
 
-    char	priority;               /**< fru priority */
+    char	priority;             /**< fru priority */
 #define RTAS_FRU_PRIORITY_HIGH      'H'
 #define RTAS_FRU_PRIORITY_MEDIUM    'M'
 #define RTAS_FRU_PRIORITY_MEDIUM_A  'A'
@@ -358,10 +391,18 @@ struct rtas_fru_scn {
 #define RTAS_FRU_PRIORITY_MEDIUM_C  'C'
 #define RTAS_FRU_PRIORITY_LOW       'L'
 
-    uint32_t    loc_code_length:8;      /**< location field length */
-    char        loc_code[80];           /**< location code */
+    uint32_t    loc_code_length;      /**< location field length */
+    char        loc_code[80];         /**< location code */
     struct rtas_fru_scn *next;
     struct rtas_fru_hdr *subscns;
+};
+
+struct rtas_fru_scn_raw {
+    uint32_t    length:8;
+    uint32_t	data1:8;
+    char	priority;
+    uint32_t    loc_code_length:8;
+    char        loc_code[80];
 };
 
 #define RE_FRU_SCN_SZ       4
@@ -372,29 +413,52 @@ struct rtas_fru_scn {
  */
 struct rtas_src_scn {
     struct scn_header shdr;
-    struct rtas_v6_hdr_raw v6hdr;
+    struct rtas_v6_hdr v6hdr;
 
-    uint32_t    version:8;          /**< SRC version */ 
-    char        src_platform_data[7];   /**< platform specific data */
+    uint32_t    version;              /**< SRC version */ 
+    char        src_platform_data[7]; /**< platform specific data */
 #define src_subscns_included(src)    ((src)->src_platform_data[0] & 0x01)
 
-    uint32_t    ext_refcode2:32;    /**< extended reference code word 2 */
-    uint32_t    ext_refcode3:32;    /**< extended reference code word 3 */
-    uint32_t    ext_refcode4:32;    /**< extended reference code word 4 */
-    uint32_t    ext_refcode5:32;    /**< extended reference code word 5 */
+    uint32_t    ext_refcode2;         /**< extended reference code word 2 */
+    uint32_t    ext_refcode3;         /**< extended reference code word 3 */
+    uint32_t    ext_refcode4;         /**< extended reference code word 4 */
+    uint32_t    ext_refcode5;         /**< extended reference code word 5 */
 
-    uint32_t    ext_refcode6:32;    /**< extended reference code word 6 */
-    uint32_t    ext_refcode7:32;    /**< extended reference code word 7 */
-    uint32_t    ext_refcode8:32;    /**< extended reference code word 8 */
-    uint32_t    ext_refcode9:32;    /**< extended reference code word 9 */
+    uint32_t    ext_refcode6;         /**< extended reference code word 6 */
+    uint32_t    ext_refcode7;         /**< extended reference code word 7 */
+    uint32_t    ext_refcode8;         /**< extended reference code word 8 */
+    uint32_t    ext_refcode9;         /**< extended reference code word 9 */
 
-    char        primary_refcode[36];/**< primary reference code */
+    char        primary_refcode[36];  /**< primary reference code */
     
-    uint32_t    subscn_id:8;		    /**< sub-section id (0xC0) */
-    uint32_t    subscn_platform_data:8;    /**< platform specific data */
-    uint32_t    subscn_length:16;   /**< sub-section length */
+    uint32_t    subscn_id;	      /**< sub-section id (0xC0) */
+    uint32_t    subscn_platform_data; /**< platform specific data */
+    uint32_t    subscn_length;        /**< sub-section length */
 
     struct rtas_fru_scn *fru_scns;
+};
+
+struct rtas_src_scn_raw {
+    struct rtas_v6_hdr_raw v6hdr;
+
+    uint32_t    version:8;
+    char        src_platform_data[7];
+
+    uint32_t    ext_refcode2:32;
+    uint32_t    ext_refcode3:32;
+    uint32_t    ext_refcode4:32;
+    uint32_t    ext_refcode5:32;
+
+    uint32_t    ext_refcode6:32;
+    uint32_t    ext_refcode7:32;
+    uint32_t    ext_refcode8:32;
+    uint32_t    ext_refcode9:32;
+
+    char        primary_refcode[36];
+    
+    uint32_t    subscn_id:8;
+    uint32_t    subscn_platform_data:8;
+    uint32_t    subscn_length:16;
 };
 
 #define RE_SRC_SCN_SZ       80
