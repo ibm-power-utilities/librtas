@@ -493,19 +493,19 @@ int sc_errinjct_close(int token, int otoken)
 int sc_errinjct_open(int token, int *otoken)
 {
 	uint64_t elapsed = 0;
-	__be32 be_otoken;
+	__be32 be_status;
 	int status;
 	int rc;
 
 	do {
-		rc = sc_rtas_call(token, 0, 2, &be_otoken, &status);
+		rc = sc_rtas_call(token, 0, 2, otoken, &be_status);
 		if (rc)
 			return rc;
 
+		status = be32toh(be_status);
+
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
-
-	*otoken = be32toh(be_otoken);
 
 	dbg1("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
 	return rc ? rc : status;
