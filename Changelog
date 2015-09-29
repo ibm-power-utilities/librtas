@@ -1,3 +1,21 @@
+Changelog for librtas-1.3.14
+=======================================
+commit 4e46c718f42bf05e797c7fcfdd6cfc2a21fb4c91
+Author: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+Date:   Wed Jan 7 14:26:15 2015 -0500
+
+    PAPR requires that the status word is the first parameter in the return
+    buffer for rtas calls. Due to this requirement the librtas sc_rtas_call
+    function always performs a be32toh operation on the first parameter in the
+    return buffer. However, the ibm,open-errinjct rtas is special in that its
+    return buffer is switched. The "Open Token" is the first return parameter
+    while the "Status" word is second.
+    
+    This patch fixes this special case in the sc_errinjct_open function such
+    that the byteswapping of "status" and "otoken" are handled correctly.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+
 Changelog for librtas-1.3.13
 =======================================
 commit 1d54a4a346f9111e1326dfdec756fd78360add42
