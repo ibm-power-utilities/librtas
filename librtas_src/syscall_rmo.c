@@ -60,7 +60,7 @@ int open_proc_rtas_file(const char *name, int mode)
 	}
 
 	if (fd < 0)
-		dbg1("Failed to open %s\n", full_name);
+		dbg("Failed to open %s\n", full_name);
 
 	return fd;
 }
@@ -80,7 +80,7 @@ static int read_kregion_bounds(struct region *kregion)
 
 	fd = open_proc_rtas_file(rmo_filename, O_RDONLY);
 	if (fd < 0) {
-		dbg1("Could not open workarea file\n");
+		dbg("Could not open workarea file\n");
 		return RTAS_IO_ASSERT;
 	}
 
@@ -96,7 +96,7 @@ static int read_kregion_bounds(struct region *kregion)
 
 	if (!(kregion->size && kregion->addr) ||
 	    (kregion->size > (PAGE_SIZE * MAX_PAGES))) {
-		dbg1("Unexpected kregion bounds\n");
+		dbg("Unexpected kregion bounds\n");
 		return RTAS_IO_ASSERT;
 	}
 
@@ -155,7 +155,7 @@ static int acquire_file_lock(off_t start, size_t size)
 		wa_config.lockfile_fd = open(lockfile_path, O_CREAT | O_RDWR,
 					     S_IRUSR | S_IWUSR);
 		if (wa_config.lockfile_fd < 0) {
-			dbg1("could not open lockfile %s\n", lockfile_path);
+			dbg("could not open lockfile %s\n", lockfile_path);
 			return RTAS_IO_ASSERT;
 		}
 	}
@@ -169,7 +169,7 @@ static int acquire_file_lock(off_t start, size_t size)
 	rc = fcntl(wa_config.lockfile_fd, F_SETLKW, &flock);
 	if (rc < 0) {
 		/* Expected to fail for regions used by other processes */
-		dbg1("fcntl failed for [0x%lx, 0x%x]\n", start, size);
+		dbg("fcntl failed for [0x%lx, 0x%x]\n", start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -196,7 +196,7 @@ static int release_file_lock(off_t start, size_t size)
 
 	rc = fcntl(wa_config.lockfile_fd, F_SETLK, &flock);
 	if (rc < 0) {
-		dbg1("fcntl failed for [0x%lx, 0x%x]\n", start, size);
+		dbg("fcntl failed for [0x%lx, 0x%x]\n", start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -219,7 +219,7 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 	int i;
 
 	if (size > kregion->size) {
-		dbg1("Invalid buffer size 0x%x requested\n", size);
+		dbg("Invalid buffer size 0x%x requested\n", size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -242,7 +242,7 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 	}
 
 	if (!addr) {
-		dbg1("Could not find available workarea space\n");
+		dbg("Could not find available workarea space\n");
 		return RTAS_IO_ASSERT;
 	}
 
@@ -266,7 +266,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	int rc;
 
 	if (size > kregion->size) {
-		dbg1("Invalid buffer size 0x%x requested\n", size);
+		dbg("Invalid buffer size 0x%x requested\n", size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -276,7 +276,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	bits =
 	    get_bits(first_page, first_page + n_pages - 1, wa_config.pages_map);
 	if (bits != ((1 << n_pages) - 1)) {
-		dbg1("Invalid region [0x%x, 0x%x]\n", phys_addr, size);
+		dbg("Invalid region [0x%x, 0x%x]\n", phys_addr, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -321,7 +321,7 @@ static int mmap_dev_mem(uint32_t phys_addr, size_t size, void **buf)
 
 	fd = open(devmem_path, O_RDWR);
 	if (fd < 0) {
-		dbg1("Failed to open %s\n", devmem_path);
+		dbg("Failed to open %s\n", devmem_path);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -330,7 +330,7 @@ static int mmap_dev_mem(uint32_t phys_addr, size_t size, void **buf)
 	close(fd);
 
 	if (newbuf == MAP_FAILED) {
-		dbg1("mmap failed\n");
+		dbg("mmap failed\n");
 		return RTAS_IO_ASSERT;
 	}
 
@@ -352,14 +352,14 @@ static int munmap_dev_mem(void *buf, size_t size)
 
 	fd = open(devmem_path, O_RDWR);
 	if (fd < 0) {
-		dbg1("Failed to open %s\n", devmem_path);
+		dbg("Failed to open %s\n", devmem_path);
 		return RTAS_IO_ASSERT;
 	}
 
 	rc = munmap(buf, size);
 	close(fd);
 	if (rc < 0) {
-		dbg1("munmap failed\n");
+		dbg("munmap failed\n");
 		return RTAS_IO_ASSERT;
 	}
 
@@ -411,7 +411,7 @@ int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 	}
 
 	if (!wa_config.init_done) {
-		dbg1("Attempting to free before calling get()\n");
+		dbg("Attempting to free before calling get()\n");
 		return RTAS_FREE_ERR;
 	}
 
@@ -447,7 +447,7 @@ int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 	int n_pages;
 	int rc;
 
-	dbg1("RMO buffer request, size: %d\n", size);
+	dbg("RMO buffer request, size: %d\n", size);
 
 	n_pages = size / PAGE_SIZE;
 

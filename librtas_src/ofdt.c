@@ -14,6 +14,7 @@
 #include <endian.h>
 #include <byteswap.h>
 #include "librtas.h"
+#include "syscall.h"
 
 static const char *ofdt_rtas_path = "/proc/device-tree/rtas";
 
@@ -137,7 +138,7 @@ int read_entire_file(int fd, char **buf, size_t * len)
 
 		rc = read(fd, *buf + off, BLOCK_SIZE);
 		if (rc < 0) {
-			dbg1("read failed\n");
+			dbg("read failed\n");
 			errno = EIO;
 			return -1;
 		}

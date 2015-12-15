@@ -71,7 +71,7 @@ static unsigned int handle_delay(int status, uint64_t * elapsed)
 	}
 	*elapsed += ms;
 
-	dbg1("Return status %d, delaying for %ld ms\n", status, ms);
+	dbg("Return status %d, delaying for %ld ms\n", status, ms);
 	usleep(ms * 1000);
 	return 1;
 }
@@ -157,7 +157,7 @@ static int _rtas_call(int delay_handling, int token, int ninputs,
 	} while (rc == CALL_AGAIN);
 
 	if (rc != 0) {
-		dbg1("RTAS syscall failure, errno=%d\n", errno);
+		dbg("RTAS syscall failure, errno=%d\n", errno);
 		return RTAS_IO_ASSERT;
 	}
 	display_rtas_buf(&args, 1);
@@ -219,7 +219,7 @@ int rtas_activate_firmware()
 
 	rc = rtas_call("ibm,activate-firmware", 0, 1, &status);
 
-	dbg1("() = %d\n", rc ? rc : status);
+	dbg("() = %d\n", rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -274,7 +274,7 @@ int rtas_cfg_connector(char *workarea)
 	if (extent_pa)
 		(void)rtas_free_rmo_buffer(extent, extent_pa, PAGE_SIZE);
 
-	dbg1("(%p) = %d\n", workarea, rc ? rc : status);
+	dbg("(%p) = %d\n", workarea, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -307,7 +307,7 @@ int rtas_display_char(char c)
 
 	rc = rtas_call("display-character", 1, 1, c, &status);
 
-	dbg1("(%d) = %d\n", c, rc ? rc : status);
+	dbg("(%d) = %d\n", c, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -338,7 +338,7 @@ int rtas_display_msg(char *buf)
 		       &status);
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, str_len);
 
-	dbg1("(%p) = %d\n", buf, rc ? rc : status);
+	dbg("(%p) = %d\n", buf, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -374,7 +374,7 @@ int rtas_errinjct(int etoken, int otoken, char *workarea)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, ERRINJCT_BUF_SIZE);
 
-	dbg1("(%d, %d, %p) = %d\n", etoken, otoken, workarea, rc ? rc : status);
+	dbg("(%d, %d, %p) = %d\n", etoken, otoken, workarea, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -392,7 +392,7 @@ int rtas_errinjct_close(int otoken)
 
 	rc = rtas_call("ibm,close-errinjct", 1, 1, htobe32(otoken), &status);
 
-	dbg1("(%d) = %d\n", otoken, rc ? rc : status);
+	dbg("(%d) = %d\n", otoken, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -415,7 +415,7 @@ int rtas_errinjct_open(int *otoken)
 	rc = rtas_call("ibm,open-errinjct", 0, 2, &be_otoken, &status);
 	*otoken = be32toh(be_otoken);
 
-	dbg1("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
+	dbg("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
 	return rc ? rc : status;
 }
 
@@ -485,8 +485,8 @@ int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 
 	*state = be32toh(be_state);
 
-	dbg1("(%d, %s, %p) = %d, %d\n", sensor, (char *)loc_code, state,
-	     rc ? rc : status, *state);
+	dbg("(%d, %s, %p) = %d, %d\n", sensor, (char *)loc_code, state,
+	    rc ? rc : status, *state);
 	return rc ? rc : status;
 }
 
@@ -554,8 +554,8 @@ int rtas_get_power_level(int powerdomain, int *level)
 
 	*level = be32toh(be_level);
 
-	dbg1("(%d, %p) = %d, %d\n", powerdomain, level, rc ? rc : status,
-	     *level);
+	dbg("(%d, %p) = %d, %d\n", powerdomain, level, rc ? rc : status,
+	    *level);
 	return rc ? rc : status;
 }
 
@@ -582,8 +582,8 @@ int rtas_get_sensor(int sensor, int index, int *state)
 
 	*state = be32toh(be_state);
 
-	dbg1("(%d, %d, %p) = %d, %d\n", sensor, index, state, rc ? rc : status,
-	     *state);
+	dbg("(%d, %d, %p) = %d, %d\n", sensor, index, state, rc ? rc : status,
+	    *state);
 	return rc ? rc : status;
 }
 
@@ -620,7 +620,7 @@ rtas_get_sysparm(unsigned int parameter, unsigned int length,
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	dbg1("(%d, %d, %p) = %d\n", parameter, length, data, rc ? rc : status);
+	dbg("(%d, %d, %p) = %d\n", parameter, length, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -657,8 +657,8 @@ int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
 	*sec = be32toh(*sec);
 	*nsec = be32toh(*nsec);
 
-	dbg1("() = %d, %d, %d, %d, %d, %d, %d, %d\n", rc ? rc : status, *year,
-			*month, *day, *hour, *min, *sec, *nsec);
+	dbg("() = %d, %d, %d, %d, %d, %d, %d, %d\n", rc ? rc : status, *year,
+	    *month, *day, *hour, *min, *sec, *nsec);
 	return rc ? rc : status;
 }
 
@@ -772,8 +772,8 @@ int rtas_lpar_perftools(int subfunc, char *workarea,
 
 	*seq_next = be32toh(*seq_next);
 
-	dbg1("(%d, %p, %d, %d, %p) = %d, %d\n", subfunc, workarea,
-	     length, sequence, seq_next, rc ? rc : status, *seq_next);
+	dbg("(%d, %p, %d, %d, %p) = %d, %d\n", subfunc, workarea,
+	    length, sequence, seq_next, rc ? rc : status, *seq_next);
 	return rc ? rc : status;
 }
 /**
@@ -952,8 +952,8 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 
 	(void) rtas_free_rmo_buffer(locbuf, loc_pa, size);
 
-	dbg1("(%d, %d, %s) = %d\n", indicator, new_value, (char *)loc_code,
-	     rc ? rc : status);
+	dbg("(%d, %d, %s) = %d\n", indicator, new_value, (char *)loc_code,
+	    rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -997,8 +997,8 @@ int rtas_set_indicator(int indicator, int index, int new_value)
 	rc = rtas_call("set-indicator", 3, 1, htobe32(indicator),
 		       htobe32(index), htobe32(new_value), &status);
 
-	dbg1("(%d, %d, %d) = %d\n", indicator, index, new_value,
-	     rc ? rc : status);
+	dbg("(%d, %d, %d) = %d\n", indicator, index, new_value,
+	    rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1022,8 +1022,8 @@ int rtas_set_power_level(int powerdomain, int level, int *setlevel)
 
 	*setlevel = be32toh(be_setlevel);
 
-	dbg1("(%d, %d, %p) = %d, %d\n", powerdomain, level, setlevel,
-	     rc ? rc : status, *setlevel);
+	dbg("(%d, %d, %p) = %d, %d\n", powerdomain, level, setlevel,
+	    rc ? rc : status, *setlevel);
 	return rc ? rc : status;
 }
 
@@ -1051,8 +1051,8 @@ rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 		       htobe32(month), htobe32(day), htobe32(hour),
 		       htobe32(min), htobe32(sec), htobe32(nsec), &status);
 
-	dbg1("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
-	     min, sec, nsec, rc ? rc : status);
+	dbg("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
+	    min, sec, nsec, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1084,7 +1084,7 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
 
-	dbg1("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
+	dbg("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1111,8 +1111,8 @@ int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
 		       htobe32(day), htobe32(hour), htobe32(min),
 		       htobe32(sec), htobe32(nsec), &status);
 
-	dbg1("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
-			min, sec, nsec, rc ? rc : status);
+	dbg("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
+	    min, sec, nsec, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1129,7 +1129,7 @@ int rtas_suspend_me(uint64_t streamid)
 	rc = rtas_call("ibm,suspend-me", 2, 1, htobe32(BITS32_HI(streamid)),
 		       htobe32(BITS32_LO(streamid)), &status);
 
-	dbg1("() = %d\n", rc ? rc : status);
+	dbg("() = %d\n", rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1165,7 +1165,7 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
 
 	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
 
-	dbg1("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
+	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1201,6 +1201,6 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 
 	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
 
-	dbg1("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
+	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }

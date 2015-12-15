@@ -108,17 +108,6 @@ extern int read_entire_file(int fd, char **buf, size_t *len);
 
 extern struct librtas_config config;
 
-#define dbg(_lvl, _fmt, _args...) 					\
-	do {								\
-		if (config.debug >= _lvl) 				\
-			printf("librtas %s(): " _fmt, __FUNCTION__, ##_args); \
-	} while (0)
-
-#define dbg1(_fmt, _args...)						\
-	do {								\
-		dbg(1, _fmt, ##_args);					\
-	} while (0)							\
-
 #define SANITY_CHECKS()                                         \
         /* Check credentials */                                 \
         if (geteuid() != (uid_t) 0)                             \
