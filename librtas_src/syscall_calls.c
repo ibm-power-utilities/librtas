@@ -124,33 +124,37 @@ static void display_rtas_buf(struct rtas_args *args, int after)
  * @param nret number of return variables
  * @return 0 on success, !0 otherwise
  */
-static int rtas_call(int token, int ninputs, int nret, ...)
+static int _rtas_call(int delay_handling, int token, int ninputs,
+		      int nrets, va_list *ap)
 {
 	struct rtas_args args;
 	rtas_arg_t *rets[MAX_ARGS];
-	va_list ap;
-	int rc;
-	int i;
+	uint64_t elapsed = 0;
+	int i, rc;
 
 	args.token = htobe32(token);
 	args.ninputs = htobe32(ninputs);
-	args.nret = htobe32(nret);
+	args.nret = htobe32(nrets);
 
-	va_start(ap, nret);
 	for (i = 0; i < ninputs; i++)
-		args.args[i] = (rtas_arg_t) va_arg(ap, unsigned long);
+		args.args[i] = (rtas_arg_t) va_arg(*ap, unsigned long);
 
-	for (i = 0; i < nret; i++)
-		rets[i] = (rtas_arg_t *) va_arg(ap, unsigned long);
-	va_end(ap);
+	for (i = 0; i < nrets; i++)
+		rets[i] = (rtas_arg_t *) va_arg(*ap, unsigned long);
 
 	display_rtas_buf(&args, 0);
 
+	do {
 #ifdef _syscall1
-	rc = rtas(&args);
+		rc = rtas(&args);
 #else
-	rc = syscall(__NR_rtas, &args);
+		rc = syscall(__NR_rtas, &args);
 #endif
+		if (!delay_handling || (rc < 0))
+			break;
+
+		rc = handle_delay(be32toh(args.args[ninputs]), &elapsed);
+	} while (rc == CALL_AGAIN);
 
 	if (rc != 0) {
 		dbg1("RTAS syscall failure, errno=%d\n", errno);
@@ -159,15 +163,47 @@ static int rtas_call(int token, int ninputs, int nret, ...)
 	display_rtas_buf(&args, 1);
 
 	/* Assign rets */
-	if (nret) {
+	if (nrets) {
 		/* All RTAS calls return a status in rets[0] */
 		*(rets[0]) = be32toh(args.args[ninputs]);
 
-		for (i = 1; i < nret; i++)
+		for (i = 1; i < nrets; i++)
 			*(rets[i]) = args.args[ninputs + i];
 	}
 
 	return 0;
+}
+
+static int rtas_call_no_delay(const char *name, int ninputs, int nrets, ...)
+{
+	va_list ap;
+	int rc, token;
+
+	token = rtas_token(name);
+	if (token < 0)
+		return token;
+
+	va_start(ap, nrets);
+	rc = _rtas_call(0, token, ninputs, nrets, &ap);
+	va_end(ap);
+
+	return rc;
+}
+
+static int rtas_call(const char *name, int ninputs, int nrets, ...)
+{
+	va_list ap;
+	int rc, token;
+
+	token = rtas_token(name);
+	if (token < 0)
+		return token;
+
+	va_start(ap, nrets);
+	rc = _rtas_call(1, token, ninputs, nrets, &ap);
+	va_end(ap);
+
+	return rc;
 }
 
 /**
@@ -179,21 +215,9 @@ static int rtas_call(int token, int ninputs, int nret, ...)
 int rtas_activate_firmware()
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,activate-firmware");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 0, 1, &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,activate-firmware", 0, 1, &status);
 
 	dbg1("() = %d\n", rc ? rc : status);
 	return rc ? rc : status;
@@ -217,12 +241,7 @@ int rtas_cfg_connector(char *workarea)
 	uint64_t elapsed = 0;
 	void *kernbuf;
 	void *extent;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,configure-connector");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(PAGE_SIZE, &kernbuf, &workarea_pa);
 	if (rc)
@@ -231,8 +250,9 @@ int rtas_cfg_connector(char *workarea)
 	memcpy(kernbuf, workarea, PAGE_SIZE);
 
 	do {
-		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
-				  htobe32(extent_pa), &status);
+		rc = rtas_call_no_delay("ibm,configure-connector", 2, 1,
+					htobe32(workarea_pa),
+					htobe32(extent_pa), &status);
 		if (rc < 0)
 			break;
 
@@ -283,21 +303,9 @@ int rtas_delay_timeout(uint64_t timeout_ms)
 int rtas_display_char(char c)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("display-character");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 1, 1, c, &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("display-character", 1, 1, c, &status);
 
 	dbg1("(%d) = %d\n", c, rc ? rc : status);
 	return rc ? rc : status;
@@ -313,16 +321,10 @@ int rtas_display_char(char c)
 int rtas_display_msg(char *buf)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int str_len;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,display-message");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	str_len = strlen(buf);
 
@@ -332,14 +334,8 @@ int rtas_display_msg(char *buf)
 
 	strcpy(kernbuf, buf);
 
-	do {
-		rc = rtas_call(token, 1, 1, htobe32(kernbuf_pa), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while ((rc == CALL_AGAIN));
-
+	rc = rtas_call("ibm,display-message", 1, 1, htobe32(kernbuf_pa),
+		       &status);
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, str_len);
 
 	dbg1("(%p) = %d\n", buf, rc ? rc : status);
@@ -360,15 +356,9 @@ int rtas_display_msg(char *buf)
 int rtas_errinjct(int etoken, int otoken, char *workarea)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
-	int status=0;
-	int rc;
-	int token = rtas_token("ibm,errinjct");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(ERRINJCT_BUF_SIZE, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -376,14 +366,8 @@ int rtas_errinjct(int etoken, int otoken, char *workarea)
 
 	memcpy(kernbuf, workarea, ERRINJCT_BUF_SIZE);
 
-	do {
-		rc = rtas_call(token, 3, 1, htobe32(etoken), htobe32(otoken),
-				  htobe32(kernbuf_pa), &status);
-		if (rc < 0 )
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,errinjct", 3, 1, htobe32(etoken), htobe32(otoken),
+		       htobe32(kernbuf_pa), &status);
 
 	if (rc == 0)
 		memcpy(workarea, kernbuf, ERRINJCT_BUF_SIZE);
@@ -404,21 +388,9 @@ int rtas_errinjct(int etoken, int otoken, char *workarea)
 int rtas_errinjct_close(int otoken)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,close-errinjct");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 1, 1, htobe32(otoken), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,close-errinjct", 1, 1, htobe32(otoken), &status);
 
 	dbg1("(%d) = %d\n", otoken, rc ? rc : status);
 	return rc ? rc : status;
@@ -437,24 +409,11 @@ int rtas_errinjct_close(int otoken)
 int rtas_errinjct_open(int *otoken)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	__be32 be_status;
-	int token, status;
-	int rc;
+	__be32 be_otoken;
+	int rc, status;
 
-	token = rtas_token("ibm,open-errinjct");
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 0, 2, otoken, &be_status);
-		if (rc)
-			return rc;
-
-		status = be32toh(be_status);
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,open-errinjct", 0, 2, &be_otoken, &status);
+	*otoken = be32toh(be_otoken);
 
 	dbg1("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
 	return rc ? rc : status;
@@ -476,25 +435,12 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 			       uint32_t func, uint32_t *info)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	__be32 be_info;
-	int token, status;
-	int rc;
+	int rc, status;
 
-	token = rtas_token("ibm,get-config-addr-info2");
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 4, 2, htobe32(config_addr),
-			       htobe32(BITS32_HI(phb_id)),
-			       htobe32(BITS32_LO(phb_id)),
-			       htobe32(func), &status, &be_info);
-		if (rc)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,get-config-addr-info2", 4, 2, htobe32(config_addr),
+		       htobe32(BITS32_HI(phb_id)), htobe32(BITS32_LO(phb_id)),
+		       htobe32(func), &status, &be_info);
 
 	*info = be32toh(be_info);
 
@@ -519,16 +465,10 @@ int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 {
 	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
-	uint64_t elapsed = 0;
 	void *locbuf;
 	uint32_t size;
 	__be32 be_state;
-	int token, status;
-	int rc;
-
-	token = rtas_token("ibm,get-dynamic-sensor-state");
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
@@ -538,14 +478,8 @@ int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 
 	memcpy(locbuf, loc_code, size);
 
-	do {
-		rc = rtas_call(token, 2, 2, htobe32(sensor), htobe32(loc_pa),
-			       &status, &be_state);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,get-dynamic-sensor-state", 2, 2,
+		       htobe32(sensor), htobe32(loc_pa), &status, &be_state);
 
 	(void) rtas_free_rmo_buffer(locbuf, loc_pa, size);
 
@@ -573,31 +507,18 @@ rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	       int start, int *next)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	__be32 be_next;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,get-indices");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
-	do {
-		rc = rtas_call(token, 5, 2, htobe32(is_sensor),
-				  htobe32(type), htobe32(kernbuf_pa),
-				  htobe32(size), htobe32(start),
-				  &status, &be_next);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,get-indices", 5, 2, htobe32(is_sensor),
+		       htobe32(type), htobe32(kernbuf_pa), htobe32(size),
+		       htobe32(start), &status, &be_next);
 
 	if (rc == 0)
 		memcpy(workarea, kernbuf, size);
@@ -625,23 +546,11 @@ rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 int rtas_get_power_level(int powerdomain, int *level)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	__be32 be_level;
-	int status;
-	int rc;
-	int token = rtas_token("get-power-level");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 1, 2, htobe32(powerdomain),
-				  &status, &be_level);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("get-power-level", 1, 2, htobe32(powerdomain),
+		       &status, &be_level);
 
 	*level = be32toh(be_level);
 
@@ -665,23 +574,11 @@ int rtas_get_power_level(int powerdomain, int *level)
 int rtas_get_sensor(int sensor, int index, int *state)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	__be32 be_state;
-	int status;
-	int rc;
-	int token = rtas_token("get-sensor-state");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 2, 2, htobe32(sensor),
-				  htobe32(index), &status, &be_state);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("get-sensor-state", 2, 2, htobe32(sensor),
+		       htobe32(index), &status, &be_state);
 
 	*state = be32toh(be_state);
 
@@ -707,29 +604,16 @@ rtas_get_sysparm(unsigned int parameter, unsigned int length,
 	       char *data)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,get-system-parameter");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
-	do {
-		rc = rtas_call(token, 3, 1, htobe32(parameter),
-				  htobe32(kernbuf_pa), htobe32(length),
-				  &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,get-system-parameter", 3, 1, htobe32(parameter),
+		       htobe32(kernbuf_pa), htobe32(length), &status);
 
 	if (rc == 0)
 		memcpy(data, kernbuf, length);
@@ -760,22 +644,10 @@ int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
 		uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("get-time-of-day");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 0, 8, &status, year, month, day, hour,
-				  min, sec, nsec);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("get-time-of-day", 0, 8, &status, year, month, day,
+		       hour, min, sec, nsec);
 
 	*year = be32toh(*year);
 	*month = be32toh(*month);
@@ -814,12 +686,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	void *kernbuf;
 	void *rmobuf;
 	void *locbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,get-vpd");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
 	if (rc)
@@ -835,7 +702,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = rtas_call(token, 4, 3, htobe32(loc_pa),
+		rc = rtas_call_no_delay("ibm,get-vpd", 4, 3, htobe32(loc_pa),
 				  htobe32(kernbuf_pa), htobe32(size),
 				  sequence, &status, seq_next,
 				  bytes_ret);
@@ -877,12 +744,7 @@ int rtas_lpar_perftools(int subfunc, char *workarea,
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,lpar-perftools");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -893,9 +755,10 @@ int rtas_lpar_perftools(int subfunc, char *workarea,
 	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = rtas_call(token, 5, 2, htobe32(subfunc), 0,
-				  htobe32(kernbuf_pa), htobe32(length),
-				  sequence, &status, seq_next);
+		rc = rtas_call_no_delay("ibm,lpar-perftools", 5, 2,
+					htobe32(subfunc), 0,
+					htobe32(kernbuf_pa), htobe32(length),
+					sequence, &status, seq_next);
 		if (rc < 0)
 			break;
 
@@ -936,12 +799,7 @@ rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	uint32_t bytes_hi, bytes_lo;
 	uint32_t dump_tag_hi, dump_tag_lo;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,platform-dump");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	if (buffer) {
 		rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
@@ -960,10 +818,11 @@ rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	next_lo = htobe32(BITS32_LO(sequence));
 
 	do {
-		rc = rtas_call(token, 6, 5, dump_tag_hi, dump_tag_lo,
-			       next_hi, next_lo, htobe32(kernbuf_pa),
-			       htobe32(length), &status, &next_hi, &next_lo,
-			       &bytes_hi, &bytes_lo);
+		rc = rtas_call_no_delay("ibm,platform-dump", 6, 5, dump_tag_hi,
+					dump_tag_lo, next_hi, next_lo,
+					htobe32(kernbuf_pa), htobe32(length),
+					&status, &next_hi, &next_lo,
+					&bytes_hi, &bytes_lo);
 		if (rc < 0)
 			break;
 
@@ -1004,24 +863,11 @@ int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
 			 int *eeh)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int token, status;
-	int rc;
+	int rc, status;
 
-	token = rtas_token("ibm,read-slot-reset-state");
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 3, 3, htobe32(cfg_addr),
-			       htobe32(BITS32_HI(phbid)),
-			       htobe32(BITS32_LO(phbid)), &status,
-			       state, eeh);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,read-slot-reset-state", 3, 3, htobe32(cfg_addr),
+		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
+		       &status, state, eeh);
 
 	*state = be32toh(*state);
 	*eeh = be32toh(*eeh);
@@ -1042,29 +888,17 @@ int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
 int rtas_scan_log_dump(void *buffer, size_t length)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,scan-log-dump");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, buffer, length);
-	do {
-		rc = rtas_call(token, 2, 1, htobe32(kernbuf_pa),
-				  htobe32(length), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,scan-log-dump", 2, 1, htobe32(kernbuf_pa),
+		       htobe32(length), &status);
 
 	if (rc == 0)
 		memcpy(buffer, kernbuf, length);
@@ -1101,15 +935,9 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 {
 	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
-	uint64_t elapsed = 0;
 	void *locbuf;
 	uint32_t size;
-	int token, status;
-	int rc;
-
-	token = rtas_token("ibm,set-dynamic-indicator");
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
@@ -1119,15 +947,8 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 
 	memcpy(locbuf, loc_code, size);
 
-	do {
-		rc = rtas_call(token, 3, 1, htobe32(indicator),
-			       htobe32(new_value), htobe32(loc_pa), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
-
+	rc = rtas_call("ibm,set-dynamic-indicator", 3, 1, htobe32(indicator),
+		       htobe32(new_value), htobe32(loc_pa), &status);
 
 	(void) rtas_free_rmo_buffer(locbuf, loc_pa, size);
 
@@ -1148,23 +969,11 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 {
 	uint64_t elapsed = 0;
-	int token, status;
-	int rc;
+	int rc, status;
 
-	token = rtas_token("ibm,set-eeh-option");
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 4, 1, htobe32(cfg_addr),
-			       htobe32(BITS32_HI(phbid)),
-			       htobe32(BITS32_LO(phbid)),
-			       htobe32(function), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,set-eeh-option", 4, 1, htobe32(cfg_addr),
+		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
+		       htobe32(function), &status);
 
 	dbg1("(0x%x, 0x%llx, %d) = %d\n", cfg_addr, phbid, function,
 	     rc ? rc : status);
@@ -1183,22 +992,10 @@ int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 int rtas_set_indicator(int indicator, int index, int new_value)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("set-indicator");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 3, 1, htobe32(indicator),
-				  htobe32(index), htobe32(new_value), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("set-indicator", 3, 1, htobe32(indicator),
+		       htobe32(index), htobe32(new_value), &status);
 
 	dbg1("(%d, %d, %d) = %d\n", indicator, index, new_value,
 	     rc ? rc : status);
@@ -1217,23 +1014,11 @@ int rtas_set_indicator(int indicator, int index, int new_value)
 int rtas_set_power_level(int powerdomain, int level, int *setlevel)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	__be32 be_setlevel;
-	int status;
-	int rc;
-	int token = rtas_token("set-power-level");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 2, 2, htobe32(powerdomain),
-				  htobe32(level), &status, &be_setlevel);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("set-power-level", 2, 2, htobe32(powerdomain),
+		       htobe32(level), &status, &be_setlevel);
 
 	*setlevel = be32toh(be_setlevel);
 
@@ -1260,23 +1045,11 @@ rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 		    uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("set-time-for-power-on");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 7, 1, htobe32(year), htobe32(month),
-				  htobe32(day), htobe32(hour), htobe32(min),
-				  htobe32(sec), htobe32(nsec), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("set-time-for-power-on", 7, 1, htobe32(year),
+		       htobe32(month), htobe32(day), htobe32(hour),
+		       htobe32(min), htobe32(sec), htobe32(nsec), &status);
 
 	dbg1("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
 	     min, sec, nsec, rc ? rc : status);
@@ -1294,16 +1067,10 @@ rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 int rtas_set_sysparm(unsigned int parameter, char *data)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
-	int status;
+	int rc, status;
 	short size;
-	int rc;
-	int token = rtas_token("ibm,set-system-parameter");
-
-	if (token < 0)
-		return token;
 
 	size = *(short *)data;
 	rc = rtas_get_rmo_buffer(size + sizeof(short), &kernbuf, &kernbuf_pa);
@@ -1312,14 +1079,8 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 
 	memcpy(kernbuf, data, size + sizeof(short));
 
-	do {
-		rc = rtas_call(token, 2, 1, htobe32(parameter),
-				  htobe32(kernbuf_pa), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,set-system-parameter", 2, 1, htobe32(parameter),
+		       htobe32(kernbuf_pa), &status);
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
 
@@ -1344,23 +1105,11 @@ int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
 		uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
 	SANITY_CHECKS();
-	uint64_t elapsed = 0;
-	int status;
-	int rc;
-	int token = rtas_token("set-time-of-day");
+	int rc, status;
 
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 7, 1, htobe32(year), htobe32(month),
-				htobe32(day), htobe32(hour), htobe32(min),
-				htobe32(sec), htobe32(nsec), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("set-time-of-day", 7, 1, htobe32(year), htobe32(month),
+		       htobe32(day), htobe32(hour), htobe32(min),
+		       htobe32(sec), htobe32(nsec), &status);
 
 	dbg1("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
 			min, sec, nsec, rc ? rc : status);
@@ -1375,22 +1124,10 @@ int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
  */
 int rtas_suspend_me(uint64_t streamid)
 {
-	uint64_t elapsed = 0;
-	int token, status;
-	int rc;
+	int rc, status;
 
-	token = rtas_token("ibm,suspend-me");
-	if (token < 0)
-		return token;
-
-	do {
-		rc = rtas_call(token, 2, 1, htobe32(BITS32_HI(streamid)),
-			       htobe32(BITS32_LO(streamid)), &status);
-		if (rc)
-			return rc;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,suspend-me", 2, 1, htobe32(BITS32_HI(streamid)),
+		       htobe32(BITS32_LO(streamid)), &status);
 
 	dbg1("() = %d\n", rc ? rc : status);
 	return rc ? rc : status;
@@ -1411,14 +1148,8 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
 {
 	SANITY_CHECKS();
 	uint32_t workarea_pa;
-	uint64_t elapsed = 0;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,update-nodes");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)
@@ -1426,14 +1157,8 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
 
 	memcpy(kernbuf, workarea, 4096);
 
-	do {
-		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
-				  htobe32(scope), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,update-nodes", 2, 1, htobe32(workarea_pa),
+		       htobe32(scope), &status);
 
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
@@ -1459,14 +1184,8 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 {
 	SANITY_CHECKS();
 	uint32_t workarea_pa;
-	uint64_t elapsed = 0;
 	void *kernbuf;
-	int status;
-	int rc;
-	int token = rtas_token("ibm,update-properties");
-
-	if (token < 0)
-		return token;
+	int rc, status;
 
 	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)
@@ -1474,14 +1193,8 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 
 	memcpy(kernbuf, workarea, 4096);
 
-	do {
-		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
-				  htobe32(scope), &status);
-		if (rc < 0)
-			break;
-
-		rc = handle_delay(status, &elapsed);
-	} while (rc == CALL_AGAIN);
+	rc = rtas_call("ibm,update-properties", 2, 1, htobe32(workarea_pa),
+		       htobe32(scope), &status);
 
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
@@ -1491,4 +1204,3 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 	dbg1("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }
-/* ========================= END OF FILE ================== */
