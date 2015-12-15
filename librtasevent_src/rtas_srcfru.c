@@ -194,6 +194,7 @@ parse_src_scn(struct rtas_event *re)
 
     src_raw = malloc(sizeof(*src_raw));
     if (src_raw == NULL) {
+	free(src);
         errno = ENOMEM;
         return 1;
     }

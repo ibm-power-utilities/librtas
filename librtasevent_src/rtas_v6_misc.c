@@ -640,6 +640,7 @@ parse_generic_v6_scn(struct rtas_event *re)
         uint32_t    data_sz = gen->v6hdr.length - RTAS_V6_HDR_SIZE;
         gen->data = malloc(data_sz);
         if (gen->data == NULL) {
+	    free(gen);
             errno = ENOMEM;
             return -1;
         }

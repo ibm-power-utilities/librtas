@@ -91,8 +91,12 @@ int rtas_token(const char *call_name)
 	int rc;
 
 	rc = get_property(ofdt_rtas_path, call_name, &prop_buf, &len);
-	if (rc < 0) 
+	if (rc < 0) {
+		if (prop_buf)
+			free(prop_buf);
+
 		return RTAS_UNKNOWN_OP;
+	}
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 	rc = bswap_32(*(int *)prop_buf);
