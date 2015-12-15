@@ -11,7 +11,7 @@ LIBRTAS_SONAME = librtas.so
 LIBRTAS_STATIC = librtas.a
 LIBRTAS = $(LIBRTAS_SONAME).$(VERSION)
 
-LIBRTAS_OBJS = common.o ofdt.o syscall_calls.o syscall_rmo.o procfs_calls.o
+LIBRTAS_OBJS = common.o ofdt.o syscall_calls.o syscall_rmo.o
 
 LIBRTAS_HDR = librtas.h
 HEADERS	= $(LIBRTAS_HDR) common.h
