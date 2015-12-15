@@ -11,10 +11,10 @@ LIBRTAS_SONAME = librtas.so
 LIBRTAS_STATIC = librtas.a
 LIBRTAS = $(LIBRTAS_SONAME).$(VERSION)
 
-LIBRTAS_OBJS = common.o ofdt.o syscall_calls.o syscall_rmo.o
+LIBRTAS_OBJS = ofdt.o syscall_calls.o syscall_rmo.o
 
 LIBRTAS_HDR = librtas.h
-HEADERS	= $(LIBRTAS_HDR) common.h
+HEADERS	= $(LIBRTAS_HDR)
 
 CFLAGS += -fPIC -DPIC
 LDFLAGS += -shared -Wl,-soname -Wl,$(LIBRTAS_SONAME).$(MAJOR_NO)

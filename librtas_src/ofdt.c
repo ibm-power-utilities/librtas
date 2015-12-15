@@ -9,13 +9,11 @@
 
 #include <stdlib.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <endian.h>
 #include <byteswap.h>
 #include "librtas.h"
-#include "common.h"
 
 static const char *ofdt_rtas_path = "/proc/device-tree/rtas";
 
