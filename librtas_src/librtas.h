@@ -97,8 +97,6 @@ extern int rtas_update_properties(char *workarea, unsigned int scope);
 }
 #endif
 
-extern int rtas_token(const char *call_name);
-
 #define SANITY_CHECKS()                                         \
         /* Check credentials */                                 \
         if (geteuid() != (uid_t) 0)                             \

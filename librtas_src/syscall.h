@@ -40,6 +40,7 @@ extern int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
 extern int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
 extern int interface_exists();
 extern int read_entire_file(int fd, char **buf, size_t *len);
+extern int rtas_token(const char *call_name);
 
 #define BITS32_LO(_num) (uint32_t) (_num & 0xffffffffll)
 #define BITS32_HI(_num) (uint32_t) (_num >> 32) 
