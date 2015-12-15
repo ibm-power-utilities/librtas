@@ -44,9 +44,11 @@ extern int interface_exists();
 #define BITS32_HI(_num) (uint32_t) (_num >> 32) 
 #define BITS64(_high, _low) (uint64_t) (((uint64_t) _high << 32) | _low)
 
+extern int dbg_lvl;
+
 #define dbg(_fmt, _args...)						  \
 	do {								  \
-		if (config.debug >= 0)					  \
+		if (dbg_lvl >= 0)					  \
 			printf("librtas %s(): " _fmt, __func__, ##_args); \
 	} while (0)
 

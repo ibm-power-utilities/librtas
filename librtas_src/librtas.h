@@ -97,16 +97,9 @@ extern int rtas_update_properties(char *workarea, unsigned int scope);
 }
 #endif
 
-struct librtas_config {
-	uint64_t rtas_timeout_ms;
-	int debug;
-};
-
 extern int open_proc_rtas_file(const char *name, int mode);
 extern int rtas_token(const char *call_name);
 extern int read_entire_file(int fd, char **buf, size_t *len);
-
-extern struct librtas_config config;
 
 #define SANITY_CHECKS()                                         \
         /* Check credentials */                                 \

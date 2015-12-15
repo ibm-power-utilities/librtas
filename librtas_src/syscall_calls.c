@@ -30,7 +30,8 @@ _syscall1(int, rtas, void *, args);
 
 #define CALL_AGAIN 1
 
-struct librtas_config config = { NULL, 0 };
+int dbg_lvl = 0;
+static uint64_t rtas_timeout_ms;
 
 /**
  * handle_delay
@@ -61,11 +62,11 @@ static unsigned int handle_delay(int status, uint64_t * elapsed)
 		return 0;
 	}
 
-	if (config.rtas_timeout_ms) {
-		if (*elapsed >= config.rtas_timeout_ms)
+	if (rtas_timeout_ms) {
+		if (*elapsed >= rtas_timeout_ms)
 			return RTAS_TIMEOUT;
 
-		remaining = config.rtas_timeout_ms - *elapsed;
+		remaining = rtas_timeout_ms - *elapsed;
 		if (ms > remaining)
 			ms = remaining;
 	}
@@ -87,7 +88,7 @@ static void display_rtas_buf(struct rtas_args *args, int after)
 {
 	int i, ninputs, nret;
 
-	if (config.debug < 2)
+	if (dbg_lvl < 2)
 		return;
 
 	ninputs = be32toh(args->ninputs);
@@ -288,7 +289,7 @@ int rtas_cfg_connector(char *workarea)
 int rtas_delay_timeout(uint64_t timeout_ms)
 {
 	SANITY_CHECKS();
-	config.rtas_timeout_ms = timeout_ms;
+	rtas_timeout_ms = timeout_ms;
 
 	return 0;
 }
@@ -444,8 +445,8 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 
 	*info = be32toh(be_info);
 
-	dbg1("(0x%x, 0x%llx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
-	     rc ? rc : status, *info);
+	dbg("(0x%x, 0x%llx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
+	    rc ? rc : status, *info);
 	return rc ? rc : status;
 }
 
@@ -918,7 +919,7 @@ int rtas_scan_log_dump(void *buffer, size_t length)
  */
 int rtas_set_debug(int level)
 {
-	config.debug = level;
+	dbg_lvl = level;
 	return 0;
 }
 
