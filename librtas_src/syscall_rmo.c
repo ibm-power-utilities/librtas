@@ -43,7 +43,7 @@ static struct workarea_config wa_config = {
  * @param mode mode to open file in
  * @return results of open() call
  */
-int open_proc_rtas_file(const char *name, int mode)
+static int open_proc_rtas_file(const char *name, int mode)
 {
 	const char *proc_rtas_paths[] = { "/proc/ppc64/rtas", "/proc/rtas" };
 	char full_name[MAX_PATH_LEN];

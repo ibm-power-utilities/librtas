@@ -97,7 +97,6 @@ extern int rtas_update_properties(char *workarea, unsigned int scope);
 }
 #endif
 
-extern int open_proc_rtas_file(const char *name, int mode);
 extern int rtas_token(const char *call_name);
 
 #define SANITY_CHECKS()                                         \
