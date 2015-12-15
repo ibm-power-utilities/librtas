@@ -91,7 +91,7 @@ static int read_kregion_bounds(struct region *kregion)
 		return rc;
 	}
 
-	sscanf(buf, "%llx %x", &kregion->addr, &kregion->size);
+	sscanf(buf, "%lx %x", &kregion->addr, &kregion->size);
 	free(buf);
 
 	if (!(kregion->size && kregion->addr) ||
@@ -169,7 +169,7 @@ static int acquire_file_lock(off_t start, size_t size)
 	rc = fcntl(wa_config.lockfile_fd, F_SETLKW, &flock);
 	if (rc < 0) {
 		/* Expected to fail for regions used by other processes */
-		dbg("fcntl failed for [0x%lx, 0x%x]\n", start, size);
+		dbg("fcntl failed for [0x%lx, 0x%zx]\n", start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -196,7 +196,7 @@ static int release_file_lock(off_t start, size_t size)
 
 	rc = fcntl(wa_config.lockfile_fd, F_SETLK, &flock);
 	if (rc < 0) {
-		dbg("fcntl failed for [0x%lx, 0x%x]\n", start, size);
+		dbg("fcntl failed for [0x%lx, 0x%zx]\n", start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -219,7 +219,7 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 	int i;
 
 	if (size > kregion->size) {
-		dbg("Invalid buffer size 0x%x requested\n", size);
+		dbg("Invalid buffer size 0x%zx requested\n", size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -266,7 +266,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	int rc;
 
 	if (size > kregion->size) {
-		dbg("Invalid buffer size 0x%x requested\n", size);
+		dbg("Invalid buffer size 0x%zx requested\n", size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -276,7 +276,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	bits = get_bits(first_page, first_page + n_pages - 1,
 			wa_config.pages_map);
 	if (bits != ((1 << n_pages) - 1)) {
-		dbg("Invalid region [0x%x, 0x%x]\n", phys_addr, size);
+		dbg("Invalid region [0x%x, 0x%zx]\n", phys_addr, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -453,7 +453,7 @@ int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 	if (rc)
 		return rc;
 
-	dbg("RMO buffer request, size: %d\n", size);
+	dbg("RMO buffer request, size: %zd\n", size);
 
 	n_pages = size / PAGE_SIZE;
 

@@ -494,7 +494,7 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 
 	*info = be32toh(be_info);
 
-	dbg("(0x%x, 0x%llx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
+	dbg("(0x%x, 0x%lx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
 	    rc ? rc : status, *info);
 	return rc ? rc : status;
 }
@@ -582,7 +582,7 @@ int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 
 	*next = be32toh(be_next);
 
-	dbg1("(%d, %d, %p, %d, %d, %p) = %d, %d\n", is_sensor, type, workarea,
+	dbg("(%d, %d, %p, %zd, %d, %p) = %d, %d\n", is_sensor, type, workarea,
 	     size, start, next, rc ? rc : status, *next);
 	return rc ? rc : status;
 }
@@ -789,8 +789,8 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	*seq_next = be32toh(*seq_next);
 	*bytes_ret = be32toh(*bytes_ret);
 
-	dbg1("(%s, 0x%p, %d, %d) = %d, %d, %d", loc_code ? loc_code : "NULL",
-		workarea, size, sequence, status, *seq_next, *bytes_ret);
+	dbg("(%s, 0x%p, %zd, %d) = %d, %d, %d", loc_code ? loc_code : "NULL",
+	    workarea, size, sequence, status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
 }
 
@@ -900,7 +900,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 			break;
 
 		sequence = BITS64(be32toh(next_hi), be32toh(next_lo));
-		dbg1("%s: seq_next = 0x%llx\n", __FUNCTION__, sequence);
+		dbg("%s: seq_next = 0x%lx\n", __FUNCTION__, sequence);
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
@@ -916,7 +916,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	bytes_lo = be32toh(bytes_lo);
 	*bytes_ret = BITS64(bytes_hi, bytes_lo);
 
-	dbg1("(0x%llx, 0x%llx, %p, %d, %p, %p) = %d, 0x%llx, 0x%llx\n",
+	dbg("(0x%lx, 0x%lx, %p, %zd, %p, %p) = %d, 0x%lx, 0x%lx\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
 	     rc ? rc : status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
@@ -948,7 +948,7 @@ int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
 	*state = be32toh(*state);
 	*eeh = be32toh(*eeh);
 
-	dbg1("(0x%x, 0x%llx, %p, %p) = %d, %d, %d\n", cfg_addr, phbid, state,
+	dbg("(0x%x, 0x%lx, %p, %p) = %d, %d, %d\n", cfg_addr, phbid, state,
 	     eeh, rc ? rc : status, *state, *eeh);
 	return rc ? rc : status;
 }
@@ -984,7 +984,7 @@ int rtas_scan_log_dump(void *buffer, size_t length)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	dbg1("(%p, %d) = %d\n", buffer, length, rc ? rc : status);
+	dbg("(%p, %zd) = %d\n", buffer, length, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1050,7 +1050,6 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
  */
 int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 {
-	uint64_t elapsed = 0;
 	int rc, status;
 
 	rc = sanity_check();
@@ -1061,7 +1060,7 @@ int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
 		       htobe32(function), &status);
 
-	dbg1("(0x%x, 0x%llx, %d) = %d\n", cfg_addr, phbid, function,
+	dbg("(0x%x, 0x%lx, %d) = %d\n", cfg_addr, phbid, function,
 	     rc ? rc : status);
 	return rc ? rc : status;
 }
