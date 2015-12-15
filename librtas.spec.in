@@ -36,10 +36,8 @@ the contents of RTAS events.
 %defattr(-, root, root)
 %{_docdir}/%{name}/COPYRIGHT
 %{_docdir}/%{name}/README
-%{_includedir}/common.h
 %{_includedir}/librtas.h
 %{_libdir}/librtas.so.%{version}
-%{_libdir}/libofdt.so
 %{_libdir}/librtas.so
 %{_libdir}/librtasevent.so
 %{_libdir}/librtasevent.so.1
@@ -48,15 +46,11 @@ the contents of RTAS events.
 %{_includedir}/librtasevent_v4.h
 %{_includedir}/librtasevent_v6.h
 
-%{_libdir}/libofdt.so.%{version}
-%{_includedir}/libofdt.h
-
 %post
 # Post-install script -------------------------------------------------
 ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so
 ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so.1
 ln -sf %{_libdir}/librtasevent.so.%{version} %{_libdir}/librtasevent.so
-ln -sf %{_libdir}/libofdt.so.%{version} %{_libdir}/libofdt.so
 ldconfig
 
 %postun
@@ -64,6 +58,5 @@ ldconfig
 if [ "$1" = "0" ] ; then        # last uninstall
     rm -f %{_libdir}/librtas.so
     rm -f %{_libdir}/librtasevent.so
-    rm -f %{_libdir}/libofdt.so
 fi
 ldconfig

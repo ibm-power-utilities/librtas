@@ -7,7 +7,7 @@ include rules.mk
 .SILENT:
 
 FILES = README COPYRIGHT
-SUBDIRS = librtas_src librtasevent_src libofdt_src
+SUBDIRS = librtas_src librtasevent_src
 
 TARBALL_FILES += $(FILES) doc/doxygen.rtas doc/doxygen.rtasevent Changelog
 
@@ -29,7 +29,6 @@ rpm: all
 	@export DESTDIR=$(SHIPDIR); $(MAKE) install
 	@rm $(SHIPDIR)$(LIB_DIR)$(call is_lib64,librtas_src/librtas.so.$(VERSION))/librtas.so
 	@rm $(SHIPDIR)$(LIB_DIR)$(call is_lib64,librtasevent_src/librtasevent.so.$(VERSION))/librtasevent.so
-	@rm $(SHIPDIR)$(LIB_DIR)$(call is_lib64,libofdt_src/libofdt.so.$(VERSION))/libofdt.so
 	@$(RPM) -bb $(SPECFILE)
 	@rm -rf $(SHIPDIR)
 
