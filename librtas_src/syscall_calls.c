@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <sys/syscall.h>
 #include <linux/unistd.h>
 #include <linux/types.h>
@@ -900,7 +901,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 			break;
 
 		sequence = BITS64(be32toh(next_hi), be32toh(next_lo));
-		dbg("%s: seq_next = 0x%lx\n", __FUNCTION__, sequence);
+		dbg("%s: seq_next = 0x%" PRIx64 "\n", __FUNCTION__, sequence);
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);

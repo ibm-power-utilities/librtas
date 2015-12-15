@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <inttypes.h>
 #include "syscall.h"
 #include "librtas.h"
 
@@ -91,7 +92,7 @@ static int read_kregion_bounds(struct region *kregion)
 		return rc;
 	}
 
-	sscanf(buf, "%lx %x", &kregion->addr, &kregion->size);
+	sscanf(buf, "%" SCNx64 " %x", &kregion->addr, &kregion->size);
 	free(buf);
 
 	if (!(kregion->size && kregion->addr) ||
