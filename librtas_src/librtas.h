@@ -99,7 +99,6 @@ extern int rtas_update_properties(char *workarea, unsigned int scope);
 
 extern int open_proc_rtas_file(const char *name, int mode);
 extern int rtas_token(const char *call_name);
-extern int read_entire_file(int fd, char **buf, size_t *len);
 
 #define SANITY_CHECKS()                                         \
         /* Check credentials */                                 \
