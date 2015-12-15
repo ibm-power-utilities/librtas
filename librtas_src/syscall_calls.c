@@ -13,95 +13,10 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/syscall.h>
-#include <unistd.h>
 #include <linux/unistd.h>
 #include <linux/types.h>
-#include "common.h"
 #include "syscall.h"
 #include "librtas.h"
-
-int sc_activate_firmware(int token);
-int sc_cfg_connector(int token, char *workarea);
-int sc_delay_timeout(uint64_t timeout_ms);
-int sc_display_char(int token, char c);
-int sc_display_msg(int token, char *buf);
-int sc_errinjct(int token, int etoken, int otoken, char *workarea);
-int sc_errinjct_close(int token, int otoken);
-int sc_errinjct_open(int token, int *otoken);
-int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state);
-int sc_get_config_addr_info2(int token, uint32_t config_addr, uint64_t phb_id, uint32_t func, uint32_t *info);
-int sc_get_indices(int token, int is_sensor, int type, char *workarea,
-		   size_t size, int start, int *next);
-int sc_get_power_level(int token, int powerdomain, int *level);
-int sc_get_sensor(int token, int sensor, int index, int *state);
-int sc_get_sysparm(int token, unsigned int parameter, unsigned int length,
-		   char *data);
-int sc_get_time(int token, uint32_t *year, uint32_t *month, uint32_t *day, 
-		uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec);
-int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size, 
-		unsigned int sequence, unsigned int *seq_next, 
-		unsigned int *bytes_ret);
-int sc_lpar_perftools(int token, int subfunc, char *workarea,
-		      unsigned int length, unsigned int sequence,
-		      unsigned int *seq_next);
-int sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence,
-		     void *buffer, size_t length, uint64_t * next_seq,
-		     uint64_t * bytes_ret);
-int sc_read_slot_reset(int token, uint32_t cfg_addr, uint64_t phbid,
-		       int *state, int *eeh);
-int sc_scan_log_dump(int token, void *buffer, size_t length);
-int sc_set_dynamic_indicator(int token, int indicator, int new_value,
-			     void *loc_code);
-int sc_set_eeh_option(int token, uint32_t cfg_addr, uint64_t phbid,
-		      int function);
-int sc_set_indicator(int token, int indicator, int index, int new_value);
-int sc_set_power_level(int token, int powerdomain, int level, int *setlevel);
-int sc_set_poweron_time(int token, uint32_t year, uint32_t month, uint32_t day,
-			uint32_t hour, uint32_t min, uint32_t sec,
-			uint32_t nsec);
-int sc_set_sysparm(int token, unsigned int parameter, char *data);
-int sc_set_time(int token, uint32_t year, uint32_t month, uint32_t day, 
-			uint32_t hour, uint32_t min, uint32_t sec, 
-			uint32_t nsec);
-int sc_suspend_me(int token, uint64_t streamid);
-int sc_update_nodes(int token, char *workarea, unsigned int scope);
-int sc_update_properties(int token, char *workarea, unsigned int scope);
-
-struct rtas_operations syscall_rtas_ops = {
-	.activate_firmware = sc_activate_firmware,
-	.cfg_connector = sc_cfg_connector,
-	.delay_timeout = sc_delay_timeout,
-	.display_char = sc_display_char,
-	.display_msg = sc_display_msg,
-	.errinjct = sc_errinjct,
-	.errinjct_close = sc_errinjct_close,
-	.errinjct_open = sc_errinjct_open,
-	.free_rmo_buffer = sc_free_rmo_buffer,
-	.get_config_addr_info2 = sc_get_config_addr_info2,
-	.get_dynamic_sensor = sc_get_dynamic_sensor,
-	.get_indices = sc_get_indices,
-	.get_sensor = sc_get_sensor,
-	.get_power_level = sc_get_power_level,
-	.get_rmo_buffer = sc_get_rmo_buffer,
-	.get_sysparm = sc_get_sysparm,
-	.get_time = sc_get_time,
-	.get_vpd = sc_get_vpd,
-	.lpar_perftools = sc_lpar_perftools,
-	.platform_dump = sc_platform_dump,
-	.read_slot_reset = sc_read_slot_reset,
-	.scan_log_dump = sc_scan_log_dump,
-	.set_dynamic_indicator = sc_set_dynamic_indicator,
-	.set_indicator = sc_set_indicator,
-	.set_eeh_option = sc_set_eeh_option,
-	.set_power_level = sc_set_power_level,
-	.set_poweron_time = sc_set_poweron_time,
-	.set_sysparm = sc_set_sysparm,
-	.set_time = sc_set_time,
-	.suspend_me = sc_suspend_me,
-	.update_nodes = sc_update_nodes,
-	.update_properties = sc_update_properties,
-	.interface_exists = sc_interface_exists,
-};
 
 /* The original librtas used the _syscall1 interface to get to the rtas
  * system call.  On recent versions of Linux though the _syscall1
@@ -114,6 +29,8 @@ _syscall1(int, rtas, void *, args);
 #endif
 
 #define CALL_AGAIN 1
+
+struct librtas_config config = { NULL, 0 };
 
 /**
  * handle_delay
@@ -163,7 +80,7 @@ static unsigned int handle_delay(int status, uint64_t * elapsed)
  * display_rtas_buf
  * @brief Dump the contents of the rtas call buffer
  *
- * @param args 
+ * @param args
  * @param after
  */
 static void display_rtas_buf(struct rtas_args *args, int after)
@@ -196,10 +113,10 @@ static void display_rtas_buf(struct rtas_args *args, int after)
 }
 
 /**
- * sc_rtas_call
+ * rtas_call
  * @brief Perform the actual  system call for the rtas call
- * 
- * Variable argument list consists of inputs followed by 
+ *
+ * Variable argument list consists of inputs followed by
  * pointers to outputs.
  *
  * @param token
@@ -207,7 +124,7 @@ static void display_rtas_buf(struct rtas_args *args, int after)
  * @param nret number of return variables
  * @return 0 on success, !0 otherwise
  */
-static int sc_rtas_call(int token, int ninputs, int nret, ...)
+static int rtas_call(int token, int ninputs, int nret, ...)
 {
 	struct rtas_args args;
 	rtas_arg_t *rets[MAX_ARGS];
@@ -254,20 +171,24 @@ static int sc_rtas_call(int token, int ninputs, int nret, ...)
 }
 
 /**
- * sc_activate_firmware
- * @brief Set up the activate-firmware rtas system call
+ * rtas_activate_firmware
+ * @brief Interface for ibm,activate-firmware rtas call
  *
- * @param token
- * @return 0 on success, !0 otherwise
+ * @return 0 on success, !0 on failure
  */
-int sc_activate_firmware(int token)
+int rtas_activate_firmware()
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,activate-firmware");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 0, 1, &status);
+		rc = rtas_call(token, 0, 1, &status);
 		if (rc)
 			return rc;
 
@@ -282,15 +203,15 @@ int sc_activate_firmware(int token)
 #define CFG_RC_MEM 5
 
 /**
- * sc_cfg_connector
- * @brief Set up the cfg-connector rtas system call
+ * rtas_cfg_connector
+ * @brief Interface for ibm,configure-connector rtas call
  *
- * @param token
- * @param workarea
- * @return 0 on success, !0 otherwise
+ * @param workarea buffer containg args to ibm,configure-connector
+ * @return 0 on success, !0 on failure
  */
-int sc_cfg_connector(int token, char *workarea)
+int rtas_cfg_connector(char *workarea)
 {
+	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	uint32_t extent_pa = 0;
 	uint64_t elapsed = 0;
@@ -298,21 +219,25 @@ int sc_cfg_connector(int token, char *workarea)
 	void *extent;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,configure-connector");
 
-	rc = sc_get_rmo_buffer(PAGE_SIZE, &kernbuf, &workarea_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(PAGE_SIZE, &kernbuf, &workarea_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, workarea, PAGE_SIZE);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
 				  htobe32(extent_pa), &status);
 		if (rc < 0)
 			break;
-		
+
 		if ((rc == 0) && (status == CFG_RC_MEM)) {
-			rc = sc_get_rmo_buffer(PAGE_SIZE, &extent, &extent_pa);
+			rc = rtas_get_rmo_buffer(PAGE_SIZE, &extent, &extent_pa);
 			if (rc < 0)
 				break;
 			continue;
@@ -324,45 +249,50 @@ int sc_cfg_connector(int token, char *workarea)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, PAGE_SIZE);
 
-	(void)sc_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
 
 	if (extent_pa)
-		(void)sc_free_rmo_buffer(extent, extent_pa, PAGE_SIZE);
+		(void)rtas_free_rmo_buffer(extent, extent_pa, PAGE_SIZE);
 
 	dbg1("(%p) = %d\n", workarea, rc ? rc : status);
 	return rc ? rc : status;
 }
 
 /**
- * sc_delay_timeout
- * @brief set the configured timeout value
+ * rtas_delay_timeout
+ * @brief Interface to retrieve the rtas timeout delay
  *
- * @param timeout_ms new timeout in milliseconds
- * @return 0 on success, !0 otherwise
+ * @param timeout_ms timeout in milli-seconds
+ * @return delay time
  */
-int sc_delay_timeout(uint64_t timeout_ms)
+int rtas_delay_timeout(uint64_t timeout_ms)
 {
+	SANITY_CHECKS();
 	config.rtas_timeout_ms = timeout_ms;
 
 	return 0;
 }
 
 /**
- * sc_display_char
- * @brief Set up display-char rtas system call
- * 
- * @param token
+ * rtas_display_char
+ * @brief Interface for display-character rtas call
+ *
  * @param c character to display
  * @return 0 on success, !0 otherwise
  */
-int sc_display_char(int token, char c)
+int rtas_display_char(char c)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("display-character");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 1, 1, c, &status);
+		rc = rtas_call(token, 1, 1, c, &status);
 		if (rc)
 			return rc;
 
@@ -374,39 +304,43 @@ int sc_display_char(int token, char c)
 }
 
 /**
- * sc_display_msg
- * @brief Set up the display-message rtas system call
+ * rtas_display_msg
+ * @brief Interface for ibm,display-message rtas call
  *
- * @param token
  * @param buf message to display
  * @return 0 on success, !0 otherwise
  */
-int sc_display_msg(int token, char *buf)
+int rtas_display_msg(char *buf)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int str_len;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,display-message");
+
+	if (token < 0)
+		return token;
 
 	str_len = strlen(buf);
 
-	rc = sc_get_rmo_buffer(str_len, &kernbuf, &kernbuf_pa);
+	rc = rtas_get_rmo_buffer(str_len, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	strcpy(kernbuf, buf);
 
 	do {
-		rc = sc_rtas_call(token, 1, 1, htobe32(kernbuf_pa), &status);
+		rc = rtas_call(token, 1, 1, htobe32(kernbuf_pa), &status);
 		if (rc < 0)
 			break;
 
 		rc = handle_delay(status, &elapsed);
 	} while ((rc == CALL_AGAIN));
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, str_len);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, str_len);
 
 	dbg1("(%p) = %d\n", buf, rc ? rc : status);
 	return rc ? rc : status;
@@ -415,31 +349,35 @@ int sc_display_msg(int token, char *buf)
 #define ERRINJCT_BUF_SIZE 1024
 
 /**
- * sc_errinjct
- * @brief Set up the errinjct rtas system call
+ * rtas_errinjct
+ * @brief Interface to the ibm,errinjct rtas call
  *
- * @param token
- * @param etoken error injection token
- * @param otoken error injection open token
- * @param workarea additional args to rtas call
+ * @param etoken errinjct token
+ * @param otoken errinjct open token
+ * @param workarea additional args to ibm,errinjct
  * @return 0 on success, !0 otherwise
  */
-int sc_errinjct(int token, int etoken, int otoken, char *workarea)
+int rtas_errinjct(int etoken, int otoken, char *workarea)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int status=0;
 	int rc;
+	int token = rtas_token("ibm,errinjct");
 
-	rc = sc_get_rmo_buffer(ERRINJCT_BUF_SIZE, &kernbuf, &kernbuf_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(ERRINJCT_BUF_SIZE, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, workarea, ERRINJCT_BUF_SIZE);
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, htobe32(etoken), htobe32(otoken),
+		rc = rtas_call(token, 3, 1, htobe32(etoken), htobe32(otoken),
 				  htobe32(kernbuf_pa), &status);
 		if (rc < 0 )
 			break;
@@ -450,28 +388,32 @@ int sc_errinjct(int token, int etoken, int otoken, char *workarea)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, ERRINJCT_BUF_SIZE);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, ERRINJCT_BUF_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, ERRINJCT_BUF_SIZE);
 
 	dbg1("(%d, %d, %p) = %d\n", etoken, otoken, workarea, rc ? rc : status);
 	return rc ? rc : status;
 }
 
 /**
- * sc_errinjct_close
- * @brief Set up the errinjct close rtas system call
+ * rtas_errinjct_close
+ * @brief Inerface to close the ibm,errinjct facility
  *
- * @param token
  * @param otoken errinjct open token
  * @return 0 on success, !0 otherwise
  */
-int sc_errinjct_close(int token, int otoken)
+int rtas_errinjct_close(int otoken)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,close-errinjct");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 1, 1, htobe32(otoken), &status);
+		rc = rtas_call(token, 1, 1, htobe32(otoken), &status);
 		if (rc)
 			return rc;
 
@@ -483,22 +425,29 @@ int sc_errinjct_close(int token, int otoken)
 }
 
 /**
- * sc_errinjct_open
- * @brief Set up the errinjct open rtas system call
+ * rtas_errinjct_open
+ * @brief Interface to open the ibm,errinjct facility
  *
- * @param token
- * @param otoken
+ * This call will set the value refrenced by otoken to the open token
+ * for the ibm,errinjct facility
+ *
+ * @param otoken pointer to open token
  * @return 0 on success, !0 otherwise
  */
-int sc_errinjct_open(int token, int *otoken)
+int rtas_errinjct_open(int *otoken)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	__be32 be_status;
-	int status;
+	int token, status;
 	int rc;
 
+	token = rtas_token("ibm,open-errinjct");
+	if (token < 0)
+		return token;
+
 	do {
-		rc = sc_rtas_call(token, 0, 2, otoken, &be_status);
+		rc = rtas_call(token, 0, 2, otoken, &be_status);
 		if (rc)
 			return rc;
 
@@ -512,29 +461,35 @@ int sc_errinjct_open(int token, int *otoken)
 }
 
 /**
- * sc_get_config_addr2
- * @brief get the pci slot config address
+ * rtas_get_config_addr_info2
+ * @brief Interface to ibm,get-config-addr-info2 rtas call
  *
- * @param token
+ * On successful completion the info value is returned.
+ *
  * @param config_addr
  * @param phb_unit_id
  * @param func
  * @param info
  * @return 0 on success, !0 otherwise
  */
-int sc_get_config_addr_info2(int token, uint32_t config_addr,
-    uint64_t phb_id, uint32_t func, uint32_t *info)
+int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
+			       uint32_t func, uint32_t *info)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	__be32 be_info;
-	int status;
+	int token, status;
 	int rc;
 
+	token = rtas_token("ibm,get-config-addr-info2");
+	if (token < 0)
+		return token;
+
 	do {
-		rc = sc_rtas_call(token, 4, 2, htobe32(config_addr),
-				  htobe32(BITS32_HI(phb_id)),
-				  htobe32(BITS32_LO(phb_id)),
-				  htobe32(func), &status, &be_info);
+		rc = rtas_call(token, 4, 2, htobe32(config_addr),
+			       htobe32(BITS32_HI(phb_id)),
+			       htobe32(BITS32_LO(phb_id)),
+			       htobe32(func), &status, &be_info);
 		if (rc)
 			break;
 
@@ -549,43 +504,50 @@ int sc_get_config_addr_info2(int token, uint32_t config_addr,
 }
 
 /**
- * sc_get_dynamic_sensor
- * @brief Set up the get-dynamic-sensor rtas system call
+ * rtas_get_dynamic_sensor
+ * @brief Interface to ibm,get-dynamic-sensor-state rtas call
  *
- * @param token
- * @param sensor
- * @param loc_code
- * @param state
+ * On success the variable referenced by the state parameter will contain
+ * the state of the sensor
+ *
+ * @param sensor sensor to retrieve
+ * @param loc_code location code of the sensor
+ * @param state reference to state variable
  * @return 0 on success, !0 otherwise
  */
-int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
+int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 {
+	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
 	uint64_t elapsed = 0;
 	void *locbuf;
 	uint32_t size;
 	__be32 be_state;
-	int status;
+	int token, status;
 	int rc;
+
+	token = rtas_token("ibm,get-dynamic-sensor-state");
+	if (token < 0)
+		return token;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
-	rc = sc_get_rmo_buffer(size, &locbuf, &loc_pa);
+	rc = rtas_get_rmo_buffer(size, &locbuf, &loc_pa);
 	if (rc)
 		return rc;
 
 	memcpy(locbuf, loc_code, size);
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, htobe32(sensor), htobe32(loc_pa),
-				  &status, &be_state);
+		rc = rtas_call(token, 2, 2, htobe32(sensor), htobe32(loc_pa),
+			       &status, &be_state);
 		if (rc < 0)
 			break;
 
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
 
-	(void) sc_free_rmo_buffer(locbuf, loc_pa, size);
+	(void) rtas_free_rmo_buffer(locbuf, loc_pa, size);
 
 	*state = be32toh(be_state);
 
@@ -595,35 +557,39 @@ int sc_get_dynamic_sensor(int token, int sensor, void *loc_code, int *state)
 }
 
 /**
- * sc_get_indices
- * @brief Set up the get-indices rtas system call
+ * rtas_get_indices
+ * @brief Interface to the ibm,get-indices rtas call
  *
- * @param token
- * @param is_sensor
+ * @param is_sensor is this index a sensor?
  * @param type
- * @param workarea
+ * @param workarea additional args to the rtas call
  * @param size
  * @param start
  * @param next
  * @return 0 on success, !0 otherwise
  */
 int
-sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
+rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	       int start, int *next)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	__be32 be_next;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,get-indices");
 
-	rc = sc_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
-	if (rc) 
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
+	if (rc)
 		return rc;
 
 	do {
-		rc = sc_rtas_call(token, 5, 2, htobe32(is_sensor),
+		rc = rtas_call(token, 5, 2, htobe32(is_sensor),
 				  htobe32(type), htobe32(kernbuf_pa),
 				  htobe32(size), htobe32(start),
 				  &status, &be_next);
@@ -636,7 +602,7 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 	if (rc == 0)
 		memcpy(workarea, kernbuf, size);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, size);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size);
 
 	*next = be32toh(be_next);
 
@@ -646,23 +612,30 @@ sc_get_indices(int token, int is_sensor, int type, char *workarea, size_t size,
 }
 
 /**
- * sc_get_power_level
- * @brief Set up the get-power-level rtas system call
+ * rtas_get_power_level
+ * @brief Interface to the get-power-level rtas call
  *
- * @param token
+ * On success this routine will set the variable referenced by the level
+ * parameter to the power level
+ *
  * @param powerdomain
- * @param level
+ * @param level reference to the power level variable
  * @return 0 on success, !0 otherwise
  */
-int sc_get_power_level(int token, int powerdomain, int *level)
+int rtas_get_power_level(int powerdomain, int *level)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	__be32 be_level;
 	int status;
 	int rc;
+	int token = rtas_token("get-power-level");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 1, 2, htobe32(powerdomain),
+		rc = rtas_call(token, 1, 2, htobe32(powerdomain),
 				  &status, &be_level);
 		if (rc)
 			return rc;
@@ -678,24 +651,31 @@ int sc_get_power_level(int token, int powerdomain, int *level)
 }
 
 /**
- * sc_get_sensor
- * @brief Set up the get-sensor rtas system call
+ * rtas_get_sensor
+ * @brief Interface to the get-sensor-state rtas call
  *
- * @param token
+ * On successful completion the state parameter will reference the current
+ * state of the sensor
+ *
  * @param sensor
- * @param index
- * @param state
+ * @param index sensor index
+ * @param state reference to state variable
  * @return 0 on success, !0 otherwise
  */
-int sc_get_sensor(int token, int sensor, int index, int *state)
+int rtas_get_sensor(int sensor, int index, int *state)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	__be32 be_state;
 	int status;
 	int rc;
+	int token = rtas_token("get-sensor-state");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, htobe32(sensor),
+		rc = rtas_call(token, 2, 2, htobe32(sensor),
 				  htobe32(index), &status, &be_state);
 		if (rc)
 			return rc;
@@ -711,31 +691,38 @@ int sc_get_sensor(int token, int sensor, int index, int *state)
 }
 
 /**
- * sc_get_sysparm
- * @brief Setup the get-system-parameter rtas system call
+ * rtas_get_sysparm
+ * @brief Interface to the ibm,get-system-parameter rtas call
  *
- * @param token
- * @param parameter
- * @param length
- * @param data
+ * On successful completion the data parameter will contain the system
+ * parameter results
+ *
+ * @param parameter system parameter to retrieve
+ * @param length data buffer length
+ * @param data reference to buffer to return parameter in
  * @return 0 on success, !0 otherwise
  */
 int
-sc_get_sysparm(int token, unsigned int parameter, unsigned int length,
+rtas_get_sysparm(unsigned int parameter, unsigned int length,
 	       char *data)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,get-system-parameter");
 
-	rc = sc_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, htobe32(parameter),
+		rc = rtas_call(token, 3, 1, htobe32(parameter),
 				  htobe32(kernbuf_pa), htobe32(length),
 				  &status);
 		if (rc < 0)
@@ -747,17 +734,19 @@ sc_get_sysparm(int token, unsigned int parameter, unsigned int length,
 	if (rc == 0)
 		memcpy(data, kernbuf, length);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
 	dbg1("(%d, %d, %p) = %d\n", parameter, length, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
 /**
- * sc_get_time
- * @brief Set up the get-time rtas system call
+ * rtas_get_time
+ * @brief Interface to get-time-of-day rtas call
  *
- * @param token
+ * On successful completion all of the parameters will be filled with
+ * their respective values for the current time of day.
+ *
  * @param year
  * @param month
  * @param day
@@ -767,15 +756,20 @@ sc_get_sysparm(int token, unsigned int parameter, unsigned int length,
  * @param nsec
  * @return 0 on success, !0 otherwise
  */
-int sc_get_time(int token, uint32_t *year, uint32_t *month, uint32_t *day, 
+int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
 		uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("get-time-of-day");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 0, 8, &status, year, month, day, hour,
+		rc = rtas_call(token, 0, 8, &status, year, month, day, hour,
 				  min, sec, nsec);
 		if (rc)
 			return rc;
@@ -797,21 +791,22 @@ int sc_get_time(int token, uint32_t *year, uint32_t *month, uint32_t *day,
 }
 
 /**
- * sc_get_vpd
+ * rtas_get_vpd
+ * @brief Interface to the ibm,get-vpd rtas call
  *
- * @param token
- * @param loc_code
- * @param workarea
+ * @param loc_code location code
+ * @param workarea additional args to rtas call
  * @param size
  * @param sequence
  * @param seq_next
  * @param bytes_ret
  * @return 0 on success, !0 otherwise
  */
-int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size, 
-		unsigned int sequence, unsigned int *seq_next, 
+int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
+		unsigned int sequence, unsigned int *seq_next,
 		unsigned int *bytes_ret)
 {
+	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	uint32_t loc_pa = 0;
 	uint32_t rmo_pa = 0;
@@ -821,8 +816,12 @@ int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size,
 	void *locbuf;
 	int status;
 	int rc;
-	
-	rc = sc_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
+	int token = rtas_token("ibm,get-vpd");
+
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
 	if (rc)
 		return rc;
 	kernbuf = rmobuf + PAGE_SIZE;
@@ -832,55 +831,60 @@ int sc_get_vpd(int token, char *loc_code, char *workarea, size_t size,
 
 	/* If user didn't set loc_code, copy a NULL string */
 	strncpy(locbuf, loc_code ? loc_code : "", PAGE_SIZE);
-	
+
 	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = sc_rtas_call(token, 4, 3, htobe32(loc_pa),
+		rc = rtas_call(token, 4, 3, htobe32(loc_pa),
 				  htobe32(kernbuf_pa), htobe32(size),
 				  sequence, &status, seq_next,
 				  bytes_ret);
 		if (rc < 0)
 			break;
-		
+
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
-	
+
 	if (rc == 0)
 		memcpy(workarea, kernbuf, size);
 
-	(void) sc_free_rmo_buffer(rmobuf, rmo_pa, size + PAGE_SIZE);
-	
+	(void) rtas_free_rmo_buffer(rmobuf, rmo_pa, size + PAGE_SIZE);
+
 	*seq_next = be32toh(*seq_next);
 	*bytes_ret = be32toh(*bytes_ret);
 
 	dbg1("(%s, 0x%p, %d, %d) = %d, %d, %d", loc_code ? loc_code : "NULL",
-	    	workarea, size, sequence, status, *seq_next, *bytes_ret);
-	return rc ? rc : status;	
+		workarea, size, sequence, status, *seq_next, *bytes_ret);
+	return rc ? rc : status;
 }
 
 /**
- * sc_lpar_perftools
+ * rtas_lpar_perftools
+ * @brief Interface to the ibm,lpa-perftools rtas call
  *
- * @param token
  * @param subfunc
- * @param workarea
+ * @param workarea additional args to the rtas call
  * @param length
  * @param sequence
  * @param seq_next
  * @return 0 on success, !0 otherwise
  */
-int sc_lpar_perftools(int token, int subfunc, char *workarea,
+int rtas_lpar_perftools(int subfunc, char *workarea,
 		      unsigned int length, unsigned int sequence,
 		      unsigned int *seq_next)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,lpar-perftools");
 
-	rc = sc_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
@@ -889,7 +893,7 @@ int sc_lpar_perftools(int token, int subfunc, char *workarea,
 	*seq_next = htobe32(sequence);
 	do {
 		sequence = *seq_next;
-		rc = sc_rtas_call(token, 5, 2, htobe32(subfunc), 0,
+		rc = rtas_call(token, 5, 2, htobe32(subfunc), 0,
 				  htobe32(kernbuf_pa), htobe32(length),
 				  sequence, &status, seq_next);
 		if (rc < 0)
@@ -901,7 +905,7 @@ int sc_lpar_perftools(int token, int subfunc, char *workarea,
 	if (rc == 0)
 		memcpy(workarea, kernbuf, length);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
 	*seq_next = be32toh(*seq_next);
 
@@ -909,23 +913,23 @@ int sc_lpar_perftools(int token, int subfunc, char *workarea,
 	     length, sequence, seq_next, rc ? rc : status, *seq_next);
 	return rc ? rc : status;
 }
-
 /**
- * sc_platform_dump
+ * rtas_platform_dump
+ * Interface to the ibm,platform-dump rtas call
  *
- * @param token
  * @param dump_tag
  * @param sequence
- * @param buffer
- * @param length
- * @param seq_next
+ * @param buffer buffer to write dump to
+ * @param length buffer length
+ * @param next_seq
  * @param bytes_ret
- * @return 0 on success, !0 otherwise
+ * @return 0 on success, !0 othwerwise
  */
 int
-sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
+rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 		 size_t length, uint64_t * seq_next, uint64_t * bytes_ret)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa = 0;
 	uint32_t next_hi, next_lo;
@@ -934,9 +938,13 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,platform-dump");
+
+	if (token < 0)
+		return token;
 
 	if (buffer) {
-		rc = sc_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
+		rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 		if (rc)
 			return rc;
 	}
@@ -952,15 +960,13 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 	next_lo = htobe32(BITS32_LO(sequence));
 
 	do {
-		rc = sc_rtas_call(token, 6, 5, dump_tag_hi,
-				  dump_tag_lo,
-				  next_hi,
-				  next_lo,
-				  htobe32(kernbuf_pa), htobe32(length),
-				  &status, &next_hi, &next_lo, &bytes_hi,
-				  &bytes_lo);
+		rc = rtas_call(token, 6, 5, dump_tag_hi, dump_tag_lo,
+			       next_hi, next_lo, htobe32(kernbuf_pa),
+			       htobe32(length), &status, &next_hi, &next_lo,
+			       &bytes_hi, &bytes_lo);
 		if (rc < 0)
 			break;
+
 		sequence = BITS64(be32toh(next_hi), be32toh(next_lo));
 		dbg1("%s: seq_next = 0x%llx\n", __FUNCTION__, sequence);
 
@@ -969,9 +975,9 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 
 	if (buffer && (rc == 0))
 		memcpy(buffer, kernbuf, length);
-	
+
 	if (kernbuf)
-		(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
+		(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
 	*seq_next = sequence;
 	bytes_hi = be32toh(bytes_hi);
@@ -985,29 +991,32 @@ sc_platform_dump(int token, uint64_t dump_tag, uint64_t sequence, void *buffer,
 }
 
 /**
- * sc_read_slot_reset
- * @brief Set up the read-slot-reset-state rtas system call
+ * rtas_read_slot_reset
+ * @brief Interface to the ibm,read-slot-reset-state rtas call
  *
- * @param token
  * @param cfg_addr configuration address of slot to read
- * @param phbid PHB ID of slot to read
- * @param state
+ * @param phbid PHB ID of the slot to read
+ * @param state reference to variable to return slot state in
  * @param eeh
  * @return 0 on success, !0 otherwise
  */
-int
-sc_read_slot_reset(int token, uint32_t cfg_addr, uint64_t phbid, int *state,
-		   int *eeh)
+int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
+			 int *eeh)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
-	int status;
+	int token, status;
 	int rc;
 
+	token = rtas_token("ibm,read-slot-reset-state");
+	if (token < 0)
+		return token;
+
 	do {
-		rc = sc_rtas_call(token, 3, 3, htobe32(cfg_addr),
-				  htobe32(BITS32_HI(phbid)),
-				  htobe32(BITS32_LO(phbid)), &status,
-				  state, eeh);
+		rc = rtas_call(token, 3, 3, htobe32(cfg_addr),
+			       htobe32(BITS32_HI(phbid)),
+			       htobe32(BITS32_LO(phbid)), &status,
+			       state, eeh);
 		if (rc)
 			return rc;
 
@@ -1023,28 +1032,33 @@ sc_read_slot_reset(int token, uint32_t cfg_addr, uint64_t phbid, int *state,
 }
 
 /**
- * sc_scan_log_dump
+ * rtas_scan_log_dump
+ * @brief Interface to the ibm,scan-log-dump rtas call
  *
- * @param token
- * @param buffer
- * @param length
+ * @param buffer buffer to return scan log dump in
+ * @param length size of buffer
  * @return 0 on success, !0 otherwise
  */
-int sc_scan_log_dump(int token, void *buffer, size_t length)
+int rtas_scan_log_dump(void *buffer, size_t length)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,scan-log-dump");
 
-	rc = sc_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, buffer, length);
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(kernbuf_pa),
+		rc = rtas_call(token, 2, 1, htobe32(kernbuf_pa),
 				  htobe32(length), &status);
 		if (rc < 0)
 			break;
@@ -1055,42 +1069,59 @@ int sc_scan_log_dump(int token, void *buffer, size_t length)
 	if (rc == 0)
 		memcpy(buffer, kernbuf, length);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, length);
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
 	dbg1("(%p, %d) = %d\n", buffer, length, rc ? rc : status);
 	return rc ? rc : status;
 }
 
 /**
- * sc_set_dynamic_indicator
+ * rtas_set_debug
+ * @brief Interface to set librtas debug level
  *
- * @param token
- * @param indicator
- * @param new_value
+ * @param level debug level to set to
+ * @return 0 on success, !0 otherwise
+ */
+int rtas_set_debug(int level)
+{
+	config.debug = level;
+	return 0;
+}
+
+/**
+ * rtas_set_dynamic_indicator
+ * @brief Interface to the ibm,set-dynamic-indicator rtas call
+ *
+ * @param indicator indicator to set
+ * @param new_value value to set the indicator to
  * @param loc_code
  * @return 0 on success, !0 otherwise
  */
-int sc_set_dynamic_indicator(int token, int indicator, int new_value,
-			     void *loc_code)
+int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 {
+	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
 	uint64_t elapsed = 0;
 	void *locbuf;
 	uint32_t size;
-	int status;
+	int token, status;
 	int rc;
+
+	token = rtas_token("ibm,set-dynamic-indicator");
+	if (token < 0)
+		return token;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
-	rc = sc_get_rmo_buffer(size, &locbuf, &loc_pa);
+	rc = rtas_get_rmo_buffer(size, &locbuf, &loc_pa);
 	if (rc)
 		return rc;
 
 	memcpy(locbuf, loc_code, size);
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, htobe32(indicator),
-				  htobe32(new_value), htobe32(loc_pa), &status);
+		rc = rtas_call(token, 3, 1, htobe32(indicator),
+			       htobe32(new_value), htobe32(loc_pa), &status);
 		if (rc < 0)
 			break;
 
@@ -1098,7 +1129,7 @@ int sc_set_dynamic_indicator(int token, int indicator, int new_value,
 	} while (rc == CALL_AGAIN);
 
 
-	(void) sc_free_rmo_buffer(locbuf, loc_pa, size);
+	(void) rtas_free_rmo_buffer(locbuf, loc_pa, size);
 
 	dbg1("(%d, %d, %s) = %d\n", indicator, new_value, (char *)loc_code,
 	     rc ? rc : status);
@@ -1106,26 +1137,29 @@ int sc_set_dynamic_indicator(int token, int indicator, int new_value,
 }
 
 /**
- * sc_set_eeh_option
+ * rtas_set_eeh_option
+ * @brief Inerface to the ibm,set-eeh-option rtas call
  *
- * @param token
- * @param cfg_addr
- * @param phbid
+ * @param cfg_addr configuration address for slot to set eeh option on
+ * @param phbid PHB ID for slot to set option on
  * @param function
  * @return 0 on success, !0 otherwise
  */
-int
-sc_set_eeh_option(int token, uint32_t cfg_addr, uint64_t phbid, int function)
+int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 {
 	uint64_t elapsed = 0;
-	int status;
+	int token, status;
 	int rc;
 
+	token = rtas_token("ibm,set-eeh-option");
+	if (token < 0)
+		return token;
+
 	do {
-		rc = sc_rtas_call(token, 4, 1, htobe32(cfg_addr),
-				  htobe32(BITS32_HI(phbid)),
-				  htobe32(BITS32_LO(phbid)),
-				  htobe32(function), &status);
+		rc = rtas_call(token, 4, 1, htobe32(cfg_addr),
+			       htobe32(BITS32_HI(phbid)),
+			       htobe32(BITS32_LO(phbid)),
+			       htobe32(function), &status);
 		if (rc)
 			return rc;
 
@@ -1138,22 +1172,27 @@ sc_set_eeh_option(int token, uint32_t cfg_addr, uint64_t phbid, int function)
 }
 
 /**
- * sc_set_indicator
+ * rtas_set_indicator
+ * @brief Interface to the set-indicator rtas call
  *
- * @param token
- * @param indicator
- * @param index
- * @param new_value
+ * @param indicator indicator to set
+ * @param index indicator index
+ * @param new_value value to set the indicator to
  * @return 0 on success, !0 otherwise
  */
-int sc_set_indicator(int token, int indicator, int index, int new_value)
+int rtas_set_indicator(int indicator, int index, int new_value)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("set-indicator");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 3, 1, htobe32(indicator),
+		rc = rtas_call(token, 3, 1, htobe32(indicator),
 				  htobe32(index), htobe32(new_value), &status);
 		if (rc)
 			return rc;
@@ -1167,23 +1206,28 @@ int sc_set_indicator(int token, int indicator, int index, int new_value)
 }
 
 /**
- * sc_set_power_level
+ * rtas_set_power_level
+ * @brief Interface to the set-power-level rtas call
  *
- * @param token
  * @param powerdomain
- * @param level
+ * @param level power level to set to
  * @param setlevel
  * @return 0 on success, !0 otherwise
  */
-int sc_set_power_level(int token, int powerdomain, int level, int *setlevel)
+int rtas_set_power_level(int powerdomain, int level, int *setlevel)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	__be32 be_setlevel;
 	int status;
 	int rc;
+	int token = rtas_token("set-power-level");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 2, 2, htobe32(powerdomain),
+		rc = rtas_call(token, 2, 2, htobe32(powerdomain),
 				  htobe32(level), &status, &be_setlevel);
 		if (rc)
 			return rc;
@@ -1199,28 +1243,33 @@ int sc_set_power_level(int token, int powerdomain, int level, int *setlevel)
 }
 
 /**
- * sc_set_poweron_time
+ * rtas_set_poweron_time
+ * @brief interface to the set-time-for-power-on rtas call
  *
- * @param token
- * @param year
- * @param month
- * @param day
- * @param hour
- * @param min
- * @param sec
- * @param nsec
+ * @param year year to power on
+ * @param month month to power on
+ * @param day day to power on
+ * @param hour hour to power on
+ * @param min minute to power on
+ * @param sec second to power on
+ * @param nsec nano-second top power on
  * @return 0 on success, !0 otherwise
  */
 int
-sc_set_poweron_time(int token, uint32_t year, uint32_t month, uint32_t day,
+rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 		    uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("set-time-for-power-on");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 7, 1, htobe32(year), htobe32(month),
+		rc = rtas_call(token, 7, 1, htobe32(year), htobe32(month),
 				  htobe32(day), htobe32(hour), htobe32(min),
 				  htobe32(sec), htobe32(nsec), &status);
 		if (rc)
@@ -1235,31 +1284,36 @@ sc_set_poweron_time(int token, uint32_t year, uint32_t month, uint32_t day,
 }
 
 /**
- * sc_set_sysparm
+ * rtas_set_sysparm
+ * @brief Interface to the ibm,set-system-parameter rtas call
  *
- * @param token
  * @param parameter
  * @param data
  * @return 0 on success, !0 otherwise
  */
-int sc_set_sysparm(int token, unsigned int parameter, char *data)
+int rtas_set_sysparm(unsigned int parameter, char *data)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int status;
 	short size;
 	int rc;
+	int token = rtas_token("ibm,set-system-parameter");
+
+	if (token < 0)
+		return token;
 
 	size = *(short *)data;
-	rc = sc_get_rmo_buffer(size + sizeof(short), &kernbuf, &kernbuf_pa);
+	rc = rtas_get_rmo_buffer(size + sizeof(short), &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, data, size + sizeof(short));
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(parameter),
+		rc = rtas_call(token, 2, 1, htobe32(parameter),
 				  htobe32(kernbuf_pa), &status);
 		if (rc < 0)
 			break;
@@ -1267,34 +1321,39 @@ int sc_set_sysparm(int token, unsigned int parameter, char *data)
 		rc = handle_delay(status, &elapsed);
 	} while (rc == CALL_AGAIN);
 
-	(void)sc_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
 
 	dbg1("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
 /**
- * sc_set_time
+ * rtas_set_time
+ * @brief Interface to the set-time-of-day rtas call
  *
- * @param token
- * @param year
- * @param month
- * @param day
- * @param hour
- * @param min
- * @param sec
- * @param nsec
+ * @param year year to set time to
+ * @param month month to set time to
+ * @param day day to set time to
+ * @param hour hour to set time to
+ * @param min minute to set time to
+ * @param sec second to set time to
+ * @param nsec nan-second to set time to
  * @return 0 on success, !0 otherwise
  */
-int sc_set_time(int token, uint32_t year, uint32_t month, uint32_t day, 
+int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
 		uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
+	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	int status;
 	int rc;
+	int token = rtas_token("set-time-of-day");
+
+	if (token < 0)
+		return token;
 
 	do {
-		rc = sc_rtas_call(token, 7, 1, htobe32(year), htobe32(month),
+		rc = rtas_call(token, 7, 1, htobe32(year), htobe32(month),
 				htobe32(day), htobe32(hour), htobe32(min),
 				htobe32(sec), htobe32(nsec), &status);
 		if (rc)
@@ -1309,20 +1368,24 @@ int sc_set_time(int token, uint32_t year, uint32_t month, uint32_t day,
 }
 
 /**
- * sc_suspend_me
+ * rtas_suspend_me
+ * @brief Interface for ibm,suspend-me rtas call
  *
- * @param token
- * @return 0 on success, !0 otherwise
+ * @return 0 on success, !0 on failure
  */
-int sc_suspend_me(int token, uint64_t streamid)
+int rtas_suspend_me(uint64_t streamid)
 {
 	uint64_t elapsed = 0;
-	int status;
+	int token, status;
 	int rc;
 
+	token = rtas_token("ibm,suspend-me");
+	if (token < 0)
+		return token;
+
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(BITS32_HI(streamid)),
-				  htobe32(BITS32_LO(streamid)), &status);
+		rc = rtas_call(token, 2, 1, htobe32(BITS32_HI(streamid)),
+			       htobe32(BITS32_LO(streamid)), &status);
 		if (rc)
 			return rc;
 
@@ -1334,33 +1397,37 @@ int sc_suspend_me(int token, uint64_t streamid)
 }
 
 /**
- * sc_update_nodes
- * @brief Set up the ibm,update-nodes rtas system call
+ * rtas_update_nodes
+ * @brief Interface for ibm,update-nodes rtas call
  *
- * @param token
- * @param workarea
- * @param scope
- * @return 0 on success, !0 otherwise
+ * @param workarea input output work area for the rtas call
+ * @param scope of call
+ * @return 0 on success, !0 on failure
  *
  * Note that the PAPR defines the work area as 4096 bytes (as
  * opposed to a page), thus we use that rather than PAGE_SIZE below.
  */
-int sc_update_nodes(int token, char *workarea, unsigned int scope)
+int rtas_update_nodes(char *workarea, unsigned int scope)
 {
+	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	uint64_t elapsed = 0;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,update-nodes");
 
-	rc = sc_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, workarea, 4096);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
 				  htobe32(scope), &status);
 		if (rc < 0)
 			break;
@@ -1371,40 +1438,44 @@ int sc_update_nodes(int token, char *workarea, unsigned int scope)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
 
-	(void)sc_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
 
 	dbg1("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }
 
-/**
- * sc_update_properties
- * @brief Set up the ibm,update-properties rtas system call
+ /**
+ * rtas_update_properties
+ * @brief Interface for ibm,update-properties rtas call
  *
- * @param token
- * @param workarea
- * @param scope
- * @return 0 on success, !0 otherwise
+ * @param workarea input output work area for the rtas call
+ * @param scope of call
+ * @return 0 on success, !0 on failure
  *
  * Note that the PAPR defines the work area as 4096 bytes (as
  * opposed to a page), thus we use that rather than PAGE_SIZE below.
  */
-int sc_update_properties(int token, char *workarea, unsigned int scope)
+int rtas_update_properties(char *workarea, unsigned int scope)
 {
+	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	uint64_t elapsed = 0;
 	void *kernbuf;
 	int status;
 	int rc;
+	int token = rtas_token("ibm,update-properties");
 
-	rc = sc_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
+	if (token < 0)
+		return token;
+
+	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)
 		return rc;
 
 	memcpy(kernbuf, workarea, 4096);
 
 	do {
-		rc = sc_rtas_call(token, 2, 1, htobe32(workarea_pa),
+		rc = rtas_call(token, 2, 1, htobe32(workarea_pa),
 				  htobe32(scope), &status);
 		if (rc < 0)
 			break;
@@ -1415,7 +1486,7 @@ int sc_update_properties(int token, char *workarea, unsigned int scope)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
 
-	(void)sc_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
 
 	dbg1("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;

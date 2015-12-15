@@ -11,13 +11,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/mman.h>
-#include "common.h"
 #include "syscall.h"
 #include "librtas.h"
 
 #define MAX_PAGES 64
+#define MAX_PATH_LEN 80
 
 struct workarea_config {
 	int init_done;
@@ -35,6 +34,36 @@ static struct workarea_config wa_config = {
 	.init_done = 0,
 	.pages_map = 0ll,
 };
+
+/**
+ * open_proc_rtas_file
+ * @brief Open the proc rtas file
+ *
+ * @param name filename to open
+ * @param mode mode to open file in
+ * @return results of open() call
+ */
+int open_proc_rtas_file(const char *name, int mode)
+{
+	const char *proc_rtas_paths[] = { "/proc/ppc64/rtas", "/proc/rtas" };
+	char full_name[MAX_PATH_LEN];
+	int npaths;
+	int fd;
+	int i;
+
+	npaths = sizeof(proc_rtas_paths) / sizeof(char *);
+	for (i = 0; i < npaths; i++) {
+		sprintf(full_name, "%s/%s", proc_rtas_paths[i], name);
+		fd = open(full_name, mode, S_IRUSR | S_IWUSR);
+		if (fd >= 0)
+			break;
+	}
+
+	if (fd < 0)
+		dbg1("Failed to open %s\n", full_name);
+
+	return fd;
+}
 
 /**
  * read_kregion_bounds
@@ -111,7 +140,7 @@ static inline void set_bits(short lobit, short hibit, uint64_t value,
 
 /**
  * acquire_file_lock
- * 
+ *
  * @param start
  * @param size
  * @return 0 on success, !0 otherwise
@@ -260,7 +289,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 
 /**
  * init_workarea_config
- * 
+ *
  * @return 0 on success, !0 otherwise
  */
 static int init_workarea_config()
@@ -338,11 +367,11 @@ static int munmap_dev_mem(void *buf, size_t size)
 }
 
 /**
- * sc_interface_exists
+ * interface_exists
  *
  * @return 0 on success, !0 otherwise
  */
-int sc_interface_exists()
+int interface_exists()
 {
 	int fd = open_proc_rtas_file(rmo_filename, O_RDONLY);
 	int exists;
@@ -356,7 +385,8 @@ int sc_interface_exists()
 }
 
 /**
- * sc_free_rmo_buffer
+ * rtas_free_rmo_buffer
+ * @brief free the rmo buffer used by librtas
  *
  * @param buf virtual address of mmap()'ed buffer
  * @param phys_addr physical address of low mem buffer
@@ -365,8 +395,9 @@ int sc_interface_exists()
  *	RTAS_FREE_ERR - Free called before get
  * 	RTAS_IO_ASSERT - Unexpected I/O Error
  */
-int sc_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
+int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 {
+	SANITY_CHECKS();
 	int n_pages;
 	int rc;
 
@@ -394,7 +425,12 @@ int sc_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 }
 
 /**
- * sc_get_rmo_buffer
+ * rtas_get_rmo_buffer
+ * @brief Retrive the RMO buffer used by librtas
+ *
+ * On successful completion the buf parameter will reference an allocated
+ * area of RMO memory and the phys_addr parameter will refernce the
+ * physical address of the RMO buffer.
  *
  * @param size Size of requested region.  Must be a multiple of 4096.
  * @param buf Assigned to mmap'ed buffer of acquired region
@@ -404,8 +440,9 @@ int sc_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
  * 	RTAS_NO_LOWMEM - Out of rmo memory
  * 	RTAS_IO_ASSERT - Unexpected I/O Error
  */
-int sc_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
+int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 {
+	SANITY_CHECKS();
 	uint32_t addr;
 	int n_pages;
 	int rc;

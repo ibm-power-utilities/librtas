@@ -36,9 +36,9 @@ struct region {
 	struct region *next;
 };
 
-extern int sc_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
-extern int sc_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
-extern int sc_interface_exists();
+extern int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
+extern int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
+extern int interface_exists();
 
 #define BITS32_LO(_num) (uint32_t) (_num & 0xffffffffll)
 #define BITS32_HI(_num) (uint32_t) (_num >> 32) 
