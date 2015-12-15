@@ -34,7 +34,7 @@
 /* Adding a new RTAS call requires the following:
  * 1) A function prototype in librtas.h (this file) that roughly matches
  *    the RTAS call name.
- * 2) An implementation of the RTAS function, in librtas_calls.c.
+ * 2) An implementation of the RTAS function, in syscall_calls.c.
  */
 
 #ifdef __cplusplus

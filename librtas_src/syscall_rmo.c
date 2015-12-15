@@ -129,7 +129,7 @@ static inline uint64_t get_bits(short lobit, short hibit, uint64_t mask)
  * @return 0 on success, !0 otherwise
  */
 static inline void set_bits(short lobit, short hibit, uint64_t value,
-			    uint64_t * mask)
+			    uint64_t *mask)
 {
 	short num_bits = hibit - lobit + 1;
 	uint64_t ones_mask = (1ll << (num_bits)) - 1;
@@ -273,8 +273,8 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	first_page = (phys_addr - kregion->addr) / PAGE_SIZE;
 	n_pages = size / PAGE_SIZE;
 
-	bits =
-	    get_bits(first_page, first_page + n_pages - 1, wa_config.pages_map);
+	bits = get_bits(first_page, first_page + n_pages - 1,
+			wa_config.pages_map);
 	if (bits != ((1 << n_pages) - 1)) {
 		dbg("Invalid region [0x%x, 0x%x]\n", phys_addr, size);
 		return RTAS_IO_ASSERT;

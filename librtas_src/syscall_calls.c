@@ -109,7 +109,7 @@ static void display_rtas_buf(struct rtas_args *args, int after)
 		return;
 
 	ninputs = be32toh(args->ninputs);
-	nret    = be32toh(args->nret);
+	nret = be32toh(args->nret);
 
 	/* It doesn't make sense to byte swap the input and return arguments
 	 * as we don't know here what they really mean (it could be a 64 bit
@@ -178,6 +178,7 @@ static int _rtas_call(int delay_handling, int token, int ninputs,
 		dbg("RTAS syscall failure, errno=%d\n", errno);
 		return RTAS_IO_ASSERT;
 	}
+
 	display_rtas_buf(&args, 1);
 
 	/* Assign rets */
@@ -281,9 +282,11 @@ int rtas_cfg_connector(char *workarea)
 			break;
 
 		if ((rc == 0) && (status == CFG_RC_MEM)) {
-			rc = rtas_get_rmo_buffer(PAGE_SIZE, &extent, &extent_pa);
+			rc = rtas_get_rmo_buffer(PAGE_SIZE, &extent,
+						 &extent_pa);
 			if (rc < 0)
 				break;
+
 			continue;
 		}
 
@@ -552,9 +555,8 @@ int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
  * @param next
  * @return 0 on success, !0 otherwise
  */
-int
-rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
-	       int start, int *next)
+int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
+		     int start, int *next)
 {
 	uint32_t kernbuf_pa;
 	__be32 be_next;
@@ -564,6 +566,7 @@ rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	rc = sanity_check();
 	if (rc)
 		return rc;
+
 	rc = rtas_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
@@ -657,9 +660,7 @@ int rtas_get_sensor(int sensor, int index, int *state)
  * @param data reference to buffer to return parameter in
  * @return 0 on success, !0 otherwise
  */
-int
-rtas_get_sysparm(unsigned int parameter, unsigned int length,
-	       char *data)
+int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
 {
 	uint32_t kernbuf_pa;
 	void *kernbuf;
@@ -702,7 +703,7 @@ rtas_get_sysparm(unsigned int parameter, unsigned int length,
  * @return 0 on success, !0 otherwise
  */
 int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
-		uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec)
+		  uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec)
 {
 	int rc, status;
 
@@ -739,8 +740,8 @@ int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
  * @return 0 on success, !0 otherwise
  */
 int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
-		unsigned int sequence, unsigned int *seq_next,
-		unsigned int *bytes_ret)
+		 unsigned int sequence, unsigned int *seq_next,
+		 unsigned int *bytes_ret)
 {
 	uint32_t kernbuf_pa;
 	uint32_t loc_pa = 0;
@@ -758,6 +759,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	rc = rtas_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
 	if (rc)
 		return rc;
+
 	kernbuf = rmobuf + PAGE_SIZE;
 	kernbuf_pa = rmo_pa + PAGE_SIZE;
 	locbuf = rmobuf;
@@ -803,9 +805,8 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
  * @param seq_next
  * @return 0 on success, !0 otherwise
  */
-int rtas_lpar_perftools(int subfunc, char *workarea,
-		      unsigned int length, unsigned int sequence,
-		      unsigned int *seq_next)
+int rtas_lpar_perftools(int subfunc, char *workarea, unsigned int length,
+			unsigned int sequence, unsigned int *seq_next)
 {
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
@@ -858,9 +859,8 @@ int rtas_lpar_perftools(int subfunc, char *workarea,
  * @param bytes_ret
  * @return 0 on success, !0 othwerwise
  */
-int
-rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
-		 size_t length, uint64_t * seq_next, uint64_t * bytes_ret)
+int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
+		       size_t length, uint64_t *seq_next, uint64_t *bytes_ret)
 {
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa = 0;
@@ -879,8 +879,8 @@ rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 		if (rc)
 			return rc;
 	}
-	/*
-	 * Converting a 64bit host value to 32bit BE, _hi and _lo
+
+	/* Converting a 64bit host value to 32bit BE, _hi and _lo
 	 * pair is tricky: we should convert the _hi and _lo 32bits
 	 * of the 64bit host value.
 	 */
@@ -1132,9 +1132,9 @@ int rtas_set_power_level(int powerdomain, int level, int *setlevel)
  * @param nsec nano-second top power on
  * @return 0 on success, !0 otherwise
  */
-int
-rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
-		    uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
+int rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
+			  uint32_t hour, uint32_t min, uint32_t sec,
+			  uint32_t nsec)
 {
 	int rc, status;
 
@@ -1199,8 +1199,8 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
  * @param nsec nan-second to set time to
  * @return 0 on success, !0 otherwise
  */
-int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
-		uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
+int rtas_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour,
+		  uint32_t min, uint32_t sec, uint32_t nsec)
 {
 	int rc, status;
 

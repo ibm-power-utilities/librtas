@@ -62,12 +62,10 @@ static int open_prop_file(const char *prop_path, const char *prop_name, int *fd)
  * @param prop_len
  * @return 0 on success, !0 otherwise
  */
-static int
-get_property(const char *prop_path, const char *prop_name, char **prop_val,
-	     size_t * prop_len)
+static int get_property(const char *prop_path, const char *prop_name,
+			char **prop_val, size_t *prop_len)
 {
-	int fd;
-	int rc;
+	int rc, fd;
 
 	rc = open_prop_file(prop_path, prop_name, &fd);
 	if (rc)
@@ -142,6 +140,7 @@ int read_entire_file(int fd, char **buf, size_t * len)
 			errno = EIO;
 			return -1;
 		}
+
 		off += rc;
 	} while (rc == BLOCK_SIZE);
 
