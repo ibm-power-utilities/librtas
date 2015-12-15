@@ -34,6 +34,7 @@ uninstall:
 	@$(call uninstall_lib,$(LIBRE),$(DESTDIR))
 	@$(call uninstall_inc,$(LIBRE_HDRS),$(DESTDIR))
 	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME)
+	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).1
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."
