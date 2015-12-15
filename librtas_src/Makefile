@@ -37,8 +37,9 @@ install:
 
 uninstall:
 	@$(call uninstall_lib,$(LIBRTAS),$(DESTDIR))
-	@$(call uninstall_inc,$(LIBRTAS_HDR),$(DESTDIR))
+	@$(call uninstall_inc,$(HEADERS),$(DESTDIR))
 	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME)
+	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME).1
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."
