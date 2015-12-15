@@ -34,6 +34,23 @@ int dbg_lvl = 0;
 static uint64_t rtas_timeout_ms;
 
 /**
+ * sanity_check
+ * @brief validate the caller credentials and rtas interface
+ *
+ * @return 0 for success, !o on failure
+ */
+int sanity_check(void)
+{
+	if (geteuid() != (uid_t)0)
+		return RTAS_PERM;
+
+	if (!interface_exists())
+		return RTAS_KERNEL_INT;
+
+	return 0;
+}
+
+/**
  * handle_delay
  * @brief sleep for the specified delay time
  *
@@ -215,8 +232,11 @@ static int rtas_call(const char *name, int ninputs, int nrets, ...)
  */
 int rtas_activate_firmware()
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("ibm,activate-firmware", 0, 1, &status);
 
@@ -236,13 +256,16 @@ int rtas_activate_firmware()
  */
 int rtas_cfg_connector(char *workarea)
 {
-	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	uint32_t extent_pa = 0;
 	uint64_t elapsed = 0;
 	void *kernbuf;
 	void *extent;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(PAGE_SIZE, &kernbuf, &workarea_pa);
 	if (rc)
@@ -288,7 +311,12 @@ int rtas_cfg_connector(char *workarea)
  */
 int rtas_delay_timeout(uint64_t timeout_ms)
 {
-	SANITY_CHECKS();
+	int rc;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
+
 	rtas_timeout_ms = timeout_ms;
 
 	return 0;
@@ -303,8 +331,11 @@ int rtas_delay_timeout(uint64_t timeout_ms)
  */
 int rtas_display_char(char c)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("display-character", 1, 1, c, &status);
 
@@ -321,11 +352,14 @@ int rtas_display_char(char c)
  */
 int rtas_display_msg(char *buf)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int str_len;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	str_len = strlen(buf);
 
@@ -356,10 +390,13 @@ int rtas_display_msg(char *buf)
  */
 int rtas_errinjct(int etoken, int otoken, char *workarea)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(ERRINJCT_BUF_SIZE, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -388,8 +425,11 @@ int rtas_errinjct(int etoken, int otoken, char *workarea)
  */
 int rtas_errinjct_close(int otoken)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("ibm,close-errinjct", 1, 1, htobe32(otoken), &status);
 
@@ -409,9 +449,12 @@ int rtas_errinjct_close(int otoken)
  */
 int rtas_errinjct_open(int *otoken)
 {
-	SANITY_CHECKS();
 	__be32 be_otoken;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("ibm,open-errinjct", 0, 2, &be_otoken, &status);
 	*otoken = be32toh(be_otoken);
@@ -435,9 +478,12 @@ int rtas_errinjct_open(int *otoken)
 int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 			       uint32_t func, uint32_t *info)
 {
-	SANITY_CHECKS();
 	__be32 be_info;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("ibm,get-config-addr-info2", 4, 2, htobe32(config_addr),
 		       htobe32(BITS32_HI(phb_id)), htobe32(BITS32_LO(phb_id)),
@@ -464,12 +510,15 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
  */
 int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 {
-	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
 	void *locbuf;
 	uint32_t size;
 	__be32 be_state;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
@@ -507,12 +556,14 @@ int
 rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	       int start, int *next)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	__be32 be_next;
 	void *kernbuf;
 	int rc, status;
 
+	rc = sanity_check();
+	if (rc)
+		return rc;
 	rc = rtas_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
@@ -546,9 +597,12 @@ rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
  */
 int rtas_get_power_level(int powerdomain, int *level)
 {
-	SANITY_CHECKS();
 	__be32 be_level;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("get-power-level", 1, 2, htobe32(powerdomain),
 		       &status, &be_level);
@@ -574,9 +628,12 @@ int rtas_get_power_level(int powerdomain, int *level)
  */
 int rtas_get_sensor(int sensor, int index, int *state)
 {
-	SANITY_CHECKS();
 	__be32 be_state;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("get-sensor-state", 2, 2, htobe32(sensor),
 		       htobe32(index), &status, &be_state);
@@ -604,10 +661,13 @@ int
 rtas_get_sysparm(unsigned int parameter, unsigned int length,
 	       char *data)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -644,8 +704,11 @@ rtas_get_sysparm(unsigned int parameter, unsigned int length,
 int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
 		uint32_t *hour, uint32_t *min, uint32_t *sec, uint32_t *nsec)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("get-time-of-day", 0, 8, &status, year, month, day,
 		       hour, min, sec, nsec);
@@ -679,7 +742,6 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 		unsigned int sequence, unsigned int *seq_next,
 		unsigned int *bytes_ret)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	uint32_t loc_pa = 0;
 	uint32_t rmo_pa = 0;
@@ -688,6 +750,10 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	void *rmobuf;
 	void *locbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
 	if (rc)
@@ -741,11 +807,14 @@ int rtas_lpar_perftools(int subfunc, char *workarea,
 		      unsigned int length, unsigned int sequence,
 		      unsigned int *seq_next)
 {
-	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -793,7 +862,6 @@ int
 rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 		 size_t length, uint64_t * seq_next, uint64_t * bytes_ret)
 {
-	SANITY_CHECKS();
 	uint64_t elapsed = 0;
 	uint32_t kernbuf_pa = 0;
 	uint32_t next_hi, next_lo;
@@ -801,6 +869,10 @@ rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	uint32_t dump_tag_hi, dump_tag_lo;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	if (buffer) {
 		rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
@@ -863,8 +935,11 @@ rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
 			 int *eeh)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("ibm,read-slot-reset-state", 3, 3, htobe32(cfg_addr),
 		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
@@ -888,10 +963,13 @@ int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
  */
 int rtas_scan_log_dump(void *buffer, size_t length)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(length, &kernbuf, &kernbuf_pa);
 	if (rc)
@@ -934,11 +1012,14 @@ int rtas_set_debug(int level)
  */
 int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
 {
-	SANITY_CHECKS();
 	uint32_t loc_pa = 0;
 	void *locbuf;
 	uint32_t size;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	size = be32toh(*(uint32_t *)loc_code) + sizeof(uint32_t);
 
@@ -972,6 +1053,10 @@ int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 	uint64_t elapsed = 0;
 	int rc, status;
 
+	rc = sanity_check();
+	if (rc)
+		return rc;
+
 	rc = rtas_call("ibm,set-eeh-option", 4, 1, htobe32(cfg_addr),
 		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
 		       htobe32(function), &status);
@@ -992,8 +1077,11 @@ int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
  */
 int rtas_set_indicator(int indicator, int index, int new_value)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("set-indicator", 3, 1, htobe32(indicator),
 		       htobe32(index), htobe32(new_value), &status);
@@ -1014,9 +1102,12 @@ int rtas_set_indicator(int indicator, int index, int new_value)
  */
 int rtas_set_power_level(int powerdomain, int level, int *setlevel)
 {
-	SANITY_CHECKS();
 	__be32 be_setlevel;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("set-power-level", 2, 2, htobe32(powerdomain),
 		       htobe32(level), &status, &be_setlevel);
@@ -1045,8 +1136,11 @@ int
 rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 		    uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("set-time-for-power-on", 7, 1, htobe32(year),
 		       htobe32(month), htobe32(day), htobe32(hour),
@@ -1067,11 +1161,14 @@ rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
  */
 int rtas_set_sysparm(unsigned int parameter, char *data)
 {
-	SANITY_CHECKS();
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
 	short size;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	size = *(short *)data;
 	rc = rtas_get_rmo_buffer(size + sizeof(short), &kernbuf, &kernbuf_pa);
@@ -1105,8 +1202,11 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
 		uint32_t hour, uint32_t min, uint32_t sec, uint32_t nsec)
 {
-	SANITY_CHECKS();
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_call("set-time-of-day", 7, 1, htobe32(year), htobe32(month),
 		       htobe32(day), htobe32(hour), htobe32(min),
@@ -1147,10 +1247,13 @@ int rtas_suspend_me(uint64_t streamid)
  */
 int rtas_update_nodes(char *workarea, unsigned int scope)
 {
-	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)
@@ -1183,10 +1286,13 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
  */
 int rtas_update_properties(char *workarea, unsigned int scope)
 {
-	SANITY_CHECKS();
 	uint32_t workarea_pa;
 	void *kernbuf;
 	int rc, status;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	rc = rtas_get_rmo_buffer(4096, &kernbuf, &workarea_pa);
 	if (rc)

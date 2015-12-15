@@ -97,13 +97,4 @@ extern int rtas_update_properties(char *workarea, unsigned int scope);
 }
 #endif
 
-#define SANITY_CHECKS()                                         \
-        /* Check credentials */                                 \
-        if (geteuid() != (uid_t) 0)                             \
-                return RTAS_PERM;                               \
-                                                                \
-        /* Check for any kernel RTAS interface */               \
-        if (!interface_exists())                                 \
-                return RTAS_KERNEL_INT;
-
 #endif /* _LIBRTAS_H_ */

@@ -397,9 +397,12 @@ int interface_exists()
  */
 int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 {
-	SANITY_CHECKS();
 	int n_pages;
 	int rc;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	n_pages = size / PAGE_SIZE;
 
@@ -442,10 +445,13 @@ int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
  */
 int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 {
-	SANITY_CHECKS();
 	uint32_t addr;
 	int n_pages;
 	int rc;
+
+	rc = sanity_check();
+	if (rc)
+		return rc;
 
 	dbg("RMO buffer request, size: %d\n", size);
 
