@@ -2,15 +2,8 @@
                                  librtas 
               ------------------------------------------------
 
-Technical contacts: 
-	librtas.so - John Rose <johnrose@us.ibm.com>
-	librtasevent.so - Nathan Fontenot <nfont@austin.ibm.com>
-
-Admin contacts:
-	Micheal Strosaker <strosake@us.ibm.com>
-	Nathan Fontenot <nfont@austin.ibm.com>
-                      
-May 2005
+Mailing List:
+	librtas-devel@googlegroups.com
 
 Librtas provides a set of libraries for user-space access to the
 Run-Time Abstraction Services (RTAS) on the ppc64 architecture.
