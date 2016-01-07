@@ -5,7 +5,7 @@ Summary: Libraries to provide access to RTAS calls and RTAS events.
 Name: %{name}
 Version: %{version}
 Release: %{release}
-License: IBM Common Public License (CPL) v1.0
+License: GNU Lesser General Public License (LGPL)
 Source:  %{name}-%{version}.tar.gz
 Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -34,7 +34,7 @@ the contents of RTAS events.
 
 %files
 %defattr(-, root, root)
-%{_docdir}/%{name}/COPYRIGHT
+%{_docdir}/%{name}/COPYING.LESSER
 %{_docdir}/%{name}/README
 %{_includedir}/librtas.h
 %{_libdir}/librtas.so.%{version}
