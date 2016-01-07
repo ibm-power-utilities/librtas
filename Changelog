@@ -1,3 +1,236 @@
+Changelog for librtas-1.4.0
+=======================================
+
+commit 2a279559111e4f68ed270f28e21a042a97ad41cd
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Thu Jan 7 11:55:47 2016 -0500
+
+    Update README for correct contact information.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 90f24679c795ea8224ba836994366dec31529663
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Thu Jan 7 11:19:33 2016 -0500
+
+    Switch librtas package to LGPL License.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 5bbe4e9382b2e298227af13d1b600c59a5f1768b
+Author: Rafael Fonseca <rdossant@redhat.com>
+Date:   Tue Dec 15 15:06:10 2015 -0500
+
+    From: Rafael Fonseca <rdossant@redhat.com>
+    
+    Fix print formats for width-based types.
+    
+    Signed-off-by: NAthan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 9d930daa58c3c6f2fc2fb6e82c005726d22ef8b5
+Author: Rafael Fonseca <rdossant@redhat.com>
+Date:   Tue Dec 15 14:58:20 2015 -0500
+
+    From: Rafael Fonseca <rdossant@redhat.com>
+    
+    Fix potential memory leaks
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 1d0ec08104077bcc4dd8f76524cb2493aaf04a60
+Author: Sam Bobroff <sam.bobroff@au1.ibm.com>
+Date:   Tue Dec 15 14:53:55 2015 -0500
+
+    librtasevent: correct files left after uninstall
+    
+    Signed-off-by: Sam Bobroff <sam.bobroff@au1.ibm.com>
+    Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+
+commit 22b418b8758c60c9e250f495e2d58db2394ee3c4
+Author: Sam Bobroff <sam.bobroff@au1.ibm.com>
+Date:   Tue Dec 15 14:52:49 2015 -0500
+
+    librtas: correct files left after uninstall
+    
+    Signed-off-by: Sam Bobroff <sam.bobroff@au1.ibm.com>
+    Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+
+commit 9c1403ab4da25db47fcdfa7cfa26c0b465e0a5ed
+Author: Sam Bobroff <sam.bobroff@au1.ibm.com>
+Date:   Tue Dec 15 14:50:02 2015 -0500
+
+    librtas: install librtas.so.1 symlink
+    
+    Add a line to the librtas Makefile to create librtas.so.1 when
+    performing "make install". This matches the librtasevent.so.1 that is
+    already created.
+    
+    This allows systems that rely on the existance of that link to
+    successfully build programs using librtas when it is installed
+    directly from the source.
+    
+    Signed-off-by: Sam Bobroff <sam.bobroff@au1.ibm.com>
+
+commit 0afce7b27cc5e1581f7ec6c0acf3d7b3b6419b5b
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:46:54 2015 -0500
+
+    librtas: Correct multiple build warnings
+    
+    Correct the warnings produced during the build of librtas.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit bb77762b4f3310854bdf07ef3fcebc01ddd0d798
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:37:17 2015 -0500
+
+    librtas: deprecate libofdt
+    
+    The libofdt library is a project that was started a long time ago in
+    the hopes of providing a common infrastructure for accessing the device
+    tree. The code is mostly complete andd I really don't think there are
+    any users of it so I am proposing to deprecate the library.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 015c0f95fc10e595cd1a90634ac831d93d9ba4e2
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:30:13 2015 -0500
+
+    librtas: coding style updates
+    
+    Correct a few style issues to give the code a more consistant look.
+    
+    No functional changes.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 21de2c69433e23450d4fad4f9c48fbf8d2f5d04a
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:27:56 2015 -0500
+
+    librtas: Make SANITY_CHECKS() a real function
+    
+    Make the SANITY_CHECKS() macro a regular function.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit e5451d028d6981728840e1960f2d1de90e994f60
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:24:53 2015 -0500
+
+    librtas: Move rtas_token() declaration to internal header
+    
+    Move rtas_token decalration to internal header file.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit f06f03493a3f4c8e8cc5a96db857f0ba01a66e6c
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:23:41 2015 -0500
+
+    librtas: Remove declaration of open_proc_rtas_file()
+    
+    Make the open_proc_rtas_file() routine static and remove its
+    declaration from librtas.h.
+    
+    Signed-off-by: Nathan Fotnenot <nfont@linux.vnet.ibm.com>
+
+commit c01583d8bde5dd4c3e1ce7d0b4d5ced4008bffd4
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:21:45 2015 -0500
+
+    librtas: Move declaration of read_entire_file()
+    
+    Move declaration of read_entire_file() to an internal header.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 52222bf6c8fb1d3ce6fdf5ba7e97653771ea9843
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:19:14 2015 -0500
+
+    librtas: Break up the librtas_config struct
+    
+    Break up the librtas_config struct into its two pieces and remove
+    the definitions from the public header.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit eae18de31155d109a0160485ee7d93bbdb32d2e0
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:14:26 2015 -0500
+
+    librtas: Update the dbg() macro
+    
+    Remove the useless indirect of dbg1() macro and move the definition
+    to an internal .h file.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit ee457b1c21bd913913243e54c5a7dca63d3545a4
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Tue Dec 15 14:11:16 2015 -0500
+
+    librtas: consolidate common actions in making a rtas call
+    
+    Consolidate common actions, such as getting the rtas token and
+    handling extended delays, when making a rtas call into a routine.
+    
+    This change presents to new ways to make a rtas call;
+    rtas_call() - Which handles any delays
+    rtas_call_no_delay() - Which does not handle any delays
+    
+    The no delay variant was needed for the few instances where some work
+    needs to be done in between rtas calls when a delay occurs.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit 4b18e100dcf1672590aee49b2c1bbc15debee4a7
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Tue Dec 15 13:54:45 2015 -0500
+
+    librtas: rtas calls fully   implemented in syscalls
+    
+    Since the procfs and common interfaces are being removed,
+    all rtas calls will be fully implemented in the syscall_calls.c
+    and syscall_rmo.c files.
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
+commit 94efe8cb14637820af35bba555997d5bd5f92704
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Tue Dec 15 13:25:40 2015 -0500
+
+    librtas: common.h merged into librtas.h
+    
+    Code in common.h was added to librtas.h
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
+commit 3bc2d9277c6ac6679f7ee308127f90255453d76e
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Tue Dec 15 13:23:51 2015 -0500
+
+    librtas: removal of common code
+    
+    The common files are being removed with the removal of procfs
+    in order to simplify librtas.
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
+commit b8ad1ec918230379f612a4e976e74600660cebdc
+Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+Date:   Tue Dec 15 13:20:06 2015 -0500
+
+    librtas: removing procfs interface
+    
+    The procfs interface is no longer used.  As a result, it is being
+    removed to simplify librtas.
+    
+    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
+
 Changelog for librtas-1.3.14
 =======================================
 commit 4e46c718f42bf05e797c7fcfdd6cfc2a21fb4c91
