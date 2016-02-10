@@ -6,7 +6,7 @@ include rules.mk
 
 .SILENT:
 
-FILES = README COPYRIGHT
+FILES = README COPYING.LESSER
 SUBDIRS = librtas_src librtasevent_src
 
 TARBALL_FILES += $(FILES) doc/doxygen.rtas doc/doxygen.rtasevent Changelog
