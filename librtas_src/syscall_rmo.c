@@ -433,8 +433,10 @@ int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 	}
 
 	rc = munmap_dev_mem(buf, size);
-	if (rc)
+	if (rc) {
+		(void) release_phys_region(phys_addr, size);
 		return rc;
+	}
 
 	rc = release_phys_region(phys_addr, size);
 
@@ -489,8 +491,10 @@ int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 		return rc;
 
 	rc = mmap_dev_mem(addr, size, buf);
-	if (rc)
+	if (rc) {
+		(void) release_phys_region(addr, size);
 		return rc;
+	}
 
 	*phys_addr = addr;
 	return 0;
