@@ -122,6 +122,13 @@ static char *rtas_event_error_type[] = {
     "Address Invalid", "ECC Uncorrected", "ECC Corrupted",
 };
 
+#define APPEND_XSNPRINTF(FUNC, BUF, SIZE, POS,...) do { \
+    int tmprc = snprintf((BUF)+(POS),(SIZE)-(POS),__VA_ARGS__); \
+    (POS) = (tmprc < 0) ? (POS) : tmprc >= (int)((SIZE)-(POS)) ? (int)(SIZE) : (POS)+tmprc; \
+} while(0)
+#define APPEND_SNPRINTF(...) APPEND_XSNPRINTF(snprintf,__VA_ARGS__)
+#define APPEND_VSNPRINTF(...) APPEND_XSNPRINTF(vsnprintf,__VA_ARGS__)
+
 /**
  * print_scn_title
  * @brief print the title of the RTAS event section
@@ -140,19 +147,20 @@ print_scn_title(char *fmt, ...)
 
     memset(buf, 0, sizeof(buf));
 
-    offset = snprintf(buf, sizeof(buf), "==== ");
+    offset = 0;
+    APPEND_SNPRINTF(buf, sizeof(buf), offset, "==== ");
 
     va_start(ap, fmt);
-    offset += vsnprintf(buf + offset, sizeof(buf) - offset, fmt, ap);
+    APPEND_VSNPRINTF(buf, sizeof(buf), offset, fmt, ap);
     va_end(ap);
 
-    offset += snprintf(buf + offset, sizeof(buf) - offset, " ");
+    APPEND_SNPRINTF(buf, sizeof(buf), offset, " ");
 
     rspace = (rtas_print_width - (strlen(buf) + 2 + 9));
     for (i = 0; i < rspace; i++)
-        offset += snprintf(buf + offset, sizeof(buf) - offset, "=");
+        APPEND_SNPRINTF(buf, sizeof(buf), offset, "=");
 
-    offset += snprintf(buf + offset, sizeof(buf) - offset, "\n");
+    APPEND_SNPRINTF(buf, sizeof(buf), offset, "\n");
 
     len = rtas_print(buf);
     
@@ -310,8 +318,9 @@ rtas_print(char *fmt, ...)
     memset(tmpbuf, 0, sizeof(tmpbuf));
     memset(buf, 0, sizeof(buf));
 
+    tmpbuf_len = 0;
     va_start(ap, fmt);
-    tmpbuf_len = vsnprintf(tmpbuf, sizeof(tmpbuf), fmt, ap);
+    APPEND_VSNPRINTF(tmpbuf, sizeof(tmpbuf), tmpbuf_len, fmt, ap);
     va_end(ap);
 
     i = 0;
@@ -343,10 +352,8 @@ rtas_print(char *fmt, ...)
 
             if (newline != NULL) {
                 prnt_len = newline - &tmpbuf[offset] + 1;
-                snprintf(buf + buf_offset, prnt_len, "%s",&tmpbuf[offset]);
-                buf_offset = strlen(buf);
-                buf_offset += snprintf(buf + buf_offset,
-				       sizeof(buf) - buf_offset, "\n");
+                APPEND_SNPRINTF(buf, sizeof(buf), buf_offset, "%.*s",
+                                prnt_len, &tmpbuf[offset]);
                 offset += prnt_len;
                 line_offset = 0;
                 break;
@@ -363,18 +370,17 @@ rtas_print(char *fmt, ...)
             }
 
             /* print up to the last brkpt */
-            snprintf(buf + buf_offset, prnt_len, "%s", &tmpbuf[offset]);
-            buf_offset = strlen(buf);
-            buf_offset += snprintf(buf + buf_offset, sizeof(buf) - buf_offset,
-				   "\n");
+            APPEND_SNPRINTF(buf, sizeof(buf), buf_offset, "%s", &tmpbuf[offset]);
+            APPEND_SNPRINTF(buf, sizeof(buf), buf_offset, "\n");
             offset += prnt_len;
             line_offset = 0;
         }
             
     } 
 
-    prnt_len = snprintf(buf + buf_offset, sizeof(buf) - buf_offset,
-			"%s", &tmpbuf[offset]);
+    prnt_len = buf_offset;
+    APPEND_SNPRINTF(buf, sizeof(buf), buf_offset, "%s", &tmpbuf[offset]);
+    prnt_len = buf_offset - prnt_len;
     line_offset += prnt_len;
 
     return fprintf(ostream, "%s", buf);
