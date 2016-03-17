@@ -64,7 +64,7 @@ extern int dbg_lvl;
 
 #define dbg(_fmt, _args...)						  \
 	do {								  \
-		if (dbg_lvl >= 0)					  \
+		if (dbg_lvl > 0)					  \
 			printf("librtas %s(): " _fmt, __func__, ##_args); \
 	} while (0)
 
