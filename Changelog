@@ -1,3 +1,46 @@
+Changelog for librtas-1.4.1
+=======================================
+
+commit af07fde662985cb574fe56497847c4c6cdf1d1a8
+Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Date:   Thu Mar 17 18:53:48 2016 -0400
+
+    librtas: Do not enable debug message by default
+    
+    Commit eae18de3 removed dbg1 macro. But accidently enabled logging debug
+    message by default. This is confusing end users. Hence remove logging
+    debug message by default.
+    
+    Fixes: eae18de3 (librtas: Update the dbg() macro)
+    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+    CC: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit c5e9dcf993e9e20bbe14bc06fb0ec6dd5031f935
+Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Date:   Mon Feb 15 07:33:14 2016 -0500
+
+    librtas: Release lock in error path
+    
+    Release RMO buffer lock in error path. Otherwise we will continue to hold
+    the lock and subsequent RMO buffer allocation request fails.
+    
+    Reported-by: Bharata B Rao <bharata@linux.vnet.ibm.com>
+    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+
+commit 9683c7b393d48922a14b09a898fbe3cf698cd71a
+Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Date:   Wed Feb 10 16:15:19 2016 -0500
+
+    librtas: Fix Makefile
+    
+    Commit 90f24679 switched package license from CPL to LGPL. But we forgot
+    to update Makefile. So creating tarball from source fails. This patch
+    replaces COPYRIGHT with COPYING.LESSER in Makefile.
+    
+    Also updated Makefile header with proper license text.
+    
+    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+
 Changelog for librtas-1.4.0
 =======================================
 
@@ -345,210 +388,3 @@ Date:   Wed Aug 13 13:02:17 2014 -0500
     endianness of seq_next also needs to be handled.
     
     Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
-
-Changelog for librtas-1.3.11
-=======================================
-commit 129fdb4875c8c679418b70c55df9b8b7fe8d6180
-Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
-Date:   Wed Jun 25 09:55:52 2014 -0500
-
-    README: documentation on handling endianness
-    
-    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
-
-commit b13d14ff2dcbe54af61cab19d09be22edc9d74c0
-Author: Maran Pakkirisamy <maranp@linux.vnet.ibm.com>
-Date:   Fri Jun 6 14:04:27 2014 -0500
-
-    librtas: avoid bashism in rules.mk
-    
-    Ubuntu has made dash as its default shell (/bin/sh). This leads to build
-    being broken on ubuntu.
-    More information at: https://wiki.ubuntu.com/DashAsBinSh
-    This patch removes bashism and hence fixes the build breakage.
-    
-    Signed-off-by: Maran Pakkirisamy <maranp@linux.vnet.ibm.com>
-
-commit f9b806b19bbc4df56df6b5dbab1bf9060508b5d9
-Author: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
-Date:   Fri Jun 6 14:02:40 2014 -0500
-
-    librtas: Little endian support in syscalls
-    
-    This patch attempts to make rtas syscalls compatible for Little
-    Endian systems by ensuring rtas call parameters are Big Endian and
-    return values are host endian.
-    
-    Signed-off-by: Thomas Falcon <tlfalcon@linux.vnet.ibm.com>
-
-Changelog for librtas-1.3.10
-=======================================
-commit e0c097d3e0ab65433d4fdc6e18a820c82d909464
-Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-Date:   Fri Mar 21 15:28:56 2014 -0500
-
-    librtasevent: Enable RTAS event parsing on LE systems
-    
-    The librtasevent library does not work in LE environments. The
-    struct's for each rtas event section are defined as a bit field
-    to match layout of the rtas event. This librtasevent library
-    currently functions by mapping these structs directly the raw
-    rtas event that is passed. This works for BE systems because
-    rtas events are in BE by definition.
-    
-    To fix this this patch re-defines the structs that have been
-    used to just contain an int for each value in the rtas event
-    sections, then adds a raw version of the struct that we can map
-    directly onto the passed in rtas event. The raw structs can then
-    be traversed an we can do any neccessary conversions to LE values
-    in the structs that are passed back to the user.
-    
-    This patch updates most of the v6 rtas event sections, most notably
-    src/fru sections have not been updated yet. At this time there
-    are no plans to update pre-v6 rtas events for LE environments.
-    
-    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-
-commit 7eb810757d8573ef47fdc5bd26aa3d9e9afbfd8a
-Author: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Date:   Fri Mar 21 11:49:13 2014 -0500
-
-    librtas: PCI hotplug support vs little endian
-    
-    The goal of this patch is to enable a little endian process to interact
-    with RTAS which is big endian. The rationale is that librtas assumes
-    to be passed cpu endian arguments and do the necessary conversions. The
-    reasons for this choice are:
-    - many arguments are owned by librtas (status, RMO buffer addresses...)
-    - nearly all arguments are being used in cpu endian order by librtas:
-      if they were assumed to be big endian, we would have to byte swap
-      anyway, resulting in an even bigger patch...
-    
-    Of course, all rules have an exception: the RMO buffer content is not
-    seen by librtas, it is up to the caller (drmgr) to do the conversions.
-    
-    It seems that recent kernels don't have the needed procfs files anymore,
-    so this patch only cares about the rtas() syscall based implementation.
-    
-    As requested by Benjamin Herrenschmidt, the byte swapping should be
-    performed in userland AND be careful about corner cases where non
-    32-bit values are being passed:
-    
-    http://patchwork.ozlabs.org/patch/327089/
-    
-    We cannot boldly convert all arguments in the sc_rtas_call() function.
-    
-    For an example, let's look at sc_suspend_me() where we pass a 64 bit value
-    split across two arguments. If streamid is ABCDEFGHIJKLMNOP, then it will
-    be reassembled by the kernel as IJKLMNOPABCDEFGH before being passed to the
-    host...
-    
-    As a consequence, we can only convert well known parameters in the
-    sc_rtas_call() function:
-    - token
-    - number of input arguments
-    - number of return arguments
-    - return status (always the first return argument)
-    
-    All other values must be converted in the caller. Please note that we
-    introduce intermediary variables for return values as we do not want
-    big endian values to be written in memory where the code assumes they
-    are cpu endian.
-    
-    As a starter, we focus on the RTAS calls involved in PCI hotplug.
-    According to section 13.5.3 of the PAPR+, we have:
-    - set-power-level
-    - get-sensor-state
-    - set-indicator
-    - ibm,configure-connector (the RMO part is already covered in drmgr)
-    <disclaimer>
-    We should cover all the calls, but it requires a huge work and we
-    only want to enable PCI hotplug here. So yes, all other calls are
-    still broken in little endian... some more patching will be needed.
-    </disclaimer>
-    
-    Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
-    Reviewed-by: Laurent Dufour <ldufour@linux.vnet.ibm.com>
-
-Changelog for librtas-1.3.9
-=======================================
-commit 9c5bccb93aa734796df111c2e7c051860b8b30de
-Author: Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
-Date:   Fri Feb 28 07:49:59 2014 -0600
-
-    librtas, libofdt: fix endianness issues when accessing the device tree
-    
-    Signed-off-by: Greg Kurz <gkurz@linux.vnet.ibm.com>
-
-commit 399a1962534342c1a153445b587d3fd0c95cfc78
-Merge: e2de13f a057c98
-Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-Date:   Wed Feb 26 08:22:33 2014 -0600
-
-    Merge branch 'master' of ssh://nfont@git.code.sf.net/p/librtas/code
-
-commit e2de13f77b36aff9d55d97ec862261a329262d4a
-Author: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
-Date:   Tue Feb 25 10:09:54 2014 -0600
-
-    librtasevent: Add hotplug event implementation
-    
-    Add event definition and helper functions for hotplug events. This is
-    intended for qemu to notify a pseries guest of a hotplug event.
-    
-    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
-
-commit a057c984394ac5c0a043ecc250073b8606cd38a1
-Author: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
-Date:   Tue Feb 25 10:09:54 2014 -0600
-
-    librtasevent: Add hotplug event implementation
-    
-    Add event definition and helper functions for hotplug events. This is
-    intended for qemu to notify a pseries guest of a hotplug event.
-    
-    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
-
-Changelog for librtas-1.3.8
-=======================================
-commit cd1868315f728ea5e8399df5fb7689a88870d7da
-Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-Date:   Thu Jan 31 12:27:48 2013 -0600
-
-    Identify Platform Resource Reassignment Notifications (PRRN).
-    
-    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-
-
-Changelog for librtas-1.3.7
-=======================================
-commit 0d02142ec36e176694c90ab722aedc75c48801a0
-Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
-Date:   Tue Dec 18 13:08:09 2012 -0600
-
-    librtas allocates buffer space (required for RTAS call) in the RTAS private
-    memory area through sc_get_rmo_buffer() which internally allocates memory
-    and protects it by acquiring lock on the allocated memory area.
-    
-    Locking function :
-       At present acquire_file_lock() tries to lock the particular memory
-    area. If the memory area is already locked then it returns error without
-    retrying.
-    
-    So when two process executes rtas call simultaneously one fails with
-    "Unknown librtas I/O" error.
-    
-    This patch introduces "Wait for lock to be available" instead of
-    returning with IO error.
-    
-    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
-
-commit aea297b24ed0167970732193bbfd206a6c844dec
-Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
-Date:   Tue Dec 18 13:06:21 2012 -0600
-
-    This patch fixes minor memory leak in librtas.so
-    
-    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
-    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
-
