@@ -40,13 +40,13 @@ install:
 	@$(call install_lib,$(LIBRE),$(DESTDIR))
 	@$(call install_inc,$(LIBRE_HDRS),$(DESTDIR))
 	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME)
-	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).1
+	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).$(MAJOR_NO)
 
 uninstall:
 	@$(call uninstall_lib,$(LIBRE),$(DESTDIR))
 	@$(call uninstall_inc,$(LIBRE_HDRS),$(DESTDIR))
 	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME)
-	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).1
+	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).$(MAJOR_NO)
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."

@@ -45,13 +45,13 @@ install:
 	@$(call install_lib,$(LIBRTAS),$(DESTDIR))
 	@$(call install_inc,$(HEADERS),$(DESTDIR))
 	@ln -sf $(LIBRTAS) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME)
-	@ln -sf $(LIBRTAS) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME).1
+	@ln -sf $(LIBRTAS) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME).$(MAJOR_NO)
 
 uninstall:
 	@$(call uninstall_lib,$(LIBRTAS),$(DESTDIR))
 	@$(call uninstall_inc,$(HEADERS),$(DESTDIR))
 	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME)
-	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME).1
+	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRTAS))/$(LIBRTAS_SONAME).$(MAJOR_NO)
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."
