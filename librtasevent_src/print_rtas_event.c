@@ -343,7 +343,7 @@ rtas_print(char *fmt, ...)
 
             if (newline != NULL) {
                 prnt_len = newline - &tmpbuf[offset] + 1;
-                snprintf(buf + buf_offset, prnt_len, &tmpbuf[offset]);
+                snprintf(buf + buf_offset, prnt_len, "%s", &tmpbuf[offset]);
                 buf_offset = strlen(buf);
                 buf_offset += snprintf(buf + buf_offset,
 				       sizeof(buf) - buf_offset, "\n");
@@ -363,7 +363,7 @@ rtas_print(char *fmt, ...)
             }
 
             /* print up to the last brkpt */
-            snprintf(buf + buf_offset, prnt_len, &tmpbuf[offset]);
+            snprintf(buf + buf_offset, prnt_len, "%s", &tmpbuf[offset]);
             buf_offset = strlen(buf);
             buf_offset += snprintf(buf + buf_offset, sizeof(buf) - buf_offset,
 				   "\n");
@@ -374,10 +374,10 @@ rtas_print(char *fmt, ...)
     } 
 
     prnt_len = snprintf(buf + buf_offset, sizeof(buf) - buf_offset,
-			&tmpbuf[offset]);
+			"%s", &tmpbuf[offset]);
     line_offset += prnt_len;
 
-    return fprintf(ostream, buf);
+    return fprintf(ostream, "%s", buf);
 }
 
 /** 

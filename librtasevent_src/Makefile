@@ -20,6 +20,7 @@
 include ../rules.mk
 
 LIBRE_SONAME = librtasevent.so
+LIBRE_STATIC = librtasevent.a
 LIBRE = $(LIBRE_SONAME).$(VERSION)
 
 LIBRE_OBJS = get_rtas_event.o print_rtas_event.o rtas_cpu.o rtas_dump.o	\
@@ -32,23 +33,31 @@ HEADERS = $(LIBRE_HDRS) rtas_event.h
 CFLAGS += -fPIC -DPIC -I.
 LDFLAGS += -shared -Wl,-soname -Wl,$(LIBRE_SONAME).$(MAJOR_NO)
 
-all: $(LIBRE_OBJS) $(HEADERS)
+all: libre_shared libre_static
+
+libre_shared: $(LIBRE_OBJS) $(HEADERS)
 	@echo "LD librtasevent_src/$(LIBRE)..."
 	@$(CC) $(LIBRE_OBJS) $(LDFLAGS) -o $(LIBRE)
 
+libre_static: $(LIBRE_OBJS) $(HEADERS)
+	@echo "AR $(LIBRE_STATIC)..."
+	@ar rcs $(LIBRE_STATIC) $(LIBRE_OBJS)
+
 install:
 	@$(call install_lib,$(LIBRE),$(DESTDIR))
+	@$(call install_lib,$(LIBRE_STATIC),$(DESTDIR))
 	@$(call install_inc,$(LIBRE_HDRS),$(DESTDIR))
 	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME)
-	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).1
+	@ln -sf $(LIBRE) $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).$(MAJOR_NO)
 
 uninstall:
 	@$(call uninstall_lib,$(LIBRE),$(DESTDIR))
+	@$(call uninstall_lib,$(LIBRE_STATIC),$(DESTDIR))
 	@$(call uninstall_inc,$(LIBRE_HDRS),$(DESTDIR))
 	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME)
-	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).1
+	@rm -f $(DESTDIR)/$(LIB_DIR)$(call is_lib64,$(LIBRE))/$(LIBRE_SONAME).$(MAJOR_NO)
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."
-	@rm -f $(LIBRE_OBJS) $(LIBRE_SONAME) $(LIBRE)
+	@rm -f $(LIBRE_OBJS) $(LIBRE_SONAME) $(LIBRE) $(LIBRE_STATIC)
 

@@ -1,5 +1,6 @@
 %define name librtas
-%define version 1.4.1
+%define version 2.0.0
+%define sover 2
 %define release 1
 Summary: Libraries to provide access to RTAS calls and RTAS events.
 Name: %{name}
@@ -9,7 +10,7 @@ License: GNU Lesser General Public License (LGPL)
 Source:  %{name}-%{version}.tar.gz
 Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
+ExclusiveArch: ppc ppc64 ppc64le
 
 %description
 The librtas shared library provides userspace with an interface
@@ -21,6 +22,23 @@ The librtasevent shared library provides users with a set of
 definitions and common routines useful in parsing and dumping
 the contents of RTAS events.
 
+%package devel
+Summary:  C header files for development with librtas
+Group:    Development/Libraries
+Requires: %{name}%{?_isa} = %{version}-%{release}
+
+%description devel
+The librtas-devel package contains the header files necessary for
+developing programs using librtas.
+
+%package static
+Summary:  Static verions of the librtas libraries
+Group:    Development/Libraries
+
+%description static
+The librtas-static package contains the static libraries which
+correspond to the librtas and librtas-devel packages.
+
 %prep
 %setup -q
 
@@ -31,32 +49,30 @@ the contents of RTAS events.
 %{__rm} -rf $RPM_BUILD_ROOT
 %{__make} install DESTDIR=$RPM_BUILD_ROOT
 
+%post
+ldconfig
+
+%postun
+ldconfig
 
 %files
 %defattr(-, root, root)
 %{_docdir}/%{name}/COPYING.LESSER
 %{_docdir}/%{name}/README
-%{_includedir}/librtas.h
+%{_libdir}/librtas.so.%{sover}
 %{_libdir}/librtas.so.%{version}
+%{_libdir}/librtasevent.so.%{sover}
+%{_libdir}/librtasevent.so.%{version}
+
+%files devel
 %{_libdir}/librtas.so
 %{_libdir}/librtasevent.so
-%{_libdir}/librtasevent.so.1
-%{_libdir}/librtasevent.so.%{version}
+%{_includedir}/librtas.h
 %{_includedir}/librtasevent.h
 %{_includedir}/librtasevent_v4.h
 %{_includedir}/librtasevent_v6.h
 
-%post
-# Post-install script -------------------------------------------------
-ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so
-ln -sf %{_libdir}/librtas.so.%{version} %{_libdir}/librtas.so.1
-ln -sf %{_libdir}/librtasevent.so.%{version} %{_libdir}/librtasevent.so
-ldconfig
+%files static
+%{_libdir}/librtas.a
+%{_libdir}/librtasevent.a
 
-%postun
-# Post-uninstall script -----------------------------------------------
-if [ "$1" = "0" ] ; then        # last uninstall
-    rm -f %{_libdir}/librtas.so
-    rm -f %{_libdir}/librtasevent.so
-fi
-ldconfig
