@@ -20,6 +20,7 @@
 include ../rules.mk
 
 LIBRE_SONAME = librtasevent.so
+LIBRE_STATIC = librtasevent.a
 LIBRE = $(LIBRE_SONAME).$(VERSION)
 
 LIBRE_OBJS = get_rtas_event.o print_rtas_event.o rtas_cpu.o rtas_dump.o	\
@@ -32,9 +33,15 @@ HEADERS = $(LIBRE_HDRS) rtas_event.h
 CFLAGS += -fPIC -DPIC -I.
 LDFLAGS += -shared -Wl,-soname -Wl,$(LIBRE_SONAME).$(MAJOR_NO)
 
-all: $(LIBRE_OBJS) $(HEADERS)
+all: libre_shared libre_static
+
+libre_shared: $(LIBRE_OBJS) $(HEADERS)
 	@echo "LD librtasevent_src/$(LIBRE)..."
 	@$(CC) $(LIBRE_OBJS) $(LDFLAGS) -o $(LIBRE)
+
+libre_static: $(LIBRE_OBJS) $(HEADERS)
+	@echo "AR $(LIBRE_STATIC)..."
+	@ar rcs $(LIBRE_STATIC) $(LIBRE_OBJS)
 
 install:
 	@$(call install_lib,$(LIBRE),$(DESTDIR))
@@ -50,5 +57,5 @@ uninstall:
 
 clean:
 	@echo "Cleaning up $(WORK_DIR) files..."
-	@rm -f $(LIBRE_OBJS) $(LIBRE_SONAME) $(LIBRE)
+	@rm -f $(LIBRE_OBJS) $(LIBRE_SONAME) $(LIBRE) $(LIBRE_STATIC)
 
