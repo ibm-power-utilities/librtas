@@ -1,3 +1,46 @@
+Changelog for librtas-2.0.0
+=======================================
+
+commit da9f484ab2429525101432d57176f376576c3dac
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Tue Apr 5 04:11:23 2016 -0600
+
+    Modernize and parameterize the RPM specfile slightly.
+    
+    Signed-off-by: Adam Conrad <adconrad@0c3.net>
+
+commit 9c1591cd262116290b5a651bc09192b6c34da9ce
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Tue Apr 5 01:38:33 2016 -0600
+
+    librtasevent: Fix build failure with -Wformat -Werror=format-security
+    
+    Signed-off-by: Adam Conrad <adconrad@0c3.net>
+
+commit 2644f9d269be8b852aa024f1364a5199aac268db
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Tue Apr 5 01:35:51 2016 -0600
+
+    librtas*/Makefile: install/uninstall static libs
+    
+    Signed-off-by: Adam Conrad <adconrad@0c3.net>
+
+commit f9bb81502e5fa3894caa1761292ec69580dc087e
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Tue Apr 5 01:30:41 2016 -0600
+
+    librtasevent: Generate static library.
+    
+    Signed-off-by: Adam Conrad <adconrad@0c3.net>
+
+commit 2b43240db6fe721288bf09a6f2c75743ae4f8855
+Author: Adam Conrad <adconrad@0c3.net>
+Date:   Fri Apr 1 08:34:16 2016 -0600
+
+    Use MAJOR_NO to define the SONAME symlinks, instead of hardcoding "1"
+    
+    Signed-off-by: Adam Conrad <adconrad@0c3.net>
+
 Changelog for librtas-1.4.1
 =======================================
 
