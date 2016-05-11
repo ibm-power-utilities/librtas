@@ -1,5 +1,5 @@
 %define name librtas
-%define version 2.0.0
+%define version @PACKAGE_VERSION@
 %define sover 2
 %define release 1
 Summary: Libraries to provide access to RTAS calls and RTAS events.
@@ -14,7 +14,7 @@ ExclusiveArch: ppc ppc64 ppc64le
 
 
 %description
-The librtas shared library provides userspace with an interface
+The librtas shared library provides user space with an interface
 through which certain RTAS calls can be made.  The library uses
 either of the RTAS User Module or the RTAS system call to direct
 the kernel in making these calls.
@@ -44,6 +44,7 @@ correspond to the librtas and librtas-devel packages.
 %setup -q
 
 %build
+%configure
 %{__make} %{?_smp_mflags}
 
 %install
@@ -64,6 +65,8 @@ ldconfig
 %{_libdir}/librtas.so.%{version}
 %{_libdir}/librtasevent.so.%{version}
 %{_libdir}/librtasevent.so.%{sover}
+%{_libdir}/librtas.la
+%{_libdir}/librtasevent.la
 
 %files devel
 %{_libdir}/librtas.so
@@ -72,6 +75,7 @@ ldconfig
 %{_includedir}/librtasevent.h
 %{_includedir}/librtasevent_v4.h
 %{_includedir}/librtasevent_v6.h
+%{_libdir}/pkgconfig/librtas.pc
 
 %files static
 %{_libdir}/librtas.a
