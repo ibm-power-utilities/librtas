@@ -1,0 +1,47 @@
+AC_INIT([librtas],[2.0.0],[See README])
+
+AC_CONFIG_AUX_DIR([config])
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_CANONICAL_TARGET
+
+AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar])
+
+AM_PROG_AR
+
+AC_CONFIG_HEADERS([config.h])
+
+PKG_PROG_PKG_CONFIG
+AC_CHECK_FUNCS([memset munmap strrchr])
+AC_CHECK_HEADERS([fcntl.h])
+AC_C_INLINE
+AC_FUNC_MALLOC
+AC_FUNC_MMAP
+AC_FUNC_REALLOC
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_TYPE_UID_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+
+AC_DEFUN([LOCAL_CHECK_FLAGS],[
+  AC_REQUIRE([AX_CHECK_LINK_FLAG])
+  AC_REQUIRE([AX_APPEND_COMPILE_FLAGS])
+  AC_LANG_PUSH([C])
+  AX_APPEND_COMPILE_FLAGS([-Wall])
+  AX_APPEND_COMPILE_FLAGS([-D_FORTIFY_SOURCE=2 -fstack-protector-all])
+  AX_APPEND_COMPILE_FLAGS([-fwrapv -fPIE -Wstack-protector])
+  AX_APPEND_COMPILE_FLAGS([--param=ssp-buffer-size=1])
+  AX_CHECK_LINK_FLAG([-z relro -z now])
+  AX_CHECK_LINK_FLAG([-pie])
+  AC_LANG_POP
+])
+LOCAL_CHECK_FLAGS
+
+LT_INIT
+LT_LANG([C])
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+AC_CONFIG_FILES([Makefile librtas.pc librtas.spec])
+AC_OUTPUT
