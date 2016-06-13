@@ -7,7 +7,7 @@ AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar])
 
-AM_PROG_AR
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_CONFIG_HEADERS([config.h])
 
