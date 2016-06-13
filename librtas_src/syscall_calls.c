@@ -466,15 +466,20 @@ int rtas_errinjct_close(int otoken)
  */
 int rtas_errinjct_open(int *otoken)
 {
-	__be32 be_otoken;
+	__be32 be_status;
 	int rc, status;
 
 	rc = sanity_check();
 	if (rc)
 		return rc;
 
-	rc = rtas_call("ibm,open-errinjct", 0, 2, &be_otoken, &status);
-	*otoken = be32toh(be_otoken);
+	/*
+	 * Unlike other RTAS calls, here first output parameter is otoken,
+	 * not status. rtas_call converts otoken to host endianess. We
+	 * have to convert status parameter.
+	 */
+	rc = rtas_call("ibm,open-errinjct", 0, 2, otoken, &be_status);
+	status = be32toh(be_status);
 
 	dbg("(%p) = %d, %d\n", otoken, rc ? rc : status, *otoken);
 	return rc ? rc : status;
