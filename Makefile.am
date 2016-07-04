@@ -19,7 +19,7 @@ AM_CFLAGS = -I$(top_srcdir)/librtas_src/ -I$(top_srcdir)/librtasevent_src/
 
 library_includedir=$(includedir)
 
-LIBRTAS_LIBRARY_VERSION = 2:0:0
+LIBRTAS_LIBRARY_VERSION = $(subst .,:,$(PACKAGE_VERSION))
 
 lib_LTLIBRARIES += librtas.la
 librtas_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION)
