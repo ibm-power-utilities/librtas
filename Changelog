@@ -1,3 +1,80 @@
+Changelog for librtas-2.0.1
+=======================================
+commit 7f841902eb50ca77c3aa884e3fd924c2bbd817ca
+Author: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+Date:   Mon Jun 13 09:33:57 2016 -0400
+
+    librtas: Fix endianess issue in errinjct rtas call
+    
+    Unlike other RTAS calls, first output parameter of "ibm,open-errinjct"
+    is "open token", not status value.
+    
+    With commit ee457b1c, we endedup calling be32toh twice for otoken and
+    didn't convert status from BE to host format.
+    
+    This patch fixes above issue.
+    
+    Fixes: ee457b1c (librtas: consolidate common actions in making a rtas call)
+    
+    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+    Reviewed-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+
+commit e6f35aaee6ad1d674a1b0498e7144340f4abe926
+Author: Michael Bringmann <mwb@linux.vnet.ibm.com>
+Date:   Mon Jun 13 09:29:59 2016 -0400
+
+    librtas/configure.ac: Fix for builds on older distros
+    
+    Fix problem generating configure script / Makefile on platforms/distros
+    that have versions of 'automake' older than 1.11.1.
+    
+    Signed-off-by: Michael Bringmann <mwb@linux.vnelibrtas/configure.ac: Fix for
+    
+    Fix problem generating configure script / Makefile on platforms/distros
+    that have versions of 'automake' older than 1.11.1.
+    
+    Signed-off-by: Michael Bringmann <mwb@linux.vnet.ibm.com>
+    Acked-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+
+commit ac6330c17bcbc955b9cb13d7073d89d3d87a3a50
+Author: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+Date:   Wed May 18 16:43:14 2016 -0400
+
+    Correcting to add files that should have been added as part of
+    commit e0582a6af7c33e867edca.
+    
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
+commit e0582a6af7c33e867edca882b28a1544d2ef08b4
+Author: Stewart Smith <stewart@linux.vnet.ibm.com>
+Date:   Wed May 11 13:26:51 2016 -0400
+
+    From: Signed-off-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+    
+    Switch to modern autotools based build system
+    
+    The patch removes the custom Makefiles and replaces them with a modern
+    autotools based build system.
+    
+    In the process, several bugs are fixed and enhancements made:
+    - build dependencies are sorted out okay
+    - the makefiles are now much smaller
+    - make dist works
+    - make distcheck works
+    - out of source builds work
+    - autogenerating of version in spec file is much simpler
+    - configure script checks for needed functions, header files and types
+    - we now build with hardening gcc flags (if available)
+    - libraries are now properly .so versioned
+    - build+install is good for multiarch
+    - some rpmlint warnings fixed
+    - split rpm into librtas and librtas-devel
+    - provide pkg-config foo
+    
+    Signed-off-by: Stewart Smith <stewart@linux.vnet.ibm.com>
+    Signed-off-by: Nathan Fontenot <nfont@linux.vnet.ibm.com>
+
 Changelog for librtas-2.0.0
 =======================================
 
