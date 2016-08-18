@@ -62,7 +62,7 @@ BIN_DIR = /usr/bin
 SBIN_DIR = /usr/sbin
 LIB_DIR = /usr/lib
 INC_DIR = /usr/include/
-DOC_DIR = /usr/share/doc/packages/$(PROJECT)
+DOC_DIR = /usr/share/doc/$(PROJECT)
 MAN_DIR = /usr/share/man/man8
 
 # Shipdir is where we put all the files to build an rpm
