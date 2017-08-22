@@ -105,6 +105,8 @@ extern int rtas_set_time(uint32_t year, uint32_t month, uint32_t day,
 extern int rtas_suspend_me(uint64_t streamid);
 extern int rtas_update_nodes(char *workarea, unsigned int scope);
 extern int rtas_update_properties(char *workarea, unsigned int scope);
+extern int rtas_physical_attestation(char *workarea, int seq_num,
+				     int *next_seq_num, int *work_area_bytes);
 
 #ifdef __cplusplus
 }
