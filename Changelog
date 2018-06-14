@@ -1,3 +1,22 @@
+Changelog for librtas-2.0.2
+=======================================
+commit 26970c42bc017ad68b864e7134cf941c07443aa8
+Author: Chris Engel <cengel@linux.vnet.ibm.com>
+Date:   Tue Aug 22 14:59:06 2017 -0500
+
+    Interface for ibm,physical-attestation rtas call
+    
+    The physical attestation interfaces are provided to allow a
+    trusted 3rd party client to retrieve information about the
+    trusted boot state of the target PowerVM system.  This makes
+    use of the systems physical TPM(s).  These TPM(s) are used
+    by system firmware to extend measurements during the
+    boot process.
+    
+    Signed-off-by: Chris Engel <cengel@linux.vnet.ibm.com>
+    Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.vnet.ibm.com>
+
 Changelog for librtas-2.0.1
 =======================================
 commit 7f841902eb50ca77c3aa884e3fd924c2bbd817ca
