@@ -815,7 +815,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 
 /**
  * rtas_lpar_perftools
- * @brief Interface to the ibm,lpa-perftools rtas call
+ * @brief Interface to the ibm,lpar-perftools rtas call
  *
  * @param subfunc
  * @param workarea additional args to the rtas call
