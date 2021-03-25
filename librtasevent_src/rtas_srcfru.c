@@ -73,13 +73,16 @@ parse_fru_id_scn(struct rtas_event *re)
     parse_fru_hdr(&fru_id->fruhdr, &fru_id_raw->fruhdr);
     re->offset += RE_FRU_HDR_SZ;
 
+    int len_procedure_id = strlen(fru_id->procedure_id);
+    int len_part_no = strlen(fru_id->part_no);
+
     if (fruid_has_part_no(fru_id)) {
-        strcpy(fru_id->part_no, RE_EVENT_OFFSET(re));
+        strncpy(fru_id->part_no, RE_EVENT_OFFSET(re), len_part_no);
         re->offset += 8;
     }
 
     if (fruid_has_proc_id(fru_id)) {
-        strcpy(fru_id->procedure_id, RE_EVENT_OFFSET(re));
+        strncpy(fru_id->procedure_id, RE_EVENT_OFFSET(re), len_procedure_id);
         re->offset += 8;
     }
 
@@ -238,9 +241,10 @@ parse_src_scn(struct rtas_event *re)
 
     add_re_scn(re, src, re_scn_id(&src_raw->v6hdr));
 
-    if (!src_subscns_included(src))
+    if (!src_subscns_included(src)) {
+        free (src_raw);
         return 0;
-
+    }
     rtas_copy( (char *) src_raw + RE_SRC_SCN_SZ + 4, re, RE_SRC_SUBSCN_SZ);
 
     src->subscn_id = src_raw->subscn_id;
@@ -260,6 +264,7 @@ parse_src_scn(struct rtas_event *re)
         if (fru == NULL) {
             cleanup_rtas_event(re);
             errno = ENOMEM;
+            free(src_raw);
             return 1;
         }
 
@@ -288,6 +293,8 @@ parse_src_scn(struct rtas_event *re)
 
             if (cur_fruhdr == NULL) {
                 cleanup_rtas_event(re);
+                free(src_raw);
+                free(fru);
                 return -1;
             }
 
@@ -309,6 +316,7 @@ parse_src_scn(struct rtas_event *re)
         total_len += fru->length;
     } while (total_len < srcsub_len);
 
+    free(src_raw);
     return 0;
 }
 

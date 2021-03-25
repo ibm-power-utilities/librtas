@@ -116,6 +116,7 @@ parse_vend_errlog_scn(struct rtas_event *re)
         ve->vendor_data = malloc(ve->vendor_data_sz);
         if (ve->vendor_data == NULL) {
             errno = ENOMEM;
+            free(ve);
             return -1;
         }
 
