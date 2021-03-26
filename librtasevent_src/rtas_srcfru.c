@@ -73,17 +73,14 @@ parse_fru_id_scn(struct rtas_event *re)
     parse_fru_hdr(&fru_id->fruhdr, &fru_id_raw->fruhdr);
     re->offset += RE_FRU_HDR_SZ;
 
-    int len_procedure_id = strlen(fru_id->procedure_id);
-    int len_part_no = strlen(fru_id->part_no);
-
     if (fruid_has_part_no(fru_id)) {
-        strncpy(fru_id->part_no, RE_EVENT_OFFSET(re), len_part_no);
-        re->offset += 8;
+        rtas_copy(fru_id->part_no, re, 7);
+        fru_id->part_no[7] = '\0';
     }
 
     if (fruid_has_proc_id(fru_id)) {
-        strncpy(fru_id->procedure_id, RE_EVENT_OFFSET(re), len_procedure_id);
-        re->offset += 8;
+        rtas_copy(fru_id->procedure_id, re, 7);
+        fru_id->procedure_id[7] = '\0';
     }
 
     if (fruid_has_ccin(fru_id)) {
