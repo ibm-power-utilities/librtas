@@ -252,6 +252,7 @@ parse_src_scn(struct rtas_event *re)
     total_len = RE_SRC_SUBSCN_SZ;
 
     last_fru = NULL;
+    free(src_raw);
 
     do {
 	uint32_t fru_len, fru_end;
@@ -261,7 +262,6 @@ parse_src_scn(struct rtas_event *re)
         if (fru == NULL) {
             cleanup_rtas_event(re);
             errno = ENOMEM;
-            free(src_raw);
             return 1;
         }
 
@@ -290,7 +290,6 @@ parse_src_scn(struct rtas_event *re)
 
             if (cur_fruhdr == NULL) {
                 cleanup_rtas_event(re);
-                free(src_raw);
                 free(fru);
                 return -1;
             }
@@ -313,7 +312,6 @@ parse_src_scn(struct rtas_event *re)
         total_len += fru->length;
     } while (total_len < srcsub_len);
 
-    free(src_raw);
     return 0;
 }
 
