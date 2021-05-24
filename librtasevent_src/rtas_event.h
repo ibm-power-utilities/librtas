@@ -23,6 +23,8 @@
 #ifndef _H_RTAS_EVENT
 #define _H_RTAS_EVENT
 
+#include <endian.h>
+
 #define PRNT_FMT        "%-20s%08x"
 #define PRNT_FMT_L      PRNT_FMT"    "
 #define PRNT_FMT_R      PRNT_FMT"\n"
