@@ -1,0 +1,72 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+declare -a configure_opts
+
+: "${CPU:=powerpc64le-power8}"
+: "${LIBC:=glibc}"
+: "${BR_VERSION:=stable-2020.08-1}"
+: "${EXT:=tar.bz2}"
+: "${TC_TOP:=$PWD/tc}"
+: "${DL_DIR:=$TC_TOP/download}"
+: "${INST_DIR:=$TC_TOP/install}"
+
+url_base="https://toolchains.bootlin.com/downloads/releases/toolchains/"
+filename="${CPU}--${LIBC}--${BR_VERSION}.${EXT}"
+url="${url_base}/${CPU}/tarballs/${filename}"
+
+case "$CPU" in
+    powerpc64le-*)
+	ac_host="powerpc64le"
+	;;
+    powerpc64-*)
+	ac_host="powerpc64"
+	;;
+    *)
+	printf "Error: unsupported cpu '%s'\n" "$CPU" >&2
+	exit 1
+	;;
+esac
+
+case "$LIBC" in
+    glibc)
+	ac_host+="-buildroot-linux-gnu"
+	;;
+    musl)
+	ac_host+="-buildroot-linux-musl"
+	;;
+    *)
+	printf "Error: unsupported libc '%s'\n" "$LIBC" >&2
+	exit 1
+	;;
+esac
+
+configure_opts+=(--host="$ac_host")
+
+# Download directory contents may be cached by the CI; don't remove
+# them.
+mkdir -p "$DL_DIR"
+pushd "$DL_DIR"
+test -f "$filename" || curl -O "$url"
+popd
+
+rm -rf "$INST_DIR"
+mkdir -p "$INST_DIR"
+pushd "$INST_DIR"
+tar xf "${DL_DIR}/${filename}"
+bindir="$(echo "$PWD"/*/bin)"
+popd
+
+"$bindir"/../relocate-sdk.sh
+
+ln -sf "$bindir" "$TC_TOP"/bin
+PATH="$TC_TOP"/bin:"$PATH"
+
+./autogen.sh
+./configure "${configure_opts[@]}"
+make -j "$(nproc)"
+
+# Should turn this into a stronger check
+file .libs/librtas.so.2.*
