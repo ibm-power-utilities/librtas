@@ -1,0 +1,29 @@
+name: build librtas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cpu: [powerpc64le-power8, powerpc64-power8]
+        libc: [glibc, musl]
+        br_version: [stable-2020.08-1, bleeding-edge-2020.08-1]
+    env:
+      CPU: ${{ matrix.cpu }}
+      LIBC: ${{ matrix.libc }}
+      BR_VERSION: ${{ matrix.br_version }}
+      DL_DIR: /home/runner/Downloads
+      TC_TOP: /home/runner/tc
+    steps:
+    - uses: actions/checkout@v2
+    - name: cache toolchain
+      uses: actions/cache@v2
+      with:
+        path: /home/runner/Downloads/*.tar.bz2
+        key: ${{ matrix.cpu }}--${{ matrix.libc }}--${{ matrix.br_version }}
+    - name: build
+      run: ./tools/ci-build
