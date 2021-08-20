@@ -244,14 +244,14 @@ struct rtas_lri_scn {
     union {
         uint32_t _lri_cpu_id;        /**< logical CPU id (type = proc) */
 	uint32_t _lri_drc_index;     /**< DRC index (type = mem LMB) */
-	uint32_t _lri_mem_addr_lo;   /**< mem logical addr low bits
+	uint32_t _lri_mem_addr_hi;   /**< mem logical addr high bits
                                              (type = mem page) */
     } _lri_u1;
 #define lri_cpu_id	_lri_u1._lri_cpu_id
 #define	lri_drc_index	_lri_u1._lri_drc_index
-#define lri_mem_addr_lo _lri_u1._lri_mem_addr_lo
+#define lri_mem_addr_hi _lri_u1._lri_mem_addr_hi
 
-    uint32_t    lri_mem_addr_hi;     /**< mem logical addr high bits
+    uint32_t    lri_mem_addr_lo;    /**< mem logical addr low bits
                                              (type = mem page) */
 };
 
@@ -265,10 +265,10 @@ struct rtas_lri_scn_raw {
     union {
         uint32_t _lri_cpu_id:32;
         uint32_t _lri_drc_index:32;
-        uint32_t _lri_mem_addr_lo;
+        uint32_t _lri_mem_addr_hi;
     } _lri_u1;    
     
-    uint32_t    lri_mem_addr_hi;
+    uint32_t    lri_mem_addr_lo;
 }__attribute__((__packed__));
 
 #define RE_LRI_SCN_SZ   20
