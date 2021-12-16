@@ -42,7 +42,7 @@
 #define EXTENDED_DELAY_MIN 9900
 #define EXTENDED_DELAY_MAX 9905
 
-#define PAGE_SIZE 4096
+#define RTAS_PAGE_SZ 4096
 
 /* Adding a new RTAS call requires the following:
  * 1) A function prototype in librtas.h (this file) that roughly matches

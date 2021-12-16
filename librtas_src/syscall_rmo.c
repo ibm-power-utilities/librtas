@@ -109,7 +109,7 @@ static int read_kregion_bounds(struct region *kregion)
 	free(buf);
 
 	if (!(kregion->size && kregion->addr) ||
-	    (kregion->size > (PAGE_SIZE * MAX_PAGES))) {
+	    (kregion->size > (RTAS_PAGE_SZ * MAX_PAGES))) {
 		dbg("Unexpected kregion bounds\n");
 		return RTAS_IO_ASSERT;
 	}
@@ -237,10 +237,10 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 		return RTAS_IO_ASSERT;
 	}
 
-	n_pages = size / PAGE_SIZE;
+	n_pages = size / RTAS_PAGE_SZ;
 
 	for (i = 0; i < MAX_PAGES; i++) {
-		if ((i * PAGE_SIZE) >= kregion->size)
+		if ((i * RTAS_PAGE_SZ) >= kregion->size)
 			break;
 
 		bits = get_bits(i, i + n_pages - 1, wa_config.pages_map);
@@ -249,7 +249,7 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 				set_bits(i, i + n_pages - 1,
 					 (1 << n_pages) - 1,
 					 &wa_config.pages_map);
-				addr = kregion->addr + (i * PAGE_SIZE);
+				addr = kregion->addr + (i * RTAS_PAGE_SZ);
 				break;
 			}
 		}
@@ -284,8 +284,8 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 		return RTAS_IO_ASSERT;
 	}
 
-	first_page = (phys_addr - kregion->addr) / PAGE_SIZE;
-	n_pages = size / PAGE_SIZE;
+	first_page = (phys_addr - kregion->addr) / RTAS_PAGE_SZ;
+	n_pages = size / RTAS_PAGE_SZ;
 
 	bits = get_bits(first_page, first_page + n_pages - 1,
 			wa_config.pages_map);
@@ -418,13 +418,13 @@ int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size)
 	if (rc)
 		return rc;
 
-	n_pages = size / PAGE_SIZE;
+	n_pages = size / RTAS_PAGE_SZ;
 
 	/* Check for multiple of page size */
-	if (size % PAGE_SIZE) {
-		/* Round up to multiple of PAGE_SIZE */
+	if (size % RTAS_PAGE_SZ) {
+		/* Round up to multiple of RTAS_PAGE_SZ */
 		n_pages++;
-		size = n_pages * PAGE_SIZE;
+		size = n_pages * RTAS_PAGE_SZ;
 	}
 
 	if (!wa_config.init_done) {
@@ -471,13 +471,13 @@ int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 
 	dbg("RMO buffer request, size: %zd\n", size);
 
-	n_pages = size / PAGE_SIZE;
+	n_pages = size / RTAS_PAGE_SZ;
 
 	/* Check for multiple of page size */
-	if (size % PAGE_SIZE) {
-		/* Round up to multiple of PAGE_SIZE */
+	if (size % RTAS_PAGE_SZ) {
+		/* Round up to multiple of RTAS_PAGE_SZ */
 		n_pages++;
-		size = n_pages * PAGE_SIZE;
+		size = n_pages * RTAS_PAGE_SZ;
 	}
 
 	if (!wa_config.init_done) {

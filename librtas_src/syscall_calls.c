@@ -282,11 +282,11 @@ int rtas_cfg_connector(char *workarea)
 	if (rc)
 		return rc;
 
-	rc = rtas_get_rmo_buffer(PAGE_SIZE, &kernbuf, &workarea_pa);
+	rc = rtas_get_rmo_buffer(RTAS_PAGE_SZ, &kernbuf, &workarea_pa);
 	if (rc)
 		return rc;
 
-	memcpy(kernbuf, workarea, PAGE_SIZE);
+	memcpy(kernbuf, workarea, RTAS_PAGE_SZ);
 
 	do {
 		rc = rtas_call_no_delay("ibm,configure-connector", 2, 1,
@@ -296,7 +296,7 @@ int rtas_cfg_connector(char *workarea)
 			break;
 
 		if ((rc == 0) && (status == CFG_RC_MEM)) {
-			rc = rtas_get_rmo_buffer(PAGE_SIZE, &extent,
+			rc = rtas_get_rmo_buffer(RTAS_PAGE_SZ, &extent,
 						 &extent_pa);
 			if (rc < 0)
 				break;
@@ -308,12 +308,12 @@ int rtas_cfg_connector(char *workarea)
 	} while (rc == CALL_AGAIN);
 
 	if (rc == 0)
-		memcpy(workarea, kernbuf, PAGE_SIZE);
+		memcpy(workarea, kernbuf, RTAS_PAGE_SZ);
 
-	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, RTAS_PAGE_SZ);
 
 	if (extent_pa)
-		(void)rtas_free_rmo_buffer(extent, extent_pa, PAGE_SIZE);
+		(void)rtas_free_rmo_buffer(extent, extent_pa, RTAS_PAGE_SZ);
 
 	dbg("(%p) = %d\n", workarea, rc ? rc : status);
 	return rc ? rc : status;
@@ -775,17 +775,17 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	if (rc)
 		return rc;
 
-	rc = rtas_get_rmo_buffer(size + PAGE_SIZE, &rmobuf, &rmo_pa);
+	rc = rtas_get_rmo_buffer(size + RTAS_PAGE_SZ, &rmobuf, &rmo_pa);
 	if (rc)
 		return rc;
 
-	kernbuf = rmobuf + PAGE_SIZE;
-	kernbuf_pa = rmo_pa + PAGE_SIZE;
+	kernbuf = rmobuf + RTAS_PAGE_SZ;
+	kernbuf_pa = rmo_pa + RTAS_PAGE_SZ;
 	locbuf = rmobuf;
 	loc_pa = rmo_pa;
 
 	/* If user didn't set loc_code, copy a NULL string */
-	strncpy(locbuf, loc_code ? loc_code : "", PAGE_SIZE);
+	strncpy(locbuf, loc_code ? loc_code : "", RTAS_PAGE_SZ);
 
 	*seq_next = htobe32(sequence);
 	do {
@@ -803,7 +803,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	if (rc == 0)
 		memcpy(workarea, kernbuf, size);
 
-	(void) rtas_free_rmo_buffer(rmobuf, rmo_pa, size + PAGE_SIZE);
+	(void) rtas_free_rmo_buffer(rmobuf, rmo_pa, size + RTAS_PAGE_SZ);
 
 	*seq_next = be32toh(*seq_next);
 	*bytes_ret = be32toh(*bytes_ret);
@@ -840,7 +840,7 @@ int rtas_lpar_perftools(int subfunc, char *workarea, unsigned int length,
 	if (rc)
 		return rc;
 
-	memcpy(kernbuf, workarea, PAGE_SIZE);
+	memcpy(kernbuf, workarea, RTAS_PAGE_SZ);
 
 	*seq_next = htobe32(sequence);
 	do {
@@ -1261,7 +1261,7 @@ int rtas_suspend_me(uint64_t streamid)
  * @return 0 on success, !0 on failure
  *
  * Note that the PAPR defines the work area as 4096 bytes (as
- * opposed to a page), thus we use that rather than PAGE_SIZE below.
+ * opposed to a page), thus we use that rather than RTAS_PAGE_SZ below.
  */
 int rtas_update_nodes(char *workarea, unsigned int scope)
 {
@@ -1285,7 +1285,7 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
 
-	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, RTAS_PAGE_SZ);
 
 	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
@@ -1300,7 +1300,7 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
  * @return 0 on success, !0 on failure
  *
  * Note that the PAPR defines the work area as 4096 bytes (as
- * opposed to a page), thus we use that rather than PAGE_SIZE below.
+ * opposed to a page), thus we use that rather than RTAS_PAGE_SZ below.
  */
 int rtas_update_properties(char *workarea, unsigned int scope)
 {
@@ -1324,7 +1324,7 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 	if (rc == 0)
 		memcpy(workarea, kernbuf, 4096);
 
-	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, PAGE_SIZE);
+	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, RTAS_PAGE_SZ);
 
 	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
