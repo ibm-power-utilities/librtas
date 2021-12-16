@@ -113,8 +113,8 @@ print_re_lri_scn(struct scn_header *shdr, int verbosity)
 
         case 0x40: 
             len += rtas_print("(Memory Page)\n" PRNT_FMT_ADDR, 
-                              "Logical Address:", lri->lri_mem_addr_hi,
-                              lri->lri_mem_addr_lo);
+                              "Logical Address:", lri->lri_mem_addr_lo,
+                              lri->lri_mem_addr_hi);
 	    break;
 
         case 0x41:
