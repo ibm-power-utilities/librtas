@@ -513,7 +513,7 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 
 	*info = be32toh(be_info);
 
-	dbg("(0x%x, 0x%lx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
+	dbg("(0x%x, 0x%"PRIx64", %d) = %d, 0x%x\n", config_addr, phb_id, func,
 	    rc ? rc : status, *info);
 	return rc ? rc : status;
 }
@@ -935,7 +935,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	bytes_lo = be32toh(bytes_lo);
 	*bytes_ret = BITS64(bytes_hi, bytes_lo);
 
-	dbg("(0x%lx, 0x%lx, %p, %zd, %p, %p) = %d, 0x%lx, 0x%lx\n",
+	dbg("(0x%"PRIx64", 0x%"PRIx64", %p, %zd, %p, %p) = %d, 0x%"PRIx64", 0x%"PRIx64"\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
 	     rc ? rc : status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
@@ -967,7 +967,7 @@ int rtas_read_slot_reset(uint32_t cfg_addr, uint64_t phbid, int *state,
 	*state = be32toh(*state);
 	*eeh = be32toh(*eeh);
 
-	dbg("(0x%x, 0x%lx, %p, %p) = %d, %d, %d\n", cfg_addr, phbid, state,
+	dbg("(0x%x, 0x%"PRIx64", %p, %p) = %d, %d, %d\n", cfg_addr, phbid, state,
 	     eeh, rc ? rc : status, *state, *eeh);
 	return rc ? rc : status;
 }
@@ -1079,7 +1079,7 @@ int rtas_set_eeh_option(uint32_t cfg_addr, uint64_t phbid, int function)
 		       htobe32(BITS32_HI(phbid)), htobe32(BITS32_LO(phbid)),
 		       htobe32(function), &status);
 
-	dbg("(0x%x, 0x%lx, %d) = %d\n", cfg_addr, phbid, function,
+	dbg("(0x%x, 0x%"PRIx64", %d) = %d\n", cfg_addr, phbid, function,
 	     rc ? rc : status);
 	return rc ? rc : status;
 }
