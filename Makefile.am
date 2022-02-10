@@ -12,7 +12,7 @@ man_MANS=
 noinst_HEADERS=
 library_include_HEADERS=
 
-AM_CFLAGS = -I$(top_srcdir)/librtas_src/ -I$(top_srcdir)/librtasevent_src/
+AM_CPPFLAGS = -I$(top_srcdir)/librtas_src/ -I$(top_srcdir)/librtasevent_src/
 
 library_includedir=$(includedir)
 
