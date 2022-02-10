@@ -34,8 +34,8 @@
 void rtas_copy(void *, struct rtas_event *, uint32_t);
 
 /* parse routines */
-void parse_rtas_date(struct rtas_date *, struct rtas_date_raw *);
-void parse_rtas_time(struct rtas_time *, struct rtas_time_raw *);
+void parse_rtas_date(struct rtas_date *, struct rtas_date_raw);
+void parse_rtas_time(struct rtas_time *, struct rtas_time_raw);
 void parse_v6_hdr(struct rtas_v6_hdr *, struct rtas_v6_hdr_raw *);
 
 int parse_priv_hdr_scn(struct rtas_event *);

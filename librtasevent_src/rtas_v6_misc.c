@@ -40,19 +40,19 @@ static char *months[] = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
                          "Dec"};
 
 void parse_rtas_date(struct rtas_date *rtas_date,
-		     struct rtas_date_raw *rawdate)
+		     struct rtas_date_raw rawdate)
 {
-    rtas_date->year = be16toh(rawdate->year);
-    rtas_date->month = rawdate->month;
-    rtas_date->day = rawdate->day;
+    rtas_date->year = be16toh(rawdate.year);
+    rtas_date->month = rawdate.month;
+    rtas_date->day = rawdate.day;
 }
 
-void parse_rtas_time(struct rtas_time *rtas_time, struct rtas_time_raw *rawtime)
+void parse_rtas_time(struct rtas_time *rtas_time, struct rtas_time_raw rawtime)
 {
-    rtas_time->hour = rawtime->hour;
-    rtas_time->minutes = rawtime->minutes;
-    rtas_time->seconds = rawtime->seconds;
-    rtas_time->hundredths = rawtime->hundredths;
+    rtas_time->hour = rawtime.hour;
+    rtas_time->minutes = rawtime.minutes;
+    rtas_time->seconds = rawtime.seconds;
+    rtas_time->hundredths = rawtime.hundredths;
 }
 
 void parse_v6_hdr(struct rtas_v6_hdr *v6hdr, struct rtas_v6_hdr_raw *rawv6)
@@ -116,8 +116,8 @@ parse_priv_hdr_scn(struct rtas_event *re)
 
     rawhdr = (struct rtas_priv_hdr_scn_raw *)(re->buffer + re->offset);
     parse_v6_hdr(&privhdr->v6hdr, &rawhdr->v6hdr);
-    parse_rtas_date(&privhdr->date, &rawhdr->date);
-    parse_rtas_time(&privhdr->time, &rawhdr->time);
+    parse_rtas_date(&privhdr->date, rawhdr->date);
+    parse_rtas_time(&privhdr->time, rawhdr->time);
 
     privhdr->creator_id = rawhdr->creator_id;
     privhdr->scn_count = rawhdr->scn_count;
