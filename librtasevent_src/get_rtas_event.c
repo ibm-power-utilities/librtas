@@ -279,8 +279,8 @@ static void parse_re_exthdr(struct rtas_event *re,
     rex_hdr->config_change = (rawhdr->data4 & 0x02) >> 1;
     rex_hdr->post = rawhdr->data4 & 0x01;
 
-    parse_rtas_time(&rex_hdr->time, &rawhdr->time);
-    parse_rtas_date(&rex_hdr->date, &rawhdr->date);
+    parse_rtas_time(&rex_hdr->time, rawhdr->time);
+    parse_rtas_date(&rex_hdr->date, rawhdr->date);
 
     re->offset += RE_EXT_HDR_SZ;
     add_re_scn(re, rex_hdr, RTAS_EVENT_EXT_HDR);
