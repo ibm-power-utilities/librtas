@@ -4,8 +4,6 @@ AC_PREREQ([2.69])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_CANONICAL_TARGET
-
 AM_INIT_AUTOMAKE([-Wall -Werror -Wno-portability subdir-objects foreign tar-ustar])
 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
