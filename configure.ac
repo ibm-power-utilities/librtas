@@ -31,7 +31,6 @@ AC_DEFUN([LOCAL_CHECK_FLAGS],[
   AX_APPEND_COMPILE_FLAGS([-Wall])
   AX_APPEND_COMPILE_FLAGS([-D_FORTIFY_SOURCE=2 -fstack-protector-all])
   AX_APPEND_COMPILE_FLAGS([-fwrapv -fPIE -Wstack-protector])
-  AX_APPEND_COMPILE_FLAGS([--param=ssp-buffer-size=1])
   AX_CHECK_LINK_FLAG([-z relro -z now])
   AX_CHECK_LINK_FLAG([-pie])
   AC_LANG_POP
