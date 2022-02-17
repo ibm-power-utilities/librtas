@@ -125,7 +125,7 @@ static int read_kregion_bounds(struct region *kregion)
  * @param mask
  * @return 0 on success, !0 otherwise
  */
-static inline uint64_t get_bits(short lobit, short hibit, uint64_t mask)
+static uint64_t get_bits(short lobit, short hibit, uint64_t mask)
 {
 	short num_bits = hibit - lobit + 1;
 	uint64_t ones_mask = (1ll << (num_bits)) - 1;
@@ -142,7 +142,7 @@ static inline uint64_t get_bits(short lobit, short hibit, uint64_t mask)
  * @param mask
  * @return 0 on success, !0 otherwise
  */
-static inline void set_bits(short lobit, short hibit, uint64_t value,
+static void set_bits(short lobit, short hibit, uint64_t value,
 			    uint64_t *mask)
 {
 	short num_bits = hibit - lobit + 1;
