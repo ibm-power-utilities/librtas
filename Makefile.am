@@ -6,9 +6,6 @@ EXTRA_DIST += doc/doxygen.rtas doc/doxygen.rtasevent Changelog
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = README COPYING.LESSER
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = librtas.pc
-
 bin_PROGRAMS=
 lib_LTLIBRARIES=
 man_MANS=

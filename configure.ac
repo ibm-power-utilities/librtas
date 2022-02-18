@@ -11,7 +11,6 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 
 AC_CONFIG_HEADERS([config.h])
 
-PKG_PROG_PKG_CONFIG
 AC_CHECK_FUNCS([memset munmap strrchr])
 AC_CHECK_HEADERS([fcntl.h])
 AC_C_INLINE
@@ -43,5 +42,5 @@ LT_LANG([C])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_CONFIG_FILES([Makefile librtas.pc librtas.spec])
+AC_CONFIG_FILES([Makefile librtas.spec])
 AC_OUTPUT
