@@ -39,9 +39,9 @@ jobs:
       run: ./configure --host=${{ matrix.host }}
 
     - name: make
-      run: make
+      run: make V=1
 
     - name: distcheck
       run: |
-        make distcheck DISTCHECK_CONFIGURE_FLAGS=--host=${{ matrix.host }}
+        make distcheck V=1 DISTCHECK_CONFIGURE_FLAGS=--host=${{ matrix.host }}
         file .libs/librtas.so*
