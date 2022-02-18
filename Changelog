@@ -1,3 +1,264 @@
+Changelog for librtas-2.0.3
+=======================================
+commit c8a4104ac76ceb0eb61d36c6a1b6043ec92e2eb3
+Author: Than Ngo <than@redhat.com>
+Date:   Thu Mar 25 16:13:20 2021 +0100
+
+    librtasevent: Fix coverity issues found by Covscan
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def1]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: var_assign: Assigning: "src_raw" = storage returned from "malloc(88UL)".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:216: noescape: Resource "src_raw" is not freed or pointed-to in "memset". [Note: The source code implementation of the function has been overridden by a builtin model.]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:219: noescape: Resource "src_raw" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:220: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "parse_v6_hdr".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:239: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "re_scn_id".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:242: leaked_storage: Variable "src_raw" going out of scope leaks the storage it points to.
+    240|
+    241|       if (!src_subscns_included(src))
+    242|->         return 0;
+    243|
+    244|       rtas_copy( (char *) src_raw + RE_SRC_SCN_SZ + 4, re, RE_SRC_SUBSCN_SZ);
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def2]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: var_assign: Assigning: "src_raw" = storage returned from "malloc(88UL)".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:216: noescape: Resource "src_raw" is not freed or pointed-to in "memset". [Note: The source code implementation of the function has been overridden by a builtin model.]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:219: noescape: Resource "src_raw" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:220: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "parse_v6_hdr".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:239: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "re_scn_id".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:244: noescape: Resource "(char *)src_raw + 80 + 4" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:263: leaked_storage: Variable "src_raw" going out of scope leaks the storage it points to.
+    261|               cleanup_rtas_event(re);
+    262|               errno = ENOMEM;
+    263|->             return 1;
+    264|           }
+    265|
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def3]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:259: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:259: var_assign: Assigning: "fru" = storage returned from "malloc(120UL)".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:266: noescape: Resource "fru" is not freed or pointed-to in "memset". [Note: The source code implementation of the function has been overridden by a builtin model.]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:269: noescape: Resource "fru" is not freed or pointed-to in "parse_fru_scn".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:291: leaked_storage: Variable "fru" going out of scope leaks the storage it points to.
+    289|               if (cur_fruhdr == NULL) {
+    290|                   cleanup_rtas_event(re);
+    291|->                 return -1;
+    292|               }
+    293|
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def4]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: var_assign: Assigning: "src_raw" = storage returned from "malloc(88UL)".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:216: noescape: Resource "src_raw" is not freed or pointed-to in "memset". [Note: The source code implementation of the function has been overridden by a builtin model.]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:219: noescape: Resource "src_raw" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:220: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "parse_v6_hdr".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:239: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "re_scn_id".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:244: noescape: Resource "(char *)src_raw + 80 + 4" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:291: leaked_storage: Variable "src_raw" going out of scope leaks the storage it points to.
+    289|               if (cur_fruhdr == NULL) {
+    290|                   cleanup_rtas_event(re);
+    291|->                 return -1;
+    292|               }
+    293|
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def5]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:208: var_assign: Assigning: "src_raw" = storage returned from "malloc(88UL)".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:216: noescape: Resource "src_raw" is not freed or pointed-to in "memset". [Note: The source code implementation of the function has been overridden by a builtin model.]
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:219: noescape: Resource "src_raw" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:220: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "parse_v6_hdr".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:239: noescape: Resource "&src_raw->v6hdr" is not freed or pointed-to in "re_scn_id".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:244: noescape: Resource "(char *)src_raw + 80 + 4" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_srcfru.c:312: leaked_storage: Variable "src_raw" going out of scope leaks the storage it points to.
+    310|       } while (total_len < srcsub_len);
+    311|
+    312|->     return 0;
+    313|   }
+    314|
+    
+    Error: RESOURCE_LEAK (CWE-772): [#def6]
+    librtas-2.0.2/librtasevent_src/rtas_vend.c:104: alloc_fn: Storage is returned from allocation function "malloc".
+    librtas-2.0.2/librtasevent_src/rtas_vend.c:104: var_assign: Assigning: "ve" = storage returned from "malloc(40UL)".
+    librtas-2.0.2/librtasevent_src/rtas_vend.c:111: noescape: Resource "(char *)ve + 24UL" is not freed or pointed-to in "rtas_copy".
+    librtas-2.0.2/librtasevent_src/rtas_vend.c:119: leaked_storage: Variable "ve" going out of scope leaks the storage it points to.
+    117|           if (ve->vendor_data == NULL) {
+    118|               errno = ENOMEM;
+    119|->             return -1;
+    120|           }
+    121|
+    
+    Signed-off-by: Than Ngo <than@rehat.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 2d2ac80a3b413e0e7ad3ebb47426923a9bf39b33
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Feb 18 09:17:19 2022 -0600
+
+    ci: override CFLAGS in configure
+    
+    Set CFLAGS to something fairly conventional and include -Werror so jobs
+    will fail on compiler warnings. For CI purposes this should be an
+    acceptable way to start enforcing a no new warnings policy.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 92d3fb040b25d931357a46f3d161e27d653caeb4
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Feb 18 09:25:25 2022 -0600
+
+    ci: make builds more verbose
+    
+    While we're experimenting with the CI configuration (compiler flags etc)
+    we'll need the ability to inspect the exact commands used even in
+    successful builds. So, for now at least, use V=1 with our make invocations.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 4fc1d726c5db4412a43a01a0cc0e21069c05271f
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 9 22:01:46 2022 -0600
+
+    librtas: fix printf format mismatches for 32-bit build
+    
+    Several issues of this form:
+    
+    Warning: librtas_src/syscall.h:68:11: warning: format ‘%lx’ expects
+    argument of type ‘long unsigned int’, but argument 4 has type ‘uint64_t’
+    {aka ‘long long unsigned int’} [-Wformat=]
+       68 |    printf("librtas %s(): " _fmt, __func__, ##_args); \
+          |           ^~~~~~~~~~~~~~~~
+    librtas_src/syscall_calls.c:516:2: note: in expansion of macro ‘dbg’
+      516 |  dbg("(0x%x, 0x%lx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
+          |  ^~~
+    librtas_src/syscall_calls.c:516:18: note: format string is defined here
+      516 |  dbg("(0x%x, 0x%lx, %d) = %d, 0x%x\n", config_addr, phb_id, func,
+          |                ~~^
+          |                  |
+          |                  long unsigned int
+          |                %llx
+    
+    Convert this and others to PRIx64 to accommodate uint64_t.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 6e4535968b1667eca0569621d3c9f0fd234429de
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 9 21:30:54 2022 -0600
+
+    librtasevent: fix 'taking address of packed member' warnings
+    
+    Address the following warnings:
+    
+    Warning: librtasevent_src/get_rtas_event.c:282:37: warning: taking address
+    of packed member of ‘struct rtas_event_exthdr_raw’ may result in an
+    unaligned pointer value [-Waddress-of-packed-member]
+      282 |     parse_rtas_time(&rex_hdr->time, &rawhdr->time);
+          |                                     ^~~~~~~~~~~~~
+    Warning: librtasevent_src/get_rtas_event.c:283:37: warning: taking address
+    of packed member of ‘struct rtas_event_exthdr_raw’ may result in an
+    unaligned pointer value [-Waddress-of-packed-member]
+      283 |     parse_rtas_date(&rex_hdr->date, &rawhdr->date);
+          |                                     ^~~~~~~~~~~~~
+    librtasevent_src/rtas_v6_misc.c: In function ‘parse_priv_hdr_scn’:
+    Warning: librtasevent_src/rtas_v6_misc.c:119:37: warning: taking address of
+    packed member of ‘struct rtas_priv_hdr_scn_raw’ may result in an unaligned
+    pointer value [-Waddress-of-packed-member]
+      119 |     parse_rtas_date(&privhdr->date, &rawhdr->date);
+          |                                     ^~~~~~~~~~~~~
+    Warning: librtasevent_src/rtas_v6_misc.c:120:37: warning: taking address of
+    packed member of ‘struct rtas_priv_hdr_scn_raw’ may result in an unaligned
+    pointer value [-Waddress-of-packed-member]
+      120 |     parse_rtas_time(&privhdr->time, &rawhdr->time);
+          |                                     ^~~~~~~~~~~~~
+    
+    by passing the small "raw" date/time objects by value instead of taking their
+    addresses.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 5c207ca281b93e47a3f751fa1b6f1f610357a71d
+Author: Nathan Lynch <ntl@pobox.com>
+Date:   Mon Jan 31 13:45:22 2022 -0600
+
+    ci: add GitHub Actions build tests
+    
+    GitHub's hosted x86 Ubuntu runners have cross toolchains suitable for
+    building librtas for its targeted architectures. Add a matrix build
+    including these (32- and 64-bit big-endian, 64-bit little-endian) which
+    performs a basic build and distcheck.
+    
+    Also perform a native x86 build since it "works": it produces nothing you
+    would want to run, but the build succeeds. If we are to add tests in the
+    future, running them as native code on the build host may be the best
+    option. So it's in our interest to keep the x86 build working.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 6447b24d9f8d892e750b9517f7c136855967ea61
+Author: Fabian Groffen <grobian@gentoo.org>
+Date:   Mon May 24 10:06:54 2021 +0200
+
+    librtasevent: include endian.h for beXXtoh macros
+    
+    In particular using musl libc, without this include, the calls to
+    be16toh/be32toh result in a compiler warning about an undefined symbol.
+    Since in musl these are actually implemented by macros, the symbols
+    remain undefined in the final shared library, making the library
+    unusable.
+    
+    Issue: https://github.com/ibm-power-utilities/librtas/issues/10
+    Signed-off-by: Fabian Groffen <grobian@gentoo.org>
+    Reviewed-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+    Reviewed-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0bb5704e6452886f8d93ed905efe058f13e26a6a
+Author: Andrew Donnellan <ajd@linux.ibm.com>
+Date:   Sat Apr 25 00:32:57 2020 +1000
+
+    syscall_calls: fix typo in comment
+    
+    Signed-off-by: Andrew Donnellan <ajd@linux.ibm.com>
+    Reviewed-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit f8a1f6df25263afc75cabb9c40ddb8e54cf086e3
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Thu Dec 16 13:37:15 2021 -0800
+
+    librtasevent: Fix memory page address print issue
+    
+    The logical resource address lo and hi fields are currently printed by rtas_dump
+    infering that their naming refers to significance when in fact they refer to the
+    bit numbering.
+    
+    lri_mem_addr_lo == Memory Logical Address (bit 0-31)
+    lri_mem_addr_hi == Memory Logical Address (bit 32-64))
+    
+    Hence rtas_dump command is printing the logical address output with those two
+    fields swapped.
+    
+    This patch fixes rtas_lri_scn fields so that we get legitimate addresses.
+    
+    Current output:
+    --------------
+    Logical Address:        2ab0a0000000014f
+    
+    Correct output:
+    -------------
+    Logical Address:  0x0000014F2AB0A000
+    
+    Signed-off-by: Vasant Hegde <hegdevasant@linux.vnet.ibm.com>
+    Reviewed-by: Nathan Lynch <nathanl@linux.ibm.com>
+    [tyreld: reworded commit message]
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
 Changelog for librtas-2.0.2
 =======================================
 commit 26970c42bc017ad68b864e7134cf941c07443aa8
