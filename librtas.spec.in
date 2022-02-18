@@ -75,7 +75,6 @@ ldconfig
 %{_includedir}/librtasevent.h
 %{_includedir}/librtasevent_v4.h
 %{_includedir}/librtasevent_v6.h
-%{_libdir}/pkgconfig/librtas.pc
 
 %files static
 %{_libdir}/librtas.a
