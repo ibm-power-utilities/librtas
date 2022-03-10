@@ -1,0 +1,64 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+: "${builddir:=.}"
+: "${srcdir:=.}"
+
+# keep nm sort order stable
+LC_ALL=C
+export LC_ALL
+
+found=$(mktemp)
+
+cleanup() {
+    rm -f "${found}"
+}
+
+trap cleanup EXIT
+
+dump_visible_syms() {
+    local lib="$1"; shift
+    nm --portability --defined-only --extern-only "${lib}" | \
+	cut --delimiter=' ' --fields=1
+}
+
+fail() {
+    printf "%s\n" "$1" >&2
+    exit 1
+}
+
+opt=${1:-}
+case "${opt}" in
+    --regenerate)
+	mode=regenerate
+	;;
+    *)
+	mode=check
+	;;
+esac
+
+pushd "${builddir}/.libs" >/dev/null
+declare -a libs
+libs=(*.so)
+popd >/dev/null
+
+for lib in "${libs[@]}" ; do
+    expected="${srcdir}/test/data/${lib}-expected-exports"
+    case "${mode}" in
+	regenerate)
+	    echo Regenerating expected exports for "${lib}"
+	    dump_visible_syms "${builddir}/.libs/${lib}" > "${expected}"
+	    ;;
+	check)
+	    dump_visible_syms "${builddir}/.libs/${lib}" > "${found}"
+	    test -r "${expected}" || fail "${lib}: missing expected exports list ${expected}"
+	    diff -u "${expected}" "${found}" || fail "${lib}: exported symbols changed"
+	    ;;
+	*)
+	    fail "unknown mode ${mode}"
+	    ;;
+    esac
+done
+
