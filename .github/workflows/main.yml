@@ -41,6 +41,9 @@ jobs:
     - name: make
       run: make V=1
 
+    - name: check
+      run: make V=1 VERBOSE=1 check
+
     - name: distcheck
       run: |
         make distcheck V=1 DISTCHECK_CONFIGURE_FLAGS=--host=${{ matrix.host }}
