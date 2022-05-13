@@ -53,3 +53,16 @@ library_include_HEADERS += \
 
 noinst_HEADERS += librtasevent_src/rtas_event.h \
 	librtasevent_src/rtas_src_codes.c
+
+EXTRA_DIST += test/compat-check resources
+
+# If the source tree has an abi-compliance-checker dump matching the
+# target, check the installed tree against it.
+installcheck-local:
+	if test -r $(srcdir)/resources/compat-dumps/$(host_cpu)-$(host_os).dump ; then \
+		$(srcdir)/test/compat-check --cc $(CC) --check $(prefix) \
+			--reference $(srcdir)/resources/compat-dumps/$(host_cpu)-$(host_os).dump ; \
+	else \
+		echo "No compatibility dump found for $(host_cpu)-$(host_os)." ; \
+		echo "Use resources/generate-compat-dump to generate one" ; \
+	fi
