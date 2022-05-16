@@ -56,3 +56,10 @@ jobs:
       run: |
         make distcheck V=1 DISTCHECK_CONFIGURE_FLAGS=--host=${{ matrix.host }}
         file .libs/librtas.so*
+
+    - name: Collect ABI/API compatibility reports on failure
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: "${{ matrix.host }}-report.html"
+        path: /tmp/compat_report.html
