@@ -26,7 +26,7 @@ librtas_la_SOURCES = \
 	librtas_src/syscall_rmo.c
 
 library_include_HEADERS += librtas_src/librtas.h
-noinst_HEADERS += librtas_src/syscall.h
+noinst_HEADERS += librtas_src/lparctl.h librtas_src/syscall.h
 
 lib_LTLIBRARIES += librtasevent.la
 librtasevent_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION)

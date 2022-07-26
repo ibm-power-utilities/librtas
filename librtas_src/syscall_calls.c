@@ -27,8 +27,15 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <sys/syscall.h>
+#include <sys/param.h>
 #include <linux/unistd.h>
 #include <linux/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/types.h>
+#include <linux/ioctl.h>
+#include "lparctl.h"
 #include "syscall.h"
 #include "librtas.h"
 
@@ -667,19 +674,31 @@ int rtas_get_sensor(int sensor, int index, int *state)
 	return rc ? rc : status;
 }
 
-/**
- * rtas_get_sysparm
- * @brief Interface to the ibm,get-system-parameter rtas call
- *
- * On successful completion the data parameter will contain the system
- * parameter results
- *
- * @param parameter system parameter to retrieve
- * @param length data buffer length
- * @param data reference to buffer to return parameter in
- * @return 0 on success, !0 otherwise
- */
-int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
+static int get_sysparm_lparctl(unsigned int parameter, unsigned int length, char *data)
+{
+	struct lparctl_get_system_parameter gsp = { .token = parameter, };
+	int api_ret = RTAS_IO_ASSERT;
+	int res;
+	int fd;
+
+	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
+	if (fd == -1)
+		goto err_return;
+
+	res = ioctl(fd, LPARCTL_GET_SYSPARM, &gsp);
+	if (res != 0)
+		goto err_close;
+
+	api_ret = gsp.rtas_status;
+	if (gsp.rtas_status == 0)
+		memcpy(data, gsp.data, MIN(sizeof(gsp.data), length));
+err_close:
+	(void)close(fd);
+err_return:
+	return api_ret;
+}
+
+static int get_sysparm_devmem(unsigned int parameter, unsigned int length, char *data)
 {
 	uint32_t kernbuf_pa;
 	void *kernbuf;
@@ -703,6 +722,44 @@ int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
 
 	dbg("(%d, %d, %p) = %d\n", parameter, length, data, rc ? rc : status);
 	return rc ? rc : status;
+}
+
+/**
+ * rtas_get_sysparm
+ * @brief Interface to the ibm,get-system-parameter rtas call
+ *
+ * On successful completion the data parameter will contain the system
+ * parameter results
+ *
+ * @param parameter system parameter to retrieve
+ * @param length data buffer length
+ * @param data reference to buffer to return parameter in
+ * @return 0 on success, !0 otherwise
+ */
+int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
+{
+	int (*get_sysparm_fn)(unsigned int parameter,
+			      unsigned int length, char *data);
+	int fd;
+
+	/*
+	 * Use the fallback if:
+	 * - /dev/lparctl can't be opened, or
+	 * - LPARCTL_GET_SYSPARM returns an error for a NULL argument
+	 */
+
+	get_sysparm_fn = get_sysparm_devmem;
+
+	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
+	if (fd != -1) {
+		int res = ioctl(fd, LPARCTL_GET_SYSPARM, NULL);
+
+		(void)close(fd);
+		if (res == 0)
+			get_sysparm_fn = get_sysparm_lparctl;
+	}
+
+	return get_sysparm_fn(parameter, length, data);
 }
 
 /**
@@ -1169,15 +1226,31 @@ int rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 	return rc ? rc : status;
 }
 
-/**
- * rtas_set_sysparm
- * @brief Interface to the ibm,set-system-parameter rtas call
- *
- * @param parameter
- * @param data
- * @return 0 on success, !0 otherwise
- */
-int rtas_set_sysparm(unsigned int parameter, char *data)
+static int set_sysparm_lparctl(unsigned int parameter, const char *data)
+{
+	struct lparctl_set_system_parameter ssp = { .token = parameter, };
+	int api_ret = RTAS_IO_ASSERT;
+	int res;
+	int fd;
+
+	memcpy(ssp.data, data, sizeof(ssp.data));
+
+	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
+	if (fd == -1)
+		goto err_return;
+
+	res = ioctl(fd, LPARCTL_SET_SYSPARM, &ssp);
+	if (res != 0)
+		goto err_close;
+
+	api_ret = ssp.rtas_status;
+err_close:
+	(void)close(fd);
+err_return:
+	return api_ret;
+}
+
+static int set_sysparm_devmem(unsigned int parameter, const char *data)
 {
 	uint32_t kernbuf_pa;
 	void *kernbuf;
@@ -1202,6 +1275,39 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 
 	dbg("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
 	return rc ? rc : status;
+}
+
+/**
+ * rtas_set_sysparm
+ * @brief Interface to the ibm,set-system-parameter rtas call
+ *
+ * @param parameter
+ * @param data
+ * @return 0 on success, !0 otherwise
+ */
+int rtas_set_sysparm(unsigned int parameter, /* const */ char *data)
+{
+	int (*set_sysparm_fn)(unsigned int parameter, const char *data);
+	int fd;
+
+	/*
+	 * Use the fallback if:
+	 * - /dev/lparctl can't be opened, or
+	 * - LPARCTL_SET_SYSPARM returns an error for a NULL argument
+	 */
+
+	set_sysparm_fn = set_sysparm_devmem;
+
+	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
+	if (fd != -1) {
+		int res = ioctl(fd, LPARCTL_SET_SYSPARM, NULL);
+
+		(void)close(fd);
+		if (res == 0)
+			set_sysparm_fn = set_sysparm_lparctl;
+	}
+
+	return set_sysparm_fn(parameter, data);
 }
 
 /**
