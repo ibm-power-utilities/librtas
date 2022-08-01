@@ -738,28 +738,12 @@ static int get_sysparm_devmem(unsigned int parameter, unsigned int length, char 
  */
 int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
 {
-	int (*get_sysparm_fn)(unsigned int parameter,
-			      unsigned int length, char *data);
-	int fd;
+	int ret;
 
-	/*
-	 * Use the fallback if:
-	 * - /dev/lparctl can't be opened, or
-	 * - LPARCTL_GET_SYSPARM returns an error for a NULL argument
-	 */
-
-	get_sysparm_fn = get_sysparm_devmem;
-
-	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
-	if (fd != -1) {
-		int res = ioctl(fd, LPARCTL_GET_SYSPARM, NULL);
-
-		(void)close(fd);
-		if (res == 0)
-			get_sysparm_fn = get_sysparm_lparctl;
-	}
-
-	return get_sysparm_fn(parameter, length, data);
+	ret = get_sysparm_lparctl(parameter, length, data);
+	if (ret && (errno == ENOENT || errno == ENOIOCTLCMD))
+		ret = get_sysparm_devmem(parameter, length, data);
+	return ret;
 }
 
 /**
@@ -1287,27 +1271,12 @@ static int set_sysparm_devmem(unsigned int parameter, const char *data)
  */
 int rtas_set_sysparm(unsigned int parameter, /* const */ char *data)
 {
-	int (*set_sysparm_fn)(unsigned int parameter, const char *data);
-	int fd;
+	int ret;
 
-	/*
-	 * Use the fallback if:
-	 * - /dev/lparctl can't be opened, or
-	 * - LPARCTL_SET_SYSPARM returns an error for a NULL argument
-	 */
-
-	set_sysparm_fn = set_sysparm_devmem;
-
-	fd = open("/dev/lparctl", O_RDWR | O_CLOEXEC);
-	if (fd != -1) {
-		int res = ioctl(fd, LPARCTL_SET_SYSPARM, NULL);
-
-		(void)close(fd);
-		if (res == 0)
-			set_sysparm_fn = set_sysparm_lparctl;
-	}
-
-	return set_sysparm_fn(parameter, data);
+	ret = set_sysparm_lparctl(parameter, data);
+	if (ret && (errno == ENOENT || errno == ENOIOCTLCMD))
+		ret = set_sysparm_devmem(paramter, data);
+	return ret;
 }
 
 /**
