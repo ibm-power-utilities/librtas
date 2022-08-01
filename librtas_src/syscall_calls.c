@@ -741,7 +741,7 @@ int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
 	int ret;
 
 	ret = get_sysparm_lparctl(parameter, length, data);
-	if (ret && (errno == ENOENT || errno == ENOIOCTLCMD))
+	if (ret && (errno == ENOENT || errno == ENOTTY))
 		ret = get_sysparm_devmem(parameter, length, data);
 	return ret;
 }
@@ -1274,8 +1274,8 @@ int rtas_set_sysparm(unsigned int parameter, /* const */ char *data)
 	int ret;
 
 	ret = set_sysparm_lparctl(parameter, data);
-	if (ret && (errno == ENOENT || errno == ENOIOCTLCMD))
-		ret = set_sysparm_devmem(paramter, data);
+	if (ret && (errno == ENOENT || errno == ENOTTY))
+		ret = set_sysparm_devmem(parameter, data);
 	return ret;
 }
 
