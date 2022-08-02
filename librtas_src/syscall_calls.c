@@ -886,7 +886,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	uint32_t next_hi, next_lo;
 	uint32_t bytes_hi, bytes_lo;
 	uint32_t dump_tag_hi, dump_tag_lo;
-	void *kernbuf;
+	void *kernbuf = NULL;
 	int rc, status;
 
 	rc = sanity_check();
