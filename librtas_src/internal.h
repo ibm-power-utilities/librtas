@@ -1,5 +1,5 @@
 /**
- * @file syscall.h
+ * @file internal.h
  *
  * Copyright (C) 2005 IBM Corporation
  *
@@ -20,8 +20,8 @@
  * @author John Rose <johnrose@us.ibm.com>
  */
 
-#ifndef _SYSCALL_H_
-#define _SYSCALL_H_
+#ifndef LIBRTAS_INTERNAL_H
+#define LIBRTAS_INTERNAL_H
 
 #include <stdint.h>
 
@@ -68,4 +68,4 @@ extern int dbg_lvl;
 			printf("librtas %s(): " _fmt, __func__, ##_args); \
 	} while (0)
 
-#endif
+#endif /* LIBRTAS_INTERNAL_H */
