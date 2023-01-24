@@ -1,3 +1,225 @@
+Changelog for librtas-2.0.4
+=======================================
+commit 33aa9aee37cfc4bdc93ba4aff25afb962b6a7606
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Mon Jan 23 11:48:23 2023 -0800
+
+    ci: rev Ubuntu action runner from 20.04 -> 22.04
+    
+    Move from previous LTS release to the latest LTS release. This has the
+    benefit of also moving gcc-toolchain from gcc-10 -> gcc-11.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 44d189b070eb04af6d237d52084e703327ea6243
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Tue Aug 2 15:39:02 2022 -0500
+
+    rtas_platform_dump: fix uninitialized use of local variable
+    
+    The Clang Static Analyzer correctly identifies an uninitialized use:
+    
+    librtas_src/syscall_calls.c:930:6: warning: Branch condition evaluates to a
+    garbage value [core.uninitialized.Branch]
+            if (kernbuf)
+                ^~~~~~~
+    
+    When rtas_platform_dump() is called with a NULL buffer argument,
+    rtas_free_rmo_buffer() is called with a stack garbage value for the buffer
+    address, which is ultimately passed to munmap().
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 1116a74b8ed01722957098eb934c0a8c186e2b27
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Aug 1 09:52:51 2022 -0500
+
+    configure.ac: discard LOCAL_CHECK_FLAGS
+    
+    As pointed out by Thomas Petazzoni, unconditionally setting build flags in
+    this manner is problematic for downstreams, potentially conflicting with
+    distribution policies.
+    
+    Drop LOCAL_CHECK_FLAGS and associated m4 code, preserving -Wall in
+    AM_CFLAGS. This leaves m4/ empty, but removing altogether provokes a
+    warning from autoreconf, so leave an empty file in the directory.
+    
+    Fixes #25.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 7e2216265ce2621e48036f4dcd2ea23b032d7eb5
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Jul 13 15:01:33 2022 -0500
+
+    update .gitignore
+    
+    'git status' in a built tree gives:
+    
+    Untracked files:
+      (use "git add <file>..." to include in what will be committed)
+            config.h
+            config.h.in
+            librtas.la
+            librtas_src/ofdt.lo
+            librtas_src/syscall_calls.lo
+            librtas_src/syscall_rmo.lo
+            librtasevent.la
+            librtasevent_src/get_rtas_event.lo
+            librtasevent_src/print_rtas_event.lo
+            librtasevent_src/rtas_cpu.lo
+            librtasevent_src/rtas_dump.lo
+            librtasevent_src/rtas_epow.lo
+            librtasevent_src/rtas_hotplug.lo
+            librtasevent_src/rtas_io.lo
+            librtasevent_src/rtas_lri.lo
+            librtasevent_src/rtas_mem.lo
+            librtasevent_src/rtas_post.lo
+            librtasevent_src/rtas_sp.lo
+            librtasevent_src/rtas_srcfru.lo
+            librtasevent_src/rtas_v6_misc.lo
+            librtasevent_src/rtas_vend.lo
+            libtool
+            m4/libtool.m4
+            m4/ltoptions.m4
+            m4/ltsugar.m4
+            m4/ltversion.m4
+            m4/lt~obsolete.m4
+            stamp-h1
+    
+    Ideally 'git status' should not report any untracked files after a build.
+    This reduces the likelihood of accidentally checking in build outputs when
+    making changes.
+    
+    Update .gitignore. Add things that aren't ignored but should be,
+    remove irrelevant patterns, remove comments which don't match current
+    practice (the git ls-files.. command just gives an error).
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b51c540e15d00ec0e079d55d83e97ebc9c08fece
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Feb 17 08:27:35 2022 -0600
+
+    librtas: drop inline function attributes
+    
+    There's no real need to specify inline on file-static functions in this
+    code. The compiler will inline these as it sees fit.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 29ad6be0b4a595441c3093457aaa7432d38ba4be
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Feb 18 08:09:47 2022 -0600
+
+    use AC_CONFIG_SRCDIR
+    
+    This allows configure to verify that the specified source directory
+    actually contains the project source code.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ad5868616777037350c2abd720dc547c6141bb52
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 16 16:45:12 2022 -0600
+
+    drop AM_PROG_AR
+    
+    $(AR) isn't used in our build system, so this isn't needed.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 755943eb5d8fabb11977b1d690187f51342328d9
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 16 16:28:47 2022 -0600
+
+    drop AC_CANONICAL_TARGET
+    
+    In autoconf parlance, "target" refers to the type of system for which any
+    compiler tools in the package produce code. No compiler-like tools here,
+    drop it.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit e473e2991f4a69438f618aa1c8e55d2f65229a4f
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 16 10:21:26 2022 -0600
+
+    remove position-independent executable flags
+    
+    Seems odd to specify -fPIE, -pie at the top level for a library project.
+    Libtool takes care of adding -fPIC where it's appropriate.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit a0d932bbbdf23999c6e2d13a5a3b9e796b470263
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 16 09:53:11 2022 -0600
+
+    drop redundant ssp-buffer-size specification
+    
+    It appears that setting ssp-buffer-size to the minimum changes the code
+    emitted with -fstack-protector but not -fstack-protector-strong or
+    -fstack-protector-all. We're using -fstack-protector-all so our use of
+    --param=ssp-buffer-size=1 is redundant.
+    
+    Examples/background:
+    https://bugzilla.redhat.com/show_bug.cgi?id=1105456
+    https://lore.kernel.org/all/1471862567.5256.18.camel@linux.intel.com
+    https://lwn.net/Articles/584225/
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit f30ebfe896de3712b922fe8a26444bfd29497da4
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Feb 10 13:19:20 2022 -0600
+
+    use AM_CPPFLAGS for include directives
+    
+    Preprocessor search paths are more appropriately set in AM_CPPFLAGS than
+    AM_CFLAGS.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 05c043f59d2cae5378a705c1d674c9bad432643b
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Feb 17 08:36:31 2022 -0600
+
+    require Autoconf 2.69
+    
+    Autoscan suggests requiring a minimum version of 2.69, which is a decade
+    old as of this writing. All Linux distributions we care about supporting
+    satisfy this.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ee8ed1384b15f24df83f3c9de6eabcac03a2d698
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Feb 18 08:50:32 2022 -0600
+
+    drop useless librtas.pc
+    
+    It's impossible that anyone actually uses the librtas.pc generated by the
+    build since all the flags are completely wrong and don't match the library
+    name(s) or the installed header paths.
+    
+    We don't use pkg-config to configure dependencies during our build so we
+    can drop PKG_PROG_PKG_CONFIG from configure.ac as well.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
 Changelog for librtas-2.0.3
 =======================================
 commit c8a4104ac76ceb0eb61d36c6a1b6043ec92e2eb3
