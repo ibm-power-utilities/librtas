@@ -20,8 +20,8 @@
  * @author Nathan Fontenot <nfont@austin.ibm.com>
  */
 
-#ifndef _H_RTAS_EVENT
-#define _H_RTAS_EVENT
+#ifndef RTAS_EVENT_H
+#define RTAS_EVENT_H
 
 #include <endian.h>
 
@@ -87,4 +87,4 @@ struct scn_header * get_re_scn(struct rtas_event *, int);
 void add_re_scn(struct rtas_event *, void *, int);
 int re_scn_id(struct rtas_v6_hdr_raw *);
 
-#endif
+#endif /* RTAS_EVENT_H */
