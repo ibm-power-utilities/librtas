@@ -44,8 +44,8 @@
  * @author Nathan Fontenot <nfont@austin.ibm.com>
  */
 
-#ifndef _H_RTAS_EVENTS
-#define _H_RTAS_EVENTS
+#ifndef LIBRTASEVENT_H
+#define LIBRTASEVENT_H
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -486,4 +486,4 @@ int rtas_print_event(FILE *, struct rtas_event *, int);
 int rtas_print_raw_event(FILE *, struct rtas_event *);
 int rtas_set_print_width(int);
 
-#endif
+#endif /* LIBRTASEVENT_H */
