@@ -32,16 +32,6 @@
 #include "internal.h"
 #include "librtas.h"
 
-/* The original librtas used the _syscall1 interface to get to the rtas
- * system call.  On recent versions of Linux though the _syscall1
- * interface was removed from unistd.h so we have moved to using the
- * syscall() interface instead.  The use of _syscall1 is left as the
- * default to avoid breaking the library on older systems.
- */
-#ifdef _syscall1
-_syscall1(int, rtas, void *, args);
-#endif
-
 #define CALL_AGAIN 1
 
 int dbg_lvl = 0;
@@ -177,11 +167,7 @@ static int _rtas_call(int delay_handling, int token, int ninputs,
 	display_rtas_buf(&args, 0);
 
 	do {
-#ifdef _syscall1
-		rc = rtas(&args);
-#else
 		rc = syscall(__NR_rtas, &args);
-#endif
 		if (!delay_handling || (rc < 0))
 			break;
 
