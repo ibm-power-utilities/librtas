@@ -20,7 +20,7 @@ jobs:
         host: [powerpc-linux-gnu, powerpc64-linux-gnu, powerpc64le-linux-gnu, x86_64-linux-gnu]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Register problem matchers
       run: |
