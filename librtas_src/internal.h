@@ -25,11 +25,6 @@
 
 #include <stdint.h>
 
-/* Syscall number */
-#ifndef __NR_rtas
-#define __NR_rtas 255
-#endif
-
 #define MAX_ARGS 16
 
 typedef uint32_t rtas_arg_t;
