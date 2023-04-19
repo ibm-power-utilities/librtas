@@ -20,8 +20,8 @@
  * @author John Rose <johnrose@us.ibm.com>
  */
 
-#ifndef _LIBRTAS_H_
-#define _LIBRTAS_H_
+#ifndef LIBRTAS_H
+#define LIBRTAS_H
 
 #include <stdio.h>
 #include <unistd.h>
@@ -112,4 +112,4 @@ extern int rtas_physical_attestation(char *workarea, int seq_num,
 }
 #endif
 
-#endif /* _LIBRTAS_H_ */
+#endif /* LIBRTAS_H */

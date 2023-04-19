@@ -21,8 +21,8 @@
  * @author Nathan Fontenot <nfont@austin.ibm.com>
  */
 
-#ifndef _H_RE_V6_RTAS_EVENT
-#define _H_RE_V6_RTAS_EVENT
+#ifndef LIBRTASEVENT_V6_H
+#define LIBRTASEVENT_V6_H
 
 #include <librtasevent.h>
 #include <inttypes.h>
@@ -545,5 +545,5 @@ struct rtas_hotplug_scn_raw {
 
 #define RE_HOTPLUG_SCN_SZ	16
 
-#endif 
+#endif /* LIBRTASEVENT_V6_H */
 

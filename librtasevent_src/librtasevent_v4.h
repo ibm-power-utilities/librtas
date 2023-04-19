@@ -21,8 +21,8 @@
  * @author Nathan Fontenot <nfont@austin.ibm.com>
  */
 
-#ifndef _H_RTAS_EVENT_HDRS
-#define _H_RTAS_EVENT_HDRS
+#ifndef LIBRTASEVENT_V4_H
+#define LIBRTASEVENT_V4_H
 
 #include <librtasevent.h>
 #include <inttypes.h>
@@ -219,4 +219,4 @@ struct rtas_vend_errlog {
     uint32_t    vendor_data_sz;
     char        *vendor_data;
 };
-#endif
+#endif /* LIBRTASEVENT_V4_H */
