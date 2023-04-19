@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <inttypes.h>
-#include "syscall.h"
+#include "internal.h"
 #include "librtas.h"
 
 #define MAX_PAGES 64

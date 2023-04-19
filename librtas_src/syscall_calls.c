@@ -29,7 +29,7 @@
 #include <sys/syscall.h>
 #include <linux/unistd.h>
 #include <linux/types.h>
-#include "syscall.h"
+#include "internal.h"
 #include "librtas.h"
 
 /* The original librtas used the _syscall1 interface to get to the rtas

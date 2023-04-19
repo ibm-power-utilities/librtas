@@ -27,7 +27,7 @@
 #include <endian.h>
 #include <byteswap.h>
 #include "librtas.h"
-#include "syscall.h"
+#include "internal.h"
 
 static const char *ofdt_rtas_path = "/proc/device-tree/rtas";
 
