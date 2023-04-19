@@ -25,6 +25,7 @@
 
 #include <stdint.h>
 
+#define WORK_AREA_SIZE 4096
 #define MAX_ARGS 16
 
 typedef uint32_t rtas_arg_t;
