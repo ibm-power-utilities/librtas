@@ -38,10 +38,10 @@ typedef uint32_t rtas_arg_t;
 struct rtas_args {
 	uint32_t token;
 	uint32_t ninputs;
-	uint32_t nret; 
+	uint32_t nret;
 	rtas_arg_t args[MAX_ARGS];
 	rtas_arg_t *rets;     /* Pointer to return values in args[]. */
-};  
+};
 
 struct region {
 	uint64_t addr;
@@ -49,12 +49,12 @@ struct region {
 	struct region *next;
 };
 
-extern int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
-extern int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
-extern int interface_exists();
-extern int read_entire_file(int fd, char **buf, size_t *len);
-extern int rtas_token(const char *call_name);
-extern int sanity_check(void);
+int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
+int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
+int interface_exists();
+int read_entire_file(int fd, char **buf, size_t *len);
+int rtas_token(const char *call_name);
+int sanity_check(void);
 
 #define BITS32_LO(_num) (uint32_t) (_num & 0xffffffffll)
 #define BITS32_HI(_num) (uint32_t) (_num >> 32) 
