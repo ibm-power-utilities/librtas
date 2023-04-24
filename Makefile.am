@@ -17,7 +17,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/librtas_src/ -I$(top_srcdir)/librtasevent_src/
 
 library_includedir=$(includedir)
 
-LIBRTAS_LIBRARY_VERSION = 2:0:0
+# See "Updating library version information" in the libtool manual for
+# how to maintain these values. They are *not* tied to the release
+# number.
+LIBRTAS_CURRENT = 2
+LIBRTAS_REVISION = 0
+LIBRTAS_AGE = 0
+LIBRTAS_LIBRARY_VERSION = $(LIBRTAS_CURRENT):$(LIBRTAS_REVISION):$(LIBRTAS_AGE)
 
 lib_LTLIBRARIES += librtas.la
 librtas_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION)
@@ -29,8 +35,16 @@ librtas_la_SOURCES = \
 library_include_HEADERS += librtas_src/librtas.h
 noinst_HEADERS += librtas_src/internal.h
 
+# See "Updating library version information" in the libtool manual for
+# how to maintain these values. They are *not* tied to the release
+# number.
+LIBRTASEVENT_CURRENT = 2
+LIBRTASEVENT_REVISION = 0
+LIBRTASEVENT_AGE = 0
+LIBRTASEVENT_LIBRARY_VERSION = $(LIBRTASEVENT_CURRENT):$(LIBRTASEVENT_REVISION):$(LIBRTASEVENT_AGE)
+
 lib_LTLIBRARIES += librtasevent.la
-librtasevent_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION)
+librtasevent_la_LDFLAGS = -version-info $(LIBRTASEVENT_LIBRARY_VERSION)
 librtasevent_la_SOURCES = \
 	librtasevent_src/get_rtas_event.c \
 	librtasevent_src/print_rtas_event.c \
