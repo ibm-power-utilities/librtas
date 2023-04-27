@@ -1,0 +1,543 @@
+<abi-corpus version='2.1' architecture='elf-powerpc-64' soname='librtas.so.2'>
+  <elf-needed>
+    <dependency name='libc.so.6'/>
+  </elf-needed>
+  <elf-function-symbols>
+    <!-- interface_exists -->
+    <elf-symbol name='interface_exists' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- read_entire_file -->
+    <elf-symbol name='read_entire_file' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_activate_firmware -->
+    <elf-symbol name='rtas_activate_firmware' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_cfg_connector -->
+    <elf-symbol name='rtas_cfg_connector' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_delay_timeout -->
+    <elf-symbol name='rtas_delay_timeout' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_display_char -->
+    <elf-symbol name='rtas_display_char' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_display_msg -->
+    <elf-symbol name='rtas_display_msg' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_errinjct -->
+    <elf-symbol name='rtas_errinjct' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_errinjct_close -->
+    <elf-symbol name='rtas_errinjct_close' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_errinjct_open -->
+    <elf-symbol name='rtas_errinjct_open' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_free_rmo_buffer -->
+    <elf-symbol name='rtas_free_rmo_buffer' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_config_addr_info2 -->
+    <elf-symbol name='rtas_get_config_addr_info2' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_dynamic_sensor -->
+    <elf-symbol name='rtas_get_dynamic_sensor' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_indices -->
+    <elf-symbol name='rtas_get_indices' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_power_level -->
+    <elf-symbol name='rtas_get_power_level' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_rmo_buffer -->
+    <elf-symbol name='rtas_get_rmo_buffer' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_sensor -->
+    <elf-symbol name='rtas_get_sensor' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_sysparm -->
+    <elf-symbol name='rtas_get_sysparm' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_time -->
+    <elf-symbol name='rtas_get_time' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_get_vpd -->
+    <elf-symbol name='rtas_get_vpd' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_lpar_perftools -->
+    <elf-symbol name='rtas_lpar_perftools' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_physical_attestation -->
+    <elf-symbol name='rtas_physical_attestation' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_platform_dump -->
+    <elf-symbol name='rtas_platform_dump' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_read_slot_reset -->
+    <elf-symbol name='rtas_read_slot_reset' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_scan_log_dump -->
+    <elf-symbol name='rtas_scan_log_dump' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_debug -->
+    <elf-symbol name='rtas_set_debug' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_dynamic_indicator -->
+    <elf-symbol name='rtas_set_dynamic_indicator' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_eeh_option -->
+    <elf-symbol name='rtas_set_eeh_option' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_indicator -->
+    <elf-symbol name='rtas_set_indicator' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_power_level -->
+    <elf-symbol name='rtas_set_power_level' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_poweron_time -->
+    <elf-symbol name='rtas_set_poweron_time' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_sysparm -->
+    <elf-symbol name='rtas_set_sysparm' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_set_time -->
+    <elf-symbol name='rtas_set_time' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_suspend_me -->
+    <elf-symbol name='rtas_suspend_me' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_token -->
+    <elf-symbol name='rtas_token' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_update_nodes -->
+    <elf-symbol name='rtas_update_nodes' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- rtas_update_properties -->
+    <elf-symbol name='rtas_update_properties' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+    <!-- sanity_check -->
+    <elf-symbol name='sanity_check' type='func-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-function-symbols>
+  <elf-variable-symbols>
+    <!-- dbg_lvl -->
+    <elf-symbol name='dbg_lvl' size='4' type='object-type' binding='global-binding' visibility='default-visibility' is-defined='yes'/>
+  </elf-variable-symbols>
+  <abi-instr address-size='64' path='librtas_src/ofdt.c' comp-dir-path='/source' language='LANG_C99'>
+    <!-- char -->
+    <type-decl name='char' size-in-bits='8' id='a84c031d'/>
+    <!-- int -->
+    <type-decl name='int' size-in-bits='32' id='95e97e5e'/>
+    <!-- typedef unsigned long int size_t -->
+    <typedef-decl name='size_t' type-id='f0981eeb' id='b59d7dce'/>
+    <!-- unsigned long int -->
+    <type-decl name='unsigned long int' size-in-bits='64' id='f0981eeb'/>
+    <!-- char* -->
+    <pointer-type-def type-id='a84c031d' size-in-bits='64' id='26a90f95'/>
+    <!-- char** -->
+    <pointer-type-def type-id='26a90f95' size-in-bits='64' id='9b23c9ad'/>
+    <!-- const char -->
+    <qualified-type-def type-id='a84c031d' const='yes' id='9b45d938'/>
+    <!-- const char* -->
+    <pointer-type-def type-id='9b45d938' size-in-bits='64' id='80f4b756'/>
+    <!-- size_t* -->
+    <pointer-type-def type-id='b59d7dce' size-in-bits='64' id='78c01427'/>
+    <!-- int rtas_token(const char*) -->
+    <function-decl name='rtas_token' mangled-name='rtas_token' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_token'>
+      <!-- parameter of type 'const char*' -->
+      <parameter type-id='80f4b756' name='call_name'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int read_entire_file(int, char**, size_t*) -->
+    <function-decl name='read_entire_file' mangled-name='read_entire_file' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='read_entire_file'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='fd'/>
+      <!-- parameter of type 'char**' -->
+      <parameter type-id='9b23c9ad' name='buf'/>
+      <!-- parameter of type 'size_t*' -->
+      <parameter type-id='78c01427' name='len'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr address-size='64' path='librtas_src/syscall_calls.c' comp-dir-path='/source' language='LANG_C99'>
+    <!-- typedef unsigned int __uint32_t -->
+    <typedef-decl name='__uint32_t' type-id='f0981eec' id='62f1140c'/>
+    <!-- typedef unsigned long int __uint64_t -->
+    <typedef-decl name='__uint64_t' type-id='f0981eeb' id='8910171f'/>
+    <!-- typedef __uint32_t uint32_t -->
+    <typedef-decl name='uint32_t' type-id='62f1140c' id='8f92235e'/>
+    <!-- typedef __uint64_t uint64_t -->
+    <typedef-decl name='uint64_t' type-id='8910171f' id='9c313c2d'/>
+    <!-- unsigned int -->
+    <type-decl name='unsigned int' size-in-bits='32' id='f0981eec'/>
+    <!-- int* -->
+    <pointer-type-def type-id='95e97e5e' size-in-bits='64' id='7292109c'/>
+    <!-- uint32_t* -->
+    <pointer-type-def type-id='8f92235e' size-in-bits='64' id='90421557'/>
+    <!-- uint64_t* -->
+    <pointer-type-def type-id='9c313c2d' size-in-bits='64' id='5d6479ae'/>
+    <!-- unsigned int* -->
+    <pointer-type-def type-id='f0981eec' size-in-bits='64' id='807869d3'/>
+    <!-- void* -->
+    <pointer-type-def type-id='48b5725f' size-in-bits='64' id='eaa32e2f'/>
+    <!-- void -->
+    <type-decl name='void' id='48b5725f'/>
+    <!-- int dbg_lvl -->
+    <var-decl name='dbg_lvl' type-id='95e97e5e' mangled-name='dbg_lvl' visibility='default' elf-symbol-id='dbg_lvl'/>
+    <!-- int sanity_check() -->
+    <function-decl name='sanity_check' mangled-name='sanity_check' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='sanity_check'>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_activate_firmware() -->
+    <function-decl name='rtas_activate_firmware' mangled-name='rtas_activate_firmware' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_activate_firmware'>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_cfg_connector(char*) -->
+    <function-decl name='rtas_cfg_connector' mangled-name='rtas_cfg_connector' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_cfg_connector'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_delay_timeout(uint64_t) -->
+    <function-decl name='rtas_delay_timeout' mangled-name='rtas_delay_timeout' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_delay_timeout'>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='timeout_ms'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_display_char(char) -->
+    <function-decl name='rtas_display_char' mangled-name='rtas_display_char' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_display_char'>
+      <!-- parameter of type 'char' -->
+      <parameter type-id='a84c031d' name='c'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_display_msg(char*) -->
+    <function-decl name='rtas_display_msg' mangled-name='rtas_display_msg' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_display_msg'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='buf'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_errinjct(int, int, char*) -->
+    <function-decl name='rtas_errinjct' mangled-name='rtas_errinjct' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_errinjct'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='etoken'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='otoken'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_errinjct_close(int) -->
+    <function-decl name='rtas_errinjct_close' mangled-name='rtas_errinjct_close' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_errinjct_close'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='otoken'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_errinjct_open(int*) -->
+    <function-decl name='rtas_errinjct_open' mangled-name='rtas_errinjct_open' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_errinjct_open'>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='otoken'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_config_addr_info2(uint32_t, uint64_t, uint32_t, uint32_t*) -->
+    <function-decl name='rtas_get_config_addr_info2' mangled-name='rtas_get_config_addr_info2' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_config_addr_info2'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='config_addr'/>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='phb_id'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='func'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='info'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_dynamic_sensor(int, void*, int*) -->
+    <function-decl name='rtas_get_dynamic_sensor' mangled-name='rtas_get_dynamic_sensor' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_dynamic_sensor'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='sensor'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='eaa32e2f' name='loc_code'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='state'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_indices(int, int, char*, size_t, int, int*) -->
+    <function-decl name='rtas_get_indices' mangled-name='rtas_get_indices' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_indices'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='is_sensor'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='type'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='size'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='start'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='next'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_power_level(int, int*) -->
+    <function-decl name='rtas_get_power_level' mangled-name='rtas_get_power_level' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_power_level'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='powerdomain'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='level'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_sensor(int, int, int*) -->
+    <function-decl name='rtas_get_sensor' mangled-name='rtas_get_sensor' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_sensor'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='sensor'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='index'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='state'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_sysparm(unsigned int, unsigned int, char*) -->
+    <function-decl name='rtas_get_sysparm' mangled-name='rtas_get_sysparm' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_sysparm'>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='parameter'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='length'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='data'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_time(uint32_t*, uint32_t*, uint32_t*, uint32_t*, uint32_t*, uint32_t*, uint32_t*) -->
+    <function-decl name='rtas_get_time' mangled-name='rtas_get_time' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_time'>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='year'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='month'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='day'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='hour'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='min'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='sec'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='nsec'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_vpd(char*, char*, size_t, unsigned int, unsigned int*, unsigned int*) -->
+    <function-decl name='rtas_get_vpd' mangled-name='rtas_get_vpd' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_vpd'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='loc_code'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='size'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='sequence'/>
+      <!-- parameter of type 'unsigned int*' -->
+      <parameter type-id='807869d3' name='seq_next'/>
+      <!-- parameter of type 'unsigned int*' -->
+      <parameter type-id='807869d3' name='bytes_ret'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_lpar_perftools(int, char*, unsigned int, unsigned int, unsigned int*) -->
+    <function-decl name='rtas_lpar_perftools' mangled-name='rtas_lpar_perftools' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_lpar_perftools'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='subfunc'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='length'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='sequence'/>
+      <!-- parameter of type 'unsigned int*' -->
+      <parameter type-id='807869d3' name='seq_next'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_platform_dump(uint64_t, uint64_t, void*, size_t, uint64_t*, uint64_t*) -->
+    <function-decl name='rtas_platform_dump' mangled-name='rtas_platform_dump' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_platform_dump'>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='dump_tag'/>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='sequence'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='eaa32e2f' name='buffer'/>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='length'/>
+      <!-- parameter of type 'uint64_t*' -->
+      <parameter type-id='5d6479ae' name='seq_next'/>
+      <!-- parameter of type 'uint64_t*' -->
+      <parameter type-id='5d6479ae' name='bytes_ret'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_read_slot_reset(uint32_t, uint64_t, int*, int*) -->
+    <function-decl name='rtas_read_slot_reset' mangled-name='rtas_read_slot_reset' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_read_slot_reset'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='cfg_addr'/>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='phbid'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='state'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='eeh'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_scan_log_dump(void*, size_t) -->
+    <function-decl name='rtas_scan_log_dump' mangled-name='rtas_scan_log_dump' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_scan_log_dump'>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='eaa32e2f' name='buffer'/>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='length'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_debug(int) -->
+    <function-decl name='rtas_set_debug' mangled-name='rtas_set_debug' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_debug'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='level'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_dynamic_indicator(int, int, void*) -->
+    <function-decl name='rtas_set_dynamic_indicator' mangled-name='rtas_set_dynamic_indicator' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_dynamic_indicator'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='indicator'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='new_value'/>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='eaa32e2f' name='loc_code'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_eeh_option(uint32_t, uint64_t, int) -->
+    <function-decl name='rtas_set_eeh_option' mangled-name='rtas_set_eeh_option' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_eeh_option'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='cfg_addr'/>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='phbid'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='function'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_indicator(int, int, int) -->
+    <function-decl name='rtas_set_indicator' mangled-name='rtas_set_indicator' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_indicator'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='indicator'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='index'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='new_value'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_power_level(int, int, int*) -->
+    <function-decl name='rtas_set_power_level' mangled-name='rtas_set_power_level' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_power_level'>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='powerdomain'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='level'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='setlevel'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_poweron_time(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) -->
+    <function-decl name='rtas_set_poweron_time' mangled-name='rtas_set_poweron_time' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_poweron_time'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='year'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='month'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='day'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='hour'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='min'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='sec'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='nsec'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_sysparm(unsigned int, char*) -->
+    <function-decl name='rtas_set_sysparm' mangled-name='rtas_set_sysparm' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_sysparm'>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='parameter'/>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='data'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_set_time(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) -->
+    <function-decl name='rtas_set_time' mangled-name='rtas_set_time' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_set_time'>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='year'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='month'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='day'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='hour'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='min'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='sec'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='nsec'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_suspend_me(uint64_t) -->
+    <function-decl name='rtas_suspend_me' mangled-name='rtas_suspend_me' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_suspend_me'>
+      <!-- parameter of type 'typedef uint64_t' -->
+      <parameter type-id='9c313c2d' name='streamid'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_update_nodes(char*, unsigned int) -->
+    <function-decl name='rtas_update_nodes' mangled-name='rtas_update_nodes' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_update_nodes'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='scope'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_update_properties(char*, unsigned int) -->
+    <function-decl name='rtas_update_properties' mangled-name='rtas_update_properties' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_update_properties'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'unsigned int' -->
+      <parameter type-id='f0981eec' name='scope'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_physical_attestation(char*, int, int*, int*) -->
+    <function-decl name='rtas_physical_attestation' mangled-name='rtas_physical_attestation' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_physical_attestation'>
+      <!-- parameter of type 'char*' -->
+      <parameter type-id='26a90f95' name='workarea'/>
+      <!-- parameter of type 'int' -->
+      <parameter type-id='95e97e5e' name='seq_num'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='next_seq_num'/>
+      <!-- parameter of type 'int*' -->
+      <parameter type-id='7292109c' name='work_area_bytes'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+  </abi-instr>
+  <abi-instr address-size='64' path='librtas_src/syscall_rmo.c' comp-dir-path='/source' language='LANG_C99'>
+    <!-- void** -->
+    <pointer-type-def type-id='eaa32e2f' size-in-bits='64' id='63e171df'/>
+    <!-- int interface_exists() -->
+    <function-decl name='interface_exists' mangled-name='interface_exists' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='interface_exists'>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_free_rmo_buffer(void*, uint32_t, size_t) -->
+    <function-decl name='rtas_free_rmo_buffer' mangled-name='rtas_free_rmo_buffer' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_free_rmo_buffer'>
+      <!-- parameter of type 'void*' -->
+      <parameter type-id='eaa32e2f' name='buf'/>
+      <!-- parameter of type 'typedef uint32_t' -->
+      <parameter type-id='8f92235e' name='phys_addr'/>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='size'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+    <!-- int rtas_get_rmo_buffer(size_t, void**, uint32_t*) -->
+    <function-decl name='rtas_get_rmo_buffer' mangled-name='rtas_get_rmo_buffer' visibility='default' binding='global' size-in-bits='64' elf-symbol-id='rtas_get_rmo_buffer'>
+      <!-- parameter of type 'typedef size_t' -->
+      <parameter type-id='b59d7dce' name='size'/>
+      <!-- parameter of type 'void**' -->
+      <parameter type-id='63e171df' name='buf'/>
+      <!-- parameter of type 'uint32_t*' -->
+      <parameter type-id='90421557' name='phys_addr'/>
+      <!-- int -->
+      <return type-id='95e97e5e'/>
+    </function-decl>
+  </abi-instr>
+</abi-corpus>
