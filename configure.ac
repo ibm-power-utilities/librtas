@@ -20,6 +20,8 @@ AC_TYPE_UID_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 
+AC_CHECK_PROGS([cmd_abidiff], [abidiff])
+
 LT_INIT
 LT_LANG([C])
 
