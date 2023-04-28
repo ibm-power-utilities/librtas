@@ -6,36 +6,34 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  cross-builds:
     runs-on: ubuntu-22.04
-
     strategy:
+      fail-fast: false
       matrix:
-        host: [powerpc-linux-gnu, powerpc64-linux-gnu, powerpc64le-linux-gnu, x86_64-linux-gnu]
-
+        build:
+          - name: ppc64le
+            cc_cmd: powerpc64le-linux-gnu-gcc
+            cc_pkg: gcc-powerpc64le-linux-gnu
+            libc_pkg: libc6-dev-ppc64el-cross
+          - name: ppc64
+            cc_cmd: powerpc64-linux-gnu-gcc
+            cc_pkg: gcc-powerpc64-linux-gnu
+            libc_pkg: libc6-dev-ppc64-cross
+          - name: ppc32
+            cc_cmd: powerpc-linux-gnu-gcc
+            cc_pkg: gcc-powerpc-linux-gnu
+            libc_pkg: libc6-dev-powerpc-cross
+        image:
+          - docker.io/debian:unstable
+          - docker.io/debian:testing
+          - docker.io/debian:stable
     steps:
     - uses: actions/checkout@v3
-
     - name: Register problem matchers
       run: |
         echo "::add-matcher::.github/problem-matchers/compiler-source.json"
-
-    - name: Install cross compiler
-      if: matrix.host != 'x86_64-linux-gnu'
+    - name: Build and test
       run: |
-        sudo apt update
-        sudo apt install -y gcc-${{ matrix.host }}
-
-    - name: autogen
-      run: ./autogen.sh
-
-    - name: configure
-      run: ./configure --host=${{ matrix.host }} CFLAGS='-Wall -Werror -O2 -g'
-
-    - name: make
-      run: make V=1
-
-    - name: distcheck
-      run: |
-        make distcheck V=1 DISTCHECK_CONFIGURE_FLAGS=--host=${{ matrix.host }}
-        file .libs/librtas.so*
+        set -eux
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.build.cc_cmd }} --install ${{ matrix.build.cc_pkg }} --install ${{ matrix.build.libc_pkg }}
