@@ -59,7 +59,7 @@ static FILE *ostream;
  * definitions for the rtas event sections from librtasevent.h.  Changes
  * need to be made in both places to avoid breaking librtasevent.
  */
-static int (*re_print_fns[])() = {
+static int (*re_print_fns[])(struct scn_header *shdr, int verbosity) = {
     NULL,
     print_re_hdr_scn,
     print_re_exthdr_scn,

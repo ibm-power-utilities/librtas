@@ -52,7 +52,7 @@
 extern "C" {
 #endif
 
-int rtas_activate_firmware();
+int rtas_activate_firmware(void);
 int rtas_cfg_connector(char *workarea);
 int rtas_delay_timeout(uint64_t timeout_ms);
 int rtas_display_char(char c);

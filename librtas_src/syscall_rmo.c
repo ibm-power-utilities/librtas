@@ -306,7 +306,7 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
  *
  * @return 0 on success, !0 otherwise
  */
-static int init_workarea_config()
+static int init_workarea_config(void)
 {
 	int rc;
 
@@ -385,7 +385,7 @@ static int munmap_dev_mem(void *buf, size_t size)
  *
  * @return 0 on success, !0 otherwise
  */
-int interface_exists()
+int interface_exists(void)
 {
 	int fd = open_proc_rtas_file(rmo_filename, O_RDONLY);
 	int exists;
