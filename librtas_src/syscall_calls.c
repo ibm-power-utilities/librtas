@@ -251,7 +251,7 @@ static int rtas_call(const char *name, int ninputs, int nrets, ...)
  *
  * @return 0 on success, !0 on failure
  */
-int rtas_activate_firmware()
+int rtas_activate_firmware(void)
 {
 	int rc, status;
 

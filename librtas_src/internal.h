@@ -47,7 +47,7 @@ struct region {
 
 int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t *phys_addr);
 int rtas_free_rmo_buffer(void *buf, uint32_t phys_addr, size_t size);
-int interface_exists();
+int interface_exists(void);
 int read_entire_file(int fd, char **buf, size_t *len);
 int rtas_token(const char *call_name);
 int sanity_check(void);
