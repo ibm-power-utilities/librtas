@@ -6,6 +6,49 @@ on:
   workflow_dispatch:
 
 jobs:
+  qemu-ppc64le-builds:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - registry.fedoraproject.org/fedora:rawhide
+          - registry.fedoraproject.org/fedora:latest
+          - docker.io/alpine:latest
+        cc: [gcc, clang]
+        arch: [ppc64le]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+    - name: Install tools
+      run: |
+        sudo apt-get install -y qemu-user-static
+    - name: Build and test
+      run: |
+        set -eux
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }}
+
+  native-builds:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - registry.fedoraproject.org/fedora:rawhide
+          - registry.fedoraproject.org/fedora:latest
+        cc: [gcc, clang]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+    - name: Build and test
+      run: |
+        set -eux
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }}
+
   cross-builds:
     runs-on: ubuntu-22.04
     strategy:
