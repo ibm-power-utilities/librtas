@@ -1,15 +1,9 @@
 name: CI
 
-# Controls when the workflow will run.
 on:
-  # This allows the build to be triggered manually via the github UI.
-  workflow_dispatch:
-
-  # Push to any branch
   push:
-
-  # Any pull request
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
