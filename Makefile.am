@@ -69,6 +69,12 @@ library_include_HEADERS += \
 noinst_HEADERS += librtasevent_src/rtas_event.h \
 	librtasevent_src/rtas_src_codes.c
 
+if ENABLE_TESTS
+
+TESTS = $(check_PROGRAMS)
+
+endif # ENABLE_TESTS
+
 abixml_dir = $(srcdir)/data/abixml
 librtas_abi_xml = $(abixml_dir)/librtas/$(host_cpu)-$(host_os).xml
 librtasevent_abi_xml = $(abixml_dir)/librtasevent/$(host_cpu)-$(host_os).xml

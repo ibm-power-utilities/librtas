@@ -25,6 +25,30 @@ AC_CHECK_PROGS([cmd_abidiff], [abidiff])
 LT_INIT
 LT_LANG([C])
 
+# Detection of missing pkg-config macros, per Autoconf manual.
+m4_pattern_forbid([^PKG_])
+
+PKG_PROG_PKG_CONFIG
+
+AC_MSG_CHECKING([whether to enable tests])
+AC_ARG_ENABLE([tests],
+	      [AS_HELP_STRING([--enable-tests],
+	                      [enable tests (default is no)])],
+	      [enable_tests=$enableval],
+	      [enable_tests="no"])
+AC_MSG_RESULT([$enable_tests])
+AM_CONDITIONAL([ENABLE_TESTS], [test "$enable_tests" = "yes"])
+if test "$enable_tests" = "yes"; then
+    cmocka_min_ver=1.1.7
+    PKG_CHECK_MODULES([CMOCKA],
+                      [cmocka >= $cmocka_min_ver],
+                      [cmocka_available="yes"],
+                      [cmocka_available="no"])
+    if test "$cmocka_available" = "no"; then
+        AC_MSG_ERROR([--enable-tests requires cmocka >= $cmocka_min_ver])
+    fi
+fi
+
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_CONFIG_FILES([Makefile librtas.spec])
