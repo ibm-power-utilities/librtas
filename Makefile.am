@@ -71,6 +71,12 @@ noinst_HEADERS += librtasevent_src/rtas_event.h \
 
 if ENABLE_TESTS
 
+check_PROGRAMS = tests/link_librtas tests/dlopen_librtas
+
+tests_link_librtas_LDADD = librtas.la $(CMOCKA_LIBS)
+
+tests_dlopen_librtas_LDADD = $(CMOCKA_LIBS)
+
 TESTS = $(check_PROGRAMS)
 
 endif # ENABLE_TESTS
