@@ -17,6 +17,9 @@ jobs:
           - docker.io/alpine:latest
         cc: [gcc, clang]
         arch: [ppc64le]
+        include:
+          - image: docker.io/alpine:latest
+            arg: --no-abi-check
     steps:
     - uses: actions/checkout@v3
     - name: Register problem matchers
@@ -28,7 +31,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }}
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} ${{ matrix.arg }}
 
   native-builds:
     runs-on: ubuntu-22.04

@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Created by argbash-init v2.10.0
+# ARG_OPTIONAL_BOOLEAN([keep],[],[Whether to keep the created container],[off])
+# ARG_OPTIONAL_BOOLEAN([abi-check],[],[Whether to perform ABI regression checks],[on])
+# ARG_OPTIONAL_BOOLEAN([tests],[],[Whether to run 'make check'],[on])
+# ARG_OPTIONAL_BOOLEAN([distcheck],[],[Whether to run 'make distcheck'],[on])
 # ARG_OPTIONAL_SINGLE([cc],[],[C compiler to use],[gcc])
+# ARG_OPTIONAL_SINGLE([cflags],[],[compiler flags],[-Werror])
 # ARG_OPTIONAL_SINGLE([distro],[],[Distro image to pull],[docker.io/debian:stable])
 # ARG_OPTIONAL_SINGLE([emulate],[],[Machine architecture to emulate, if any])
 # ARG_OPTIONAL_REPEATED([install],[],[Additional packages to install, if any])
@@ -27,7 +32,7 @@ die()
 
 evaluate_strictness()
 {
-	[[ "$2" =~ ^-(-(cc|distro|emulate|install|help)$|[h]) ]] && die "You have passed '$2' as a value of argument '$1', which makes it look like that you have omitted the actual value, since '$2' is an option accepted by this script. This is considered a fatal error."
+	[[ "$2" =~ ^-(-(keep|abi-check|tests|distcheck|cc|cflags|distro|emulate|install|help)$|[h]) ]] && die "You have passed '$2' as a value of argument '$1', which makes it look like that you have omitted the actual value, since '$2' is an option accepted by this script. This is considered a fatal error."
 }
 
 
@@ -39,7 +44,12 @@ begins_with_short_option()
 }
 
 # THE DEFAULTS INITIALIZATION - OPTIONALS
+_arg_keep="off"
+_arg_abi_check="on"
+_arg_tests="on"
+_arg_distcheck="on"
 _arg_cc="gcc"
+_arg_cflags="-Werror"
 _arg_distro="docker.io/debian:stable"
 _arg_emulate=
 _arg_install=()
@@ -48,8 +58,13 @@ _arg_install=()
 print_help()
 {
 	printf '%s\n' "Build librtas in a variety of environments and configurations."
-	printf 'Usage: %s [--cc <arg>] [--distro <arg>] [--emulate <arg>] [--install <arg>] [-h|--help]\n' "$0"
+	printf 'Usage: %s [--(no-)keep] [--(no-)abi-check] [--(no-)tests] [--(no-)distcheck] [--cc <arg>] [--cflags <arg>] [--distro <arg>] [--emulate <arg>] [--install <arg>] [-h|--help]\n' "$0"
+	printf '\t%s\n' "--keep, --no-keep: Whether to keep the created container (off by default)"
+	printf '\t%s\n' "--abi-check, --no-abi-check: Whether to perform ABI regression checks (on by default)"
+	printf '\t%s\n' "--tests, --no-tests: Whether to run 'make check' (on by default)"
+	printf '\t%s\n' "--distcheck, --no-distcheck: Whether to run 'make distcheck' (on by default)"
 	printf '\t%s\n' "--cc: C compiler to use (default: 'gcc')"
+	printf '\t%s\n' "--cflags: compiler flags (default: '-Werror')"
 	printf '\t%s\n' "--distro: Distro image to pull (default: 'docker.io/debian:stable')"
 	printf '\t%s\n' "--emulate: Machine architecture to emulate, if any (no default)"
 	printf '\t%s\n' "--install: Additional packages to install, if any (empty by default)"
@@ -63,6 +78,22 @@ parse_commandline()
 	do
 		_key="$1"
 		case "$_key" in
+			--no-keep|--keep)
+				_arg_keep="on"
+				test "${1:0:5}" = "--no-" && _arg_keep="off"
+				;;
+			--no-abi-check|--abi-check)
+				_arg_abi_check="on"
+				test "${1:0:5}" = "--no-" && _arg_abi_check="off"
+				;;
+			--no-tests|--tests)
+				_arg_tests="on"
+				test "${1:0:5}" = "--no-" && _arg_tests="off"
+				;;
+			--no-distcheck|--distcheck)
+				_arg_distcheck="on"
+				test "${1:0:5}" = "--no-" && _arg_distcheck="off"
+				;;
 			--cc)
 				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
 				_arg_cc="$2"
@@ -72,6 +103,16 @@ parse_commandline()
 			--cc=*)
 				_arg_cc="${_key##--cc=}"
 				evaluate_strictness "$_key" "$_arg_cc"
+				;;
+			--cflags)
+				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+				_arg_cflags="$2"
+				shift
+				evaluate_strictness "$_key" "$_arg_cflags"
+				;;
+			--cflags=*)
+				_arg_cflags="${_key##--cflags=}"
+				evaluate_strictness "$_key" "$_arg_cflags"
 				;;
 			--distro)
 				test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
@@ -136,24 +177,21 @@ printf 'Value of --%s: %s\n' 'emulate' "$_arg_emulate"
 set -eu
 set -o pipefail
 
+# path to source in container
+src_path="/source"
+
 declare -a runc_opts
 runc_opts=(
     --security-opt label=disable
     --interactive
     --log-driver none
-    --volume "$(pwd)":/source:O
-    --workdir /source
+    --volume "$(pwd)":"${src_path}":ro
 )
 test -n "$_arg_emulate" && runc_opts+=(--arch "$_arg_emulate")
+test "$_arg_keep" = "off" && runc_opts+=(--rm)
 
 declare -a cflags
-cflags=(
-    -O2
-    -Wall
-    -Werror
-    -g
-    -std=gnu99
-)
+IFS=" " read -r -a cflags <<< "$_arg_cflags"
 
 # package names that work across distros
 pkgs=(
@@ -162,6 +200,7 @@ pkgs=(
     gzip
     libtool
     make
+    pkgconf
     tar
     "${_arg_install[@]}"
 )
@@ -171,6 +210,7 @@ test "${_arg_cc}" = "clang" && pkgs+=(clang)
 # Alpine-specific packages
 apk_pkgs=(
     # libabigail-tools is in edge but not 3.18
+    cmocka-dev
     linux-headers
     musl-dev
 )
@@ -179,57 +219,100 @@ apk_pkgs=(
 apt_pkgs=(
     abigail-tools
     libc6-dev
+    libcmocka-dev
 )
 
 # Fedora/RH-specific packages
 dnf_pkgs=(
     glibc-devel
     libabigail
+    libcmocka-devel
+    util-linux # needed for su
 )
+
+declare -a configure_args
+configure_args=(
+    "CFLAGS=\"${cflags[@]}\""
+    CC="$_arg_cc"
+)
+
+declare -a make_check_cmd=(
+    echo "tests disabled, skipping"
+)
+test "$_arg_tests" = "on" && {
+    configure_args+=(--enable-tests)
+    make_check_cmd=(make VERBOSE=1 check)
+}
+
+declare -a abi_check_cmd=(
+    echo "ABI check disabled, skipping"
+)
+test "$_arg_abi_check" = "on" && abi_check_cmd=(make abi-check)
+
+declare -a make_distcheck_cmd=(
+    echo "distcheck disabled, skipping"
+)
+test "$_arg_distcheck" = "on" && make_distcheck_cmd=(make distcheck)
+
+build_user="build"
+
+autoreconf --install -Wall
 
 cat <<EOF |
 set -eux
 
-abi_check=yes
-
-# Install build dependencies
+# Install build dependencies and create build user
 case "$_arg_distro" in
     */alpine:*)
         apk add --no-cache ${pkgs[@]} ${apk_pkgs[@]}
-	abi_check=no
+	adduser -D "$build_user"
 	;;
     */debian:*)
 	apt-get update
 	apt-get -y --purge dist-upgrade
 	apt-get install -y --no-install-recommends ${pkgs[@]} ${apt_pkgs[@]}
+	useradd --create-home "$build_user"
     ;;
     */fedora:*)
 	dnf install -y --setopt=install_weak_deps=False ${pkgs[@]} ${dnf_pkgs[@]}
+	useradd --create-home "$build_user"
     ;;
 esac
+
+host="\$(${_arg_cc} -dumpmachine)"
+
+# run build as 'build' user
+su -s /bin/sh - "$build_user" << EOG
+set -eux
 
 # Report important program versions
 "${_arg_cc}" --version
 type -P abidiff >/dev/null && abidiff --version
 
-# autoreconf
-./autogen.sh
+mkdir -p /tmp/build
+cd /tmp/build
 
 # configure
-host="\$(${_arg_cc} -dumpmachine)"
-./configure --host="\$host" CFLAGS="${cflags[@]}" CC="${_arg_cc}"
+${src_path}/configure --host="\$host" ${configure_args[@]}
 
 # build
 make -j "$(nproc)" V=1
 
 # ABI check
-test "\$abi_check" = "yes" && make abi-check
+${abi_check_cmd[@]}
 
 # tests
-make check
+
+# workaround for leak sanitizer crashes seen in CI
+ASAN_OPTIONS=detect_leaks=0
+export ASAN_OPTIONS
+
+${make_check_cmd[@]}
 
 # distcheck
-make distcheck
+${make_distcheck_cmd[@]}
+
+EOG
 
 EOF
 podman run "${runc_opts[@]}" "$_arg_distro"
