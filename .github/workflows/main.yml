@@ -42,6 +42,9 @@ jobs:
           - registry.fedoraproject.org/fedora:rawhide
           - registry.fedoraproject.org/fedora:latest
         cc: [gcc, clang]
+        cflags:
+          - ''
+          - '-Og -fsanitize=address -fsanitize=undefined'
     steps:
     - uses: actions/checkout@v3
     - name: Register problem matchers
@@ -50,7 +53,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }}
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt
 
   cross-builds:
     runs-on: ubuntu-22.04
