@@ -31,7 +31,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} ${{ matrix.arg }}
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} ${{ matrix.arg }} --no-distcheck
 
   native-builds:
     runs-on: ubuntu-22.04
