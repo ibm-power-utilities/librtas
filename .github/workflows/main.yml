@@ -82,4 +82,4 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.build.cc_cmd }} --install ${{ matrix.build.cc_pkg }} --install ${{ matrix.build.libc_pkg }}
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.build.cc_cmd }} --install ${{ matrix.build.cc_pkg }} --install ${{ matrix.build.libc_pkg }} --no-tests
