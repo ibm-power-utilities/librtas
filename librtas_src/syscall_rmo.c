@@ -60,12 +60,11 @@ static struct workarea_config wa_config = {
 static int open_proc_rtas_file(const char *name, int mode)
 {
 	const char *proc_rtas_paths[] = { "/proc/ppc64/rtas", "/proc/rtas" };
+	const int npaths = sizeof(proc_rtas_paths) / sizeof(proc_rtas_paths[0]);
 	char full_name[MAX_PATH_LEN];
-	int npaths;
 	int fd;
 	int i;
 
-	npaths = sizeof(proc_rtas_paths) / sizeof(char *);
 	for (i = 0; i < npaths; i++) {
 		sprintf(full_name, "%s/%s", proc_rtas_paths[i], name);
 		fd = open(full_name, mode, S_IRUSR | S_IWUSR);
