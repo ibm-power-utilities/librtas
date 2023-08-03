@@ -226,19 +226,16 @@ static int release_file_lock(off_t start, size_t size)
 static int get_phys_region(size_t size, uint32_t * phys_addr)
 {
 	struct region *kregion = &wa_config.kern_region;
+	const size_t n_pages = size / WORK_AREA_SIZE;
 	uint32_t addr = 0;
 	uint64_t bits;
-	int n_pages;
-	int i;
 
 	if (size > kregion->size) {
 		dbg("Invalid buffer size 0x%zx requested\n", size);
 		return RTAS_IO_ASSERT;
 	}
 
-	n_pages = size / WORK_AREA_SIZE;
-
-	for (i = 0; i < MAX_PAGES; i++) {
+	for (size_t i = 0; i < MAX_PAGES; i++) {
 		if ((i * WORK_AREA_SIZE) >= kregion->size)
 			break;
 
@@ -273,8 +270,8 @@ static int get_phys_region(size_t size, uint32_t * phys_addr)
 static int release_phys_region(uint32_t phys_addr, size_t size)
 {
 	struct region *kregion = &wa_config.kern_region;
+	const size_t n_pages = size / WORK_AREA_SIZE;
 	int first_page;
-	int n_pages;
 	uint64_t bits;
 	int rc;
 
@@ -284,11 +281,10 @@ static int release_phys_region(uint32_t phys_addr, size_t size)
 	}
 
 	first_page = (phys_addr - kregion->addr) / WORK_AREA_SIZE;
-	n_pages = size / WORK_AREA_SIZE;
 
 	bits = get_bits(first_page, first_page + n_pages - 1,
 			wa_config.pages_map);
-	if (bits != ((1 << n_pages) - 1)) {
+	if (bits != ((1UL << n_pages) - 1)) {
 		dbg("Invalid region [0x%x, 0x%zx]\n", phys_addr, size);
 		return RTAS_IO_ASSERT;
 	}

@@ -408,7 +408,7 @@ parse_rtas_event(char *buf, int buflen)
 
     /* Validate the length of the buffer passed in. */
     re->event_length = re_hdr->ext_log_length + RE_EVENT_HDR_SZ;
-    if (re->event_length > buflen) {
+    if (re->event_length > (uint32_t)buflen) {
         cleanup_rtas_event(re);
         return NULL;
     }
