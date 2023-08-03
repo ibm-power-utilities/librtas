@@ -182,7 +182,7 @@ static int acquire_file_lock(off_t start, size_t size)
 	rc = fcntl(wa_config.lockfile_fd, F_SETLKW, &flock);
 	if (rc < 0) {
 		/* Expected to fail for regions used by other processes */
-		dbg("fcntl failed for [0x%lx, 0x%zx]\n", start, size);
+		dbg("fcntl failed for [0x%llx, 0x%zx]\n", (unsigned long long)start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -209,7 +209,7 @@ static int release_file_lock(off_t start, size_t size)
 
 	rc = fcntl(wa_config.lockfile_fd, F_SETLK, &flock);
 	if (rc < 0) {
-		dbg("fcntl failed for [0x%lx, 0x%zx]\n", start, size);
+		dbg("fcntl failed for [0x%llx, 0x%zx]\n", (unsigned long long)start, size);
 		return RTAS_IO_ASSERT;
 	}
 
@@ -468,7 +468,7 @@ int rtas_get_rmo_buffer(size_t size, void **buf, uint32_t * phys_addr)
 	if (rc)
 		return rc;
 
-	dbg("RMO buffer request, size: %zd\n", size);
+	dbg("RMO buffer request, size: %zu\n", size);
 
 	n_pages = size / WORK_AREA_SIZE;
 

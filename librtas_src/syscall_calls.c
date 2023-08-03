@@ -93,7 +93,7 @@ static unsigned int handle_delay(int status, uint64_t * elapsed)
 	}
 	*elapsed += ms;
 
-	dbg("Return status %d, delaying for %ld ms\n", status, ms);
+	dbg("Return status %d, delaying for %lu ms\n", status, ms);
 	usleep(ms * 1000);
 	return 1;
 }
@@ -121,7 +121,7 @@ static void display_rtas_buf(struct rtas_args *args, int after)
 	 * values is enough for debugging purposes.
 	 */
 	if (!after) {
-		printf("RTAS call args.token = %d\n", be32toh(args->token));
+		printf("RTAS call args.token = %u\n", be32toh(args->token));
 		printf("RTAS call args.ninputs = %d\n", ninputs);
 		printf("RTAS call args.nret = %d\n", nret);
 		for (i = 0; i < ninputs; i++)
@@ -519,7 +519,7 @@ int rtas_get_config_addr_info2(uint32_t config_addr, uint64_t phb_id,
 
 	*info = be32toh(be_info);
 
-	dbg("(0x%x, 0x%"PRIx64", %d) = %d, 0x%x\n", config_addr, phb_id, func,
+	dbg("(0x%x, 0x%"PRIx64", %u) = %d, 0x%x\n", config_addr, phb_id, func,
 	    rc ? rc : status, *info);
 	return rc ? rc : status;
 }
@@ -607,7 +607,7 @@ int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 
 	*next = be32toh(be_next);
 
-	dbg("(%d, %d, %p, %zd, %d, %p) = %d, %d\n", is_sensor, type, workarea,
+	dbg("(%d, %d, %p, %zu, %d, %p) = %d, %d\n", is_sensor, type, workarea,
 	     size, start, next, rc ? rc : status, *next);
 	return rc ? rc : status;
 }
@@ -707,7 +707,7 @@ int rtas_get_sysparm(unsigned int parameter, unsigned int length, char *data)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	dbg("(%d, %d, %p) = %d\n", parameter, length, data, rc ? rc : status);
+	dbg("(%u, %u, %p) = %d\n", parameter, length, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -747,7 +747,7 @@ int rtas_get_time(uint32_t *year, uint32_t *month, uint32_t *day,
 	*sec = be32toh(*sec);
 	*nsec = be32toh(*nsec);
 
-	dbg("() = %d, %d, %d, %d, %d, %d, %d, %d\n", rc ? rc : status, *year,
+	dbg("() = %d, %u, %u, %u, %u, %u, %u, %u\n", rc ? rc : status, *year,
 	    *month, *day, *hour, *min, *sec, *nsec);
 	return rc ? rc : status;
 }
@@ -814,7 +814,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	*seq_next = be32toh(*seq_next);
 	*bytes_ret = be32toh(*bytes_ret);
 
-	dbg("(%s, 0x%p, %zd, %d) = %d, %d, %d", loc_code ? loc_code : "NULL",
+	printf("(%s, 0x%p, %zu, %u) = %d, %u, %u", loc_code ? loc_code : "NULL",
 	    workarea, size, sequence, status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
 }
@@ -868,7 +868,7 @@ int rtas_lpar_perftools(int subfunc, char *workarea, unsigned int length,
 
 	*seq_next = be32toh(*seq_next);
 
-	dbg("(%d, %p, %d, %d, %p) = %d, %d\n", subfunc, workarea,
+	dbg("(%d, %p, %u, %u, %p) = %d, %u\n", subfunc, workarea,
 	    length, sequence, seq_next, rc ? rc : status, *seq_next);
 	return rc ? rc : status;
 }
@@ -941,7 +941,7 @@ int rtas_platform_dump(uint64_t dump_tag, uint64_t sequence, void *buffer,
 	bytes_lo = be32toh(bytes_lo);
 	*bytes_ret = BITS64(bytes_hi, bytes_lo);
 
-	dbg("(0x%"PRIx64", 0x%"PRIx64", %p, %zd, %p, %p) = %d, 0x%"PRIx64", 0x%"PRIx64"\n",
+	dbg("(0x%"PRIx64", 0x%"PRIx64", %p, %zu, %p, %p) = %d, 0x%"PRIx64", 0x%"PRIx64"\n",
 	     dump_tag, sequence, buffer, length, seq_next, bytes_ret,
 	     rc ? rc : status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
@@ -1009,7 +1009,7 @@ int rtas_scan_log_dump(void *buffer, size_t length)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, length);
 
-	dbg("(%p, %zd) = %d\n", buffer, length, rc ? rc : status);
+	dbg("(%p, %zu) = %d\n", buffer, length, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1170,7 +1170,7 @@ int rtas_set_poweron_time(uint32_t year, uint32_t month, uint32_t day,
 		       htobe32(month), htobe32(day), htobe32(hour),
 		       htobe32(min), htobe32(sec), htobe32(nsec), &status);
 
-	dbg("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
+	dbg("(%u, %u, %u, %u, %u, %u, %u) = %d\n", year, month, day, hour,
 	    min, sec, nsec, rc ? rc : status);
 	return rc ? rc : status;
 }
@@ -1206,7 +1206,7 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 
 	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
 
-	dbg("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
+	dbg("(%u, %p) = %d\n", parameter, data, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1236,7 +1236,7 @@ int rtas_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour,
 		       htobe32(day), htobe32(hour), htobe32(min),
 		       htobe32(sec), htobe32(nsec), &status);
 
-	dbg("(%d, %d, %d, %d, %d, %d, %d) = %d\n", year, month, day, hour,
+	dbg("(%u, %u, %u, %u, %u, %u, %u) = %d\n", year, month, day, hour,
 	    min, sec, nsec, rc ? rc : status);
 	return rc ? rc : status;
 }
@@ -1290,7 +1290,7 @@ int rtas_update_nodes(char *workarea, unsigned int scope)
 
 	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, WORK_AREA_SIZE);
 
-	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
+	dbg("(%p) %u = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }
 
@@ -1326,7 +1326,7 @@ int rtas_update_properties(char *workarea, unsigned int scope)
 
 	(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, WORK_AREA_SIZE);
 
-	dbg("(%p) %d = %d\n", workarea, scope, rc ? rc : status);
+	dbg("(%p) %u = %d\n", workarea, scope, rc ? rc : status);
 	return rc ? rc : status;
 }
 
