@@ -1378,7 +1378,7 @@ int rtas_physical_attestation(char *workarea, int seq_num, int *next_seq_num,
 	*next_seq_num = be32toh(*next_seq_num);
 
 	/* FW returned more data than we can handle */
-	if (be32toh(resp_bytes) > *work_area_bytes) {
+	if (be32toh(resp_bytes) > (unsigned int)*work_area_bytes) {
 		(void)rtas_free_rmo_buffer(kernbuf, workarea_pa, kbuf_sz);
 		return RTAS_IO_ASSERT;
 	}

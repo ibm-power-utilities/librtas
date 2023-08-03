@@ -508,14 +508,14 @@ static int
 print_fru_mr_scn(struct rtas_fru_hdr *fruhdr, int verbosity)
 {
     struct rtas_fru_mr_scn  *fru_mr = (struct rtas_fru_mr_scn *)fruhdr;
-    int i, len;
+    int len;
 
     len = print_scn_title("FRU MR Section");
     len += print_fru_hdr(fruhdr, verbosity);
 
     len += rtas_print("\nManufacturing Replaceable Unit Fields (%d):\n",
 		      frumr_num_callouts(fru_mr));
-    for (i = 0; i < frumr_num_callouts(fru_mr); i++) {
+    for (size_t i = 0; i < frumr_num_callouts(fru_mr); i++) {
         struct fru_mru *mru = &fru_mr->mrus[i];
 
         len += rtas_print("%-20s%c           %-20s%08x\n", "MRU Priority:", 
