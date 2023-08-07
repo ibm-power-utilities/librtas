@@ -148,14 +148,14 @@ print_v4_io(struct scn_header *shdr, int verbosity)
     len += rtas_print("IOA Signaling the error: %x:%x.%x\n    vendor: %04x  "
 	              "device: %04x  rev: %02x  slot: %x\n", 
                       io->pci_sig_busno, io->pci_sig_devfn >> 3, 
-                      io->pci_sig_devfn & 0x7, io->pci_sig_vendorid, 
+                      io->pci_sig_devfn & 0x7U, io->pci_sig_vendorid, 
                       io->pci_sig_deviceid, io->pci_sig_revisionid, 
                       io->pci_sig_slot);
     
     len += rtas_print("IOA Sending during the error: %x:%x.%x\n"
                       "    vendor: %04x  device: %04x  rev: %02x  slot: %x\n", 
                       io->pci_send_busno, io->pci_send_devfn >> 3, 
-                      io->pci_send_devfn & 0x7, io->pci_send_vendorid, 
+                      io->pci_send_devfn & 0x7U, io->pci_send_vendorid, 
                       io->pci_send_deviceid, io->pci_send_revisionid, 
                       io->pci_send_slot);
    

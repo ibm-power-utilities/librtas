@@ -430,7 +430,7 @@ struct rtas_src_scn {
 
     uint32_t    version;              /**< SRC version */ 
     char        src_platform_data[7]; /**< platform specific data */
-#define src_subscns_included(src)    ((src)->src_platform_data[0] & 0x01)
+#define src_subscns_included(src)    ((src)->src_platform_data[0] & 0x01U)
 
     uint32_t    ext_refcode2;         /**< extended reference code word 2 */
     uint32_t    ext_refcode3;         /**< extended reference code word 3 */

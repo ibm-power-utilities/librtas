@@ -80,7 +80,7 @@ print_v6_hdr(char *name, struct rtas_v6_hdr *v6hdr, int verbosity)
 {
     int len;
 
-    len = print_scn_title(name);
+    len = print_scn_title("%s", name);
 
     if (verbosity > 1) {
         len += rtas_print("%-20s      %c%c    "PRNT_FMT_R, 
@@ -386,7 +386,7 @@ print_usr_hdr_event_data(struct rtas_usr_hdr_scn *usrhdr)
                               "shutdown.\n");
             break;
         default:
-	    len += rtas_print("Unknown event type (%d).\n", usrhdr->event_type);
+	    len += rtas_print("Unknown event type (%u).\n", usrhdr->event_type);
             break;
     }
     
@@ -443,7 +443,7 @@ print_usr_hdr_event_data(struct rtas_usr_hdr_scn *usrhdr)
                               "produce incorrect results.\n");
             break;
 	default:
-	    len += rtas_print("Unknown event severity (%d).\n",
+	    len += rtas_print("Unknown event severity (%u).\n",
                               usrhdr->event_type);
             break;
     }
