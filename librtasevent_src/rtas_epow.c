@@ -99,7 +99,7 @@ print_v4_epow(struct scn_header *shdr, int verbosity)
     int len = 0;
 
     len += print_scn_title("EPOW Warning");
-    len += rtas_print(PRNT_FMT_R, "EPOW Sensor Value:", epow->sensor_value); 
+    len += rtas_print(PRNT_FMT_R, "EPOW Sensor Value:", (uint32_t)epow->sensor_value); 
 
     if (version >= 3) {
         if (epow->sensor) {
@@ -108,7 +108,7 @@ print_v4_epow(struct scn_header *shdr, int verbosity)
                               "Sensor Token:", epow->sensor_token, 
                               "Sensor Index:", epow->sensor_index);
             len += rtas_print(PRNT_FMT_2,
-                              "Sensor Value:", epow->sensor_value,
+                              "Sensor Value:", (uint32_t)epow->sensor_value,
                               "Sensor Status:", epow->sensor_status);
         }
 
@@ -161,8 +161,8 @@ print_v6_epow(struct scn_header *shdr, int verbosity)
 
     len += print_v6_hdr("EPOW Warning", &epow->v6hdr, verbosity);
 
-    len += rtas_print(PRNT_FMT_2, "Sensor Value:", epow->sensor_value,
-                      "Action Code:", epow->action_code);
+    len += rtas_print(PRNT_FMT_2, "Sensor Value:", (uint32_t)epow->sensor_value,
+                      "Action Code:", (uint32_t)epow->action_code);
     len += rtas_print(PRNT_FMT_R, "EPOW Event:", epow->event_modifier);
 
     switch (epow->event_modifier) {

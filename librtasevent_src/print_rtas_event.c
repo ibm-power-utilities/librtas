@@ -130,8 +130,7 @@ static char *rtas_event_error_type[] = {
  * @param ... additional args a la printf()
  * @return number of characters printed
  */
-int
-print_scn_title(char *fmt, ...)
+int print_scn_title(char *fmt, ...)
 {
     va_list ap;
     int rspace;
@@ -154,7 +153,7 @@ print_scn_title(char *fmt, ...)
 
     offset += snprintf(buf + offset, sizeof(buf) - offset, "\n");
 
-    len = rtas_print(buf);
+    len = rtas_print("%s", buf);
     
     return len; 
 }
@@ -293,8 +292,7 @@ rtas_set_print_width(int width)
  * @param ... additional args a la printf()
  * @return number of bytes written
  */
-int
-rtas_print(char *fmt, ...)
+int rtas_print(char *fmt, ...)
 {
     va_list     ap;
     char        buf[1024];

@@ -513,7 +513,7 @@ print_fru_mr_scn(struct rtas_fru_hdr *fruhdr, int verbosity)
     len = print_scn_title("FRU MR Section");
     len += print_fru_hdr(fruhdr, verbosity);
 
-    len += rtas_print("\nManufacturing Replaceable Unit Fields (%d):\n",
+    len += rtas_print("\nManufacturing Replaceable Unit Fields (%u):\n",
 		      frumr_num_callouts(fru_mr));
     for (size_t i = 0; i < frumr_num_callouts(fru_mr); i++) {
         struct fru_mru *mru = &fru_mr->mrus[i];

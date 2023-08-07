@@ -139,8 +139,17 @@ print_re_post_scn(struct scn_header *shdr, int verbosity)
 	len += rtas_print("Self-test error in firmware extended "
                           "diagnostics.\n");
 
-    len += rtas_print("POST Error Code:        %x\n", post->err_code);
-    len += rtas_print("Firmware Revision Code: %x\n", post->firmware_rev);
+    len += rtas_print("POST Error Code:        %x %x %x %x %x\n",
+		      post->err_code[0],
+		      post->err_code[1],
+		      post->err_code[2],
+		      post->err_code[3],
+		      post->err_code[4]);
+
+    len += rtas_print("Firmware Revision Code: %x %x %x\n",
+		      post->firmware_rev[0],
+		      post->firmware_rev[1],
+		      post->firmware_rev[2]);
 
     len += rtas_print("\n");
     return len;

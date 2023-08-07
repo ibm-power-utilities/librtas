@@ -79,9 +79,11 @@ int print_re_hotplug_scn(struct scn_header *, int);
 
 int print_mtms(struct rtas_mtms *);
 
+__attribute__ ((format (printf, 1, 2)))
 int print_scn_title(char *, ...);
 int print_v6_hdr(char *, struct rtas_v6_hdr *, int);
 int print_raw_data(char *, int);
+__attribute__ ((format (printf, 1, 2)))
 int rtas_print(char *fmt, ...);
 struct scn_header * get_re_scn(struct rtas_event *, int);
 void add_re_scn(struct rtas_event *, void *, int);
