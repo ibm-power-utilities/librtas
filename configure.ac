@@ -20,6 +20,30 @@ AC_TYPE_UID_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 
+AC_DEFUN([LIBRTAS_SET_FLAGS], [
+    AC_REQUIRE([AX_APPEND_COMPILE_FLAGS])
+    AC_LANG_PUSH([C])
+    # Some warning flags need -O2 to work.
+    AX_APPEND_COMPILE_FLAGS([-O2], [cc_opt_flags])
+    # Specify a C dialect instead of using the compiler's default.
+    AX_APPEND_COMPILE_FLAGS([-std=gnu99], [cc_std_flags])
+    # Warning flags to use if supported. By default clang only warns
+    # on unrecognized -W flags, so run the tests with -Werror.
+    AX_APPEND_COMPILE_FLAGS([         \
+        -Wall                         \
+        -Wextra                       \
+        -Wformat-signedness           \
+        -Wformat=2                    \
+        -Wno-unused-parameter         \
+        -Wsign-compare                \
+    ], [cc_warn_flags], [-Werror])
+    AC_LANG_POP
+    AC_SUBST([cc_opt_flags])
+    AC_SUBST([cc_std_flags])
+    AC_SUBST([cc_warn_flags])
+])
+LIBRTAS_SET_FLAGS
+
 AC_CHECK_PROGS([cmd_abidiff], [abidiff])
 
 LT_INIT

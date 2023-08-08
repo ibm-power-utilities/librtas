@@ -12,7 +12,7 @@ man_MANS=
 noinst_HEADERS=
 library_include_HEADERS=
 
-AM_CFLAGS = -Wall
+AM_CFLAGS = @cc_std_flags@ @cc_opt_flags@ @cc_warn_flags@
 AM_CPPFLAGS = -I$(top_srcdir)/librtas_src/ -I$(top_srcdir)/librtasevent_src/
 
 library_includedir=$(includedir)
