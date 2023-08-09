@@ -814,7 +814,7 @@ int rtas_get_vpd(char *loc_code, char *workarea, size_t size,
 	*seq_next = be32toh(*seq_next);
 	*bytes_ret = be32toh(*bytes_ret);
 
-	printf("(%s, 0x%p, %zu, %u) = %d, %u, %u", loc_code ? loc_code : "NULL",
+	dbg("(%s, 0x%p, %zu, %u) = %d, %u, %u\n", loc_code ? loc_code : "NULL",
 	    workarea, size, sequence, status, *seq_next, *bytes_ret);
 	return rc ? rc : status;
 }
