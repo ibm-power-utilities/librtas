@@ -43,8 +43,8 @@ jobs:
           - registry.fedoraproject.org/fedora:latest
         cc: [gcc, clang]
         cflags:
-          - ''
-          - '-Og -fsanitize=address -fsanitize=undefined'
+          - '-Werror'
+          - '-Werror -Og -fsanitize=address -fsanitize=undefined'
     steps:
     - uses: actions/checkout@v3
     - name: Register problem matchers
