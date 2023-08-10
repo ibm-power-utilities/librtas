@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - registry.fedoraproject.org/fedora:rawhide
-          - registry.fedoraproject.org/fedora:latest
+          - docker.io/fedora:rawhide
+          - docker.io/fedora:latest
           - docker.io/alpine:latest
         cc: [gcc, clang]
         arch: [ppc64le]
@@ -39,8 +39,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - registry.fedoraproject.org/fedora:rawhide
-          - registry.fedoraproject.org/fedora:latest
+          - docker.io/fedora:rawhide
+          - docker.io/fedora:latest
         cc: [gcc, clang]
         cflags:
           - '-Werror'
