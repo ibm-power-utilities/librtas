@@ -34,7 +34,7 @@ librtas_la_SOURCES = \
 	librtas_src/syscall_rmo.c
 
 library_include_HEADERS += librtas_src/librtas.h
-noinst_HEADERS += librtas_src/internal.h
+noinst_HEADERS += librtas_src/internal.h librtas_src/papr-vpd.h
 
 # See "Updating library version information" in the libtool manual for
 # how to maintain these values. They are *not* tied to the release
