@@ -52,6 +52,11 @@ int read_entire_file(int fd, char **buf, size_t *len);
 int rtas_token(const char *call_name);
 int sanity_check(void);
 
+#define CALL_AGAIN 1
+unsigned int handle_delay(int status, uint64_t * elapsed);
+int rtas_call_no_delay(const char *name, int ninputs, int nrets, ...);
+int rtas_call(const char *name, int ninputs, int nrets, ...);
+
 #define BITS32_LO(_num) (uint32_t) (_num & 0xffffffffll)
 #define BITS32_HI(_num) (uint32_t) (_num >> 32) 
 #define BITS64(_high, _low) (uint64_t) (((uint64_t) _high << 32) | _low)
