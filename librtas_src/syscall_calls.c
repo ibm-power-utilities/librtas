@@ -32,8 +32,6 @@
 #include "internal.h"
 #include "librtas.h"
 
-#define CALL_AGAIN 1
-
 int dbg_lvl = 0;
 static uint64_t rtas_timeout_ms;
 
@@ -65,7 +63,8 @@ int sanity_check(void)
  *	CALL_AGAIN	if the status is delay related
  *	RTAS_TIMEOUT if the requested timeout has been exceeded
  */
-static unsigned int handle_delay(int status, uint64_t * elapsed)
+__attribute__((visibility("hidden")))
+unsigned int handle_delay(int status, uint64_t * elapsed)
 {
 	int order = status - EXTENDED_DELAY_MIN;
 	unsigned long ms = 0;
@@ -213,7 +212,8 @@ static int _rtas_call(int delay_handling, int token, int ninputs,
 	return 0;
 }
 
-static int rtas_call_no_delay(const char *name, int ninputs, int nrets, ...)
+__attribute__((visibility("hidden")))
+int rtas_call_no_delay(const char *name, int ninputs, int nrets, ...)
 {
 	va_list ap;
 	int rc, token;
