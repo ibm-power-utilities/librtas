@@ -1188,23 +1188,34 @@ int rtas_set_sysparm(unsigned int parameter, char *data)
 	uint32_t kernbuf_pa;
 	void *kernbuf;
 	int rc, status;
-	short size;
+	uint16_t size;
 
 	rc = sanity_check();
 	if (rc)
 		return rc;
-
-	size = *(short *)data;
-	rc = rtas_get_rmo_buffer(size + sizeof(short), &kernbuf, &kernbuf_pa);
+	/*
+	 * We have to copy the contents of @data to a RMO buffer. The
+	 * caller has encoded the data length in the first two bytes
+	 * of @data in MSB order, and we can't assume any
+	 * alignment. So interpret @data as:
+	 *
+	 * struct {
+	 *     unsigned char len_msb;
+	 *     unsigned char len_lsb;
+	 *     char [(len_msb << 8) + len_lsb];
+	 * }
+	 */
+	size = 2 + (((unsigned char)data[0] << 8) | (unsigned char)data[1]);
+	rc = rtas_get_rmo_buffer(size, &kernbuf, &kernbuf_pa);
 	if (rc)
 		return rc;
 
-	memcpy(kernbuf, data, size + sizeof(short));
+	memcpy(kernbuf, data, size);
 
 	rc = rtas_call("ibm,set-system-parameter", 2, 1, htobe32(parameter),
 		       htobe32(kernbuf_pa), &status);
 
-	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size + sizeof(short));
+	(void)rtas_free_rmo_buffer(kernbuf, kernbuf_pa, size);
 
 	dbg("(%u, %p) = %d\n", parameter, data, rc ? rc : status);
 	return rc ? rc : status;
