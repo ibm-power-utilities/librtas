@@ -35,7 +35,9 @@ librtas_la_SOURCES = \
 	librtas_src/sysparm.c
 
 library_include_HEADERS += librtas_src/librtas.h
-noinst_HEADERS += librtas_src/internal.h
+noinst_HEADERS += \
+	librtas_src/internal.h \
+	librtas_src/papr-miscdev.h
 
 # See "Updating library version information" in the libtool manual for
 # how to maintain these values. They are *not* tied to the release
