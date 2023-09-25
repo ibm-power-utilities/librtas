@@ -38,6 +38,7 @@ library_include_HEADERS += librtas_src/librtas.h
 noinst_HEADERS += \
 	librtas_src/internal.h \
 	librtas_src/papr-miscdev.h \
+	librtas_src/papr-sysparm.h \
 	librtas_src/papr-vpd.h
 
 # See "Updating library version information" in the libtool manual for
