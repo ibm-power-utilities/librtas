@@ -31,7 +31,8 @@ librtas_la_SOURCES = \
 	librtas_src/vpd.c \
 	librtas_src/ofdt.c \
 	librtas_src/syscall_calls.c \
-	librtas_src/syscall_rmo.c
+	librtas_src/syscall_rmo.c \
+	librtas_src/sysparm.c
 
 library_include_HEADERS += librtas_src/librtas.h
 noinst_HEADERS += librtas_src/internal.h
