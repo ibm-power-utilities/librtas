@@ -1,3 +1,767 @@
+Changelog for librtas-2.0.5
+=======================================
+commit 8aee694e8070be4f16db9d52556f1fd33421ed35
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Oct 9 14:35:10 2023 -0700
+
+    ci: update package index in qemu jobs
+    
+    Looks like this is necessary after all.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0bba0c5282960cb8fbf57de72973a158ca7e1c53
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Oct 9 14:35:09 2023 -0700
+
+    librtas: fix buffer length determination in rtas_set_sysparm()
+    
+    The data passed by callers has this layout:
+    
+      struct {
+          uint8_t len_msb;
+          uint8_t len_lsb;
+          char payload[];
+      };
+    
+    I.e. the length of valid data in payload[] is stored in the first two
+    bytes of the buffer. However, rtas_set_sysparm() wrongly assumes that
+    the length is in host-endian, leading to miscalculation of allocation
+    and copy sizes.
+    
+    For example, given this code in rtas_set_sysparm():
+    
+      int rtas_set_sysparm(unsigned int parameter, char *data) {
+          ...
+          size = *(short *)data;
+          ...
+          memcpy(kernbuf, data, size + sizeof(short));
+          ...
+      }
+    
+    on little-endian targets, the following code:
+    
+        struct {
+            uint16_t len_be;
+            char data[1024];
+        } sp_block = {
+            .len_be = htobe16(sizeof"hello"),
+            .data = "hello",
+        };
+        rtas_set_sysparm(0, (char *)&sp_block);
+    
+    results in a copy of size ((6 << 8) + 2) = 1538, reading beyond the
+    end of the passed object.
+    
+    Similarly, objects with an encoded size of 256 or greater will result
+    in copying too little data.
+    
+    Extract the size from the buffer correctly, always treating it as
+    big-endian.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0a8a540e1fb8855febbfbc6d15ed494aa16c53d8
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Aug 10 09:47:52 2023 -0500
+
+    ci: switch Fedora registry locations
+    
+    I had thought registry.fedoraproject.org was preferable for their
+    images, but with rawhide (not latest) pulls we're seeing:
+    
+    Trying to pull registry.fedoraproject.org/fedora:rawhide...
+    Error: choosing an image from manifest list
+    docker://registry.fedoraproject.org/fedora:rawhide: no image found in
+    manifest list for architecture amd64, variant "", OS linux
+    
+    And it's happening for me locally too. Switch to docker.io.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 4b23104d5c91975d44ae1b13b94046b1eb0452d9
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Aug 9 19:04:47 2023 -0500
+
+    new test: rtas_set_debug
+    
+    Ensure rtas_set_debug() returns 0 without altering errno for a range
+    of reasonable values.  Anything other behavior would be an ABI break
+    at this point.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 617bc187bc6543a6ece2031985aad52aa287e5e0
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Aug 9 16:26:19 2023 -0500
+
+    librtas: revert unintended printf in rtas_get_vpd()
+    
+    Commit 629856c6f661 ("librtas: fix printf format signedness
+    mismatches") inadvertently replaced a use of the dbg() macro in
+    rtas_get_vpd() with a call to printf(). Revert that part of the
+    commit, and add a necessary newline to the debug message.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit fac8fcf98695edcad2cd8f44b162c12393d96c6e
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Aug 9 13:29:07 2023 -0500
+
+    ci: ensure -Werror in runner-native builds
+    
+    Commit 7874574f5026 ("ci: parameterize runner-native builds on
+    cflags") inadvertently disabled -Werror for the runner-native builds
+    since it uses build-with's --cflags option to override the default.
+    
+    Add -Werror to both cases in the matrix.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ca4c1d20c4061352330bd653d373715220488552
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Aug 7 13:23:42 2023 -0500
+
+    ci: add cppcheck workflow
+    
+    Run cppcheck twice:
+    
+    * First with relatively narrow criteria that will fail the run when
+      violated.
+    
+    * Next with a wider set of checks that is a superset of the
+      first. This reports a variety of issues that may or may not be worth
+      fixing, and will never fail the run.
+    
+    When a class of issues in the second set is fixed, the first cppcheck
+    run should be ratcheted up to match. E.g. if all portability
+    diagnostics are addressed, the 'portability' key should be added to
+    the --enable=... argument of the first cppcheck invocation.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b7c5f844aacf0d824c567d89e677c180f5043993
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Tue Aug 8 15:01:33 2023 -0500
+
+    configure.ac: set default compile flags at configure time
+    
+    Define default compiler flags at configure time, using
+    ax_append_compile_flags() from the Autoconf archive to apply only
+    those supported by the selected compiler.
+    
+    At this point the project builds cleanly with recent Clang and GCC
+    using -Wall and -Wextra. So far the only warning from -Wextra we need
+    to suppress is -Wno-unused-parameter.
+    
+    Some warnings depend on higher optimization levels to work, and -O2 is
+    commonly used by distros. Use -O2 as the default optimization level.
+    
+    Much of this code was written in the early 2000s, before C11, and has
+    been relatively undisturbed since. For now, specify gnu99 for the C
+    dialect instead of accepting the compiler default. I believe it should
+    be relatively easy to update this though.
+    
+    Users and packagers are of course free to supplement or override these
+    default flags using the conventional methods, e.g.:
+    
+      $ ./configure CFLAGS=-Werror # treat warnings as errors
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit f060d6b6fa6e9c94ad07d34690d37c8c76881a70
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Aug 7 17:00:12 2023 -0500
+
+    librtasevent: 'format' function attribute for printf-style functions
+    
+    Clang (but not GCC) says:
+    
+    librtasevent_src/print_rtas_event.c:146:61: error: format string is
+    not a string literal [-Werror,-Wformat-nonliteral]
+        offset += vsnprintf(buf + offset, sizeof(buf) - offset, fmt, ap);
+                                                                ^~~
+    librtasevent_src/print_rtas_event.c:314:52: error: format string is
+    not a string literal [-Werror,-Wformat-nonliteral]
+        tmpbuf_len = vsnprintf(tmpbuf, sizeof(tmpbuf), fmt, ap);
+    
+    Adding a 'format' function attribute to print_scn_title() and
+    rtas_print() yields the following warnings:
+    
+    *** fixme ***
+    
+    Fix the fallout.
+    
+    Notably, this found longstanding bugs in print_re_post_scn(), which
+    passes pointers where integers are specified by format strings. These
+    sites have been fixed to print the contents of the structure fields
+    they were intended to report.
+    
+    See discussion of -Wformat-nonliteral at
+    https://clang.llvm.org/docs/AttributeReference.html#format
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 742ca68b2cb330a7252d6d8c936115d4687feed0
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Aug 3 07:42:23 2023 -0500
+
+    fix -Wsign-compare warnings
+    
+    librtas_src/syscall_calls.c:1381:33: error: comparison of integer
+    expressions of different signedness: '__uint32_t' {aka 'unsigned int'}
+    and 'int' [-Werror=sign-compare]
+     1381 |         if (be32toh(resp_bytes) > *work_area_bytes) {
+          |                                 ^
+    
+    librtas_src/syscall_rmo.c: In function 'get_phys_region':
+    librtas_src/syscall_rmo.c:242:42: error: comparison of integer
+    expressions of different signedness: 'int' and 'uint32_t' {aka
+    'unsigned int'} [-Werror=sign-compare]
+      242 |                 if ((i * WORK_AREA_SIZE) >= kregion->size)
+          |                                          ^~
+    
+    librtas_src/syscall_rmo.c: In function 'release_phys_region':
+    librtas_src/syscall_rmo.c:291:18: error: comparison of integer
+    expressions of different signedness: 'uint64_t' {aka 'long unsigned
+    int'} and 'int' [-Werror=sign-compare]
+      291 |         if (bits != ((1 << n_pages) - 1)) {
+          |                  ^~
+    
+    librtasevent_src/get_rtas_event.c: In function 'parse_rtas_event':
+    librtasevent_src/get_rtas_event.c:411:26: error: comparison of integer
+    expressions of different signedness: 'uint32_t' {aka 'unsigned int'}
+    and 'int' [-Werror=sign-compare]
+      411 |     if (re->event_length > buflen) {
+          |                          ^
+    
+    librtasevent_src/rtas_srcfru.c: In function 'print_fru_mr_scn':
+    librtasevent_src/rtas_srcfru.c:518:19: error: comparison of integer
+    expressions of different signedness: 'int' and 'uint32_t' {aka
+    'unsigned int'} [-Werror=sign-compare]
+      518 |     for (i = 0; i < frumr_num_callouts(fru_mr); i++) {
+          |                   ^
+    
+    This is a step toward enabling a more strict set of warnings by
+    default.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 7129aa91e1899eddc5d2116f16e611ceae162b85
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Aug 3 07:37:47 2023 -0500
+
+    librtas: fix printf format signedness mismatches
+    
+    Fix all instances of signed/unsigned format mismatches with use of the
+    dbg() macro, e.g.
+    
+    librtas_src/syscall_calls.c:1209:13: error: format '%d' expects
+    argument of type 'int', but argument 2 has type 'unsigned int'
+    [-Werror=format=]
+     1209 |         dbg("(%d, %p) = %d\n", parameter, data, rc ? rc : status);
+          |             ^~~~~~~~~~~~~~~~~  ~~~~~~~~~
+          |                                |
+          |                                unsigned int
+    
+    This is a step toward enabling a more strict set of warnings by
+    default.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 58e24d71ea30e9507350f4ede10f99a1b77cad5d
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Aug 2 11:45:18 2023 -0500
+
+    librtas: fix cppcheck uninitialized variable warning
+    
+    cppcheck (somewhat dubiously) warns:
+    
+    Checking librtas_src/syscall_rmo.c ...
+    librtas_src/syscall_rmo.c:76:6: warning: Uninitialized variable: fd [uninitvar]
+     if (fd < 0)
+         ^
+    librtas_src/syscall_rmo.c:69:16: note: Assuming condition is false
+     for (i = 0; i < npaths; i++) {
+    
+    But it's easy enough to satisfy it by making npaths const. This makes
+    the project "clean" for cppcheck's default behavior, without
+    additional checks enabled.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit f463aa42278a3ce0b328dd75c45e337f1c7cbc72
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Jul 17 13:45:09 2023 -0500
+
+    tests: add simple link and rtld tests
+    
+    link_librtas: ensure we can link librtas and call a function in it.
+    
+    dlopen_librtas: ensure we can dlopen librtas.so and look up all API
+    symbols.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b62ecd42180d7ac7b32cac6a50802455850a857a
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Jul 17 11:24:51 2023 -0500
+
+    build system: add support for cmocka-based tests
+    
+    Add an --enable-tests switch to configure, which is off by
+    default. When enabled, check for a recent version of
+    cmocka (https://cmocka.org/) libraries to build tests with.
+    
+    It is intended that 'configure --enable-tests' without a suitable
+    cmocka installation results in an error.
+    
+    For now, the set of tests is empty.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 2cb840af56da4e592fee3a5dfe7e6c26eb6640cd
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Jul 19 17:32:54 2023 -0500
+
+    ci: parameterize runner-native builds on cflags
+    
+    Add a matrix dimension for compiler flags, allowing us to run+test
+    with typical production flags as well as sanitizers. Just install the
+    necessary sanitizer libraries unconditionally.
+    
+    Ideally we would run with sanitizers enabled in emulation, but
+    combining sanitizers and qemu gave me no end of trouble. I have found
+    various reports that sanitizers and user space qemu emulation on Linux
+    are basically incompatible.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit eddc8a2bc74e2f215ecffa5b2fad1f2fdf8f23b4
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Jul 19 17:31:40 2023 -0500
+
+    ci: skip distcheck in qemu runs
+    
+    I don't think it's too irresponsible to omit distcheck when running in
+    emulation; the runner-native jobs exercise it fine. This substantially
+    reduces overall CI runtime.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 9612f6ac0fda9af21cc81c65c3ae71b8ab23af64
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Jul 19 13:38:33 2023 -0500
+
+    ci: disable unit tests for cross compiles
+    
+    So far 'make check' hasn't done anything; we haven't had any
+    testcases. Changes to follow will add real testcases which we won't be
+    able to easily build or execute when using these toolchains.
+    
+    We will get test coverage in the runner-native and qemu-based jobs.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 6626fd7e1b5e55050f861dc0914d8c59fcef7353
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Tue Jul 18 17:46:42 2023 -0500
+
+    tools/build-with: various updates
+    
+    * Add pkgconf and cmocka package lists, for enabling tests.
+    
+    * Remove the created container by default. This can be overridden with
+      the new '--keep' option.
+    
+    * Add --abi-check boolean option, removing the special case for
+      Alpine. Defaults to true. Update the CI configuration to use this.
+    
+    * Build configure arguments outside of the here document, making them
+      easier to manipulate.
+    
+    * Add --tests boolean option, which determines whether to run 'make
+      check'. Defaults to true.
+    
+    * Add --distcheck boolean option, which determines whether to run
+      'make distcheck'. Defaults to true.
+    
+    * Add --cflags option, which enables the user to control compiler
+      flags for the build. This will allow us to flexibly experiment with
+      things like sanitizers in CI.
+    
+    * Run 'make check' with VERBOSE=1, so failed test outputs are
+      displayed.
+    
+    * Run autoreconf before entering the container, which allows us to use
+      a read-only volume.
+    
+    * Use unprivileged user for build and test, which better matches
+      typical local development practice.
+    
+    * Implement a workaround for LeakSanitizer internal errors seen only
+      in CI. When using -fanitize=address, we consistently get spurious test
+      failures due to some issue with the leak detection pass at the end of
+      execution:
+    
+      [==========] tests: Running 1 test(s).
+      [ RUN      ] call_rtas_set_debug
+      [       OK ] call_rtas_set_debug
+      [==========] tests: 1 test(s) run.
+      [  PASSED  ] 1 test(s).
+      ==2492==LeakSanitizer has encountered a fatal error.
+      ==2492==HINT: For debugging, try setting environment variable
+                    LSAN_OPTIONS=verbosity=1:log_threads=1
+      ==2492==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+      FAIL tests/link_librtas (exit status: 1)
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 133ddcfba6ec8dc44867bcacb8360a096bf0f169
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed May 10 22:48:23 2023 -0500
+
+    fixes for -Wstrict-prototypes
+    
+    We should always specify the argument list and types.
+    
+    librtas_src/librtas.h:55:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+       55 | int rtas_activate_firmware();
+          | ^~~
+    librtas_src/internal.h:50:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+       50 | int interface_exists();
+          | ^~~
+    librtas_src/syscall_calls.c:254:5: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+      254 | int rtas_activate_firmware()
+          |     ^~~~~~~~~~~~~~~~~~~~~~
+    librtas_src/syscall_rmo.c:309:12: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+      309 | static int init_workarea_config()
+          |            ^~~~~~~~~~~~~~~~~~~~
+    librtas_src/syscall_rmo.c:388:5: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+      388 | int interface_exists()
+          |     ^~~~~~~~~~~~~~~~
+    librtasevent_src/print_rtas_event.c:62:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
+       62 | static int (*re_print_fns[])() = {
+          | ^~~~~~
+    
+    The only thing noteworthy here is rtas_activate_firmware(), which is
+    declared in a public header. But updating the declaration to
+    rtas_activate_firmware(void), which matches the implementation and all
+    known callers, should not pose any compatibility issues.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 753a2e01dbd2f9da7fcf45302e23d5f73312d522
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Tue Jan 17 13:14:29 2023 -0600
+
+    librtas.h: drop extern from function declarations
+    
+    Reduce clutter in librtas.h by removing all the unnecessary
+    extern's. No functional change.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b97bdd69e0f1e70de95446ad6e4f6769f0e6f385
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Apr 24 17:00:54 2023 -0500
+
+    Makefile.am: separate library interface versions
+    
+    Since librtas and librtasevent can experience ABI-related changes
+    independently, it only makes sense to manage their interface versions
+    separately. This is consistent with libtool's guidance: the version
+    tuple supplied to -version-info should be maintained independently of
+    the package/release version.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 742bef09f06a3dd370de331796e06700f5b7a69c
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Jun 23 11:34:36 2023 -0500
+
+    ci: add "native" and QEMU-emulated jobs
+    
+    Add two more job categories to the workflow:
+    
+    - qemu-ppc64le-builds: Runs the build as ppc64le code on Fedora latest
+      and rawhide, as well as on Alpine latest (which achieves musl-libc
+      coverage). These seem to typically run between seven and twenty
+      minutes.
+    - native-builds: These run the build in Fedora latest and rawhide
+      containers matching the machine architecture of the
+      runner (presumably x86_64). These take roughly two minutes or
+      less (rawhide seems consistently faster for some reason).
+    
+    GCC and Clang are used in both cases.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ad56fe263f9f39ac4e1cee6501c4150d0476c316
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Apr 28 17:33:36 2023 -0500
+
+    ci: cross build matrix rework
+    
+    - Drop x86_64; we will get that coverage back in a change to come.
+    - Use the "build-with" script, which enables us to expand coverage to
+      each of Debian's stable, testing, and unstable tags.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit c09d6589ee65d0bf1046d1c569abf9441b143cfe
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Jul 3 11:50:55 2023 -0500
+
+    ci: tidy workflow configuration
+    
+    Sort the workflow trigger list, dropping comments that duplicate what
+    can be found easily in the GH Actions documentation.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ad163aa18e28e3f5f6b304c5220c70634b09c920
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Fri Jun 30 14:36:42 2023 -0500
+
+    add tools/build-with for container-based build and test
+    
+    This script runs a build (and any tests/checks) from scratch in a
+    container. The user can specify:
+    
+    - The distro as well as any additional packages to install.
+    - The compiler command (e.g. "clang" or "powerpc64le-linux-gnu-gcc").
+    - Whether to run under QEMU user mode emulation. Currently, this may
+      be the best option for running ppc64le code in GitHub Actions.
+    
+    Benefits:
+    - Enables consistency between local development and CI.
+    - Can build with a variety of distros and compilers, allowing us to
+      easily construct build matrices and experiment quickly.
+    - Allows for build and test in emulation, assuming user has performed
+      the appropriate QEMU+binfmt setup.
+    
+    About half of the script is code generated by the argbash utility for
+    handling command-line arguments:
+    
+    https://argbash.readthedocs.io/en/latest/
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit e645594877491abfe4b438b767531e519003e2c2
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Apr 27 09:09:20 2023 -0500
+
+    add build system support for ABI regression checks
+    
+    Add a custom abi-check Makefile target that uses the libabigail
+    abidiff tool to check for ABI breakage.
+    
+    If an ABI definition for the target arch is not found, such as when
+    building for x86, emit a message that clearly says the check has been
+    skipped.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 6f97982fa04a76c5cf78cbc6aa5f937bb5e6d30b
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Apr 27 08:35:08 2023 -0500
+
+    add ABI definitions as of v2.0.4
+    
+    Generated against a v2.0.4 checkout using tools/generate-abi-defs.
+    
+    Note: these include many visible symbols that are clearly intended for
+    internal use since they do not have declarations in the shipped
+    headers: basically every symbol without "rtas" in the name. The
+    question of whether these can be hidden in future releases is not
+    addressed in this change.
+    
+    Future changes to the ABIs of librtas and librtasevent should be
+    accompanied by updates to these definitions.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit d3a16ed45a1a2050b9e8df7b6e0442f8e6c4b69b
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Apr 27 09:08:30 2023 -0500
+
+    add tools/generate-abi-defs script for ABI maintenance
+    
+    This tool is invoked manually outside of the build system to generate
+    ABI definitions using the libabigail project's abidw tool:
+    
+    https://sourceware.org/libabigail/manual/libabigail-overview.html
+    
+    ABI definitions are generated in a Debian stable/bookworm container
+    for each of the PowerPC targets that the project has supported over
+    its life.
+    
+    About half of the script is code generated by the argbash utility for
+    handling command line arguments.
+    
+    https://argbash.readthedocs.io/en/latest/
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 83ff23b51e7e486286c552822140dcdd6cee9ffe
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:25 2023 -0700
+
+    convert PAGE_SIZE to WORK_AREA_SIZE
+    
+    By defining PAGE_SIZE, librtas.h risks conflicts with system
+    headers. Substitute a new internal constant WORK_AREA_SIZE throughout
+    the source tree, and update comments accordingly.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Fixes #7
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b00bfc5402921b0872aaac6741b165dc14a8855d
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:24 2023 -0700
+
+    ensure non-powerpc builds do not attempt a real syscall
+    
+    While we allow non-powerpc builds for the sake of coverage, the fact
+    that we force __NR_rtas to be defined means that such builds will
+    generate calls to nonsensical system calls. For example, syscall 255
+    is inotify_rm_watch on x86_64.
+    
+    We don't anticipate anyone actually running non-powerpc librtas builds
+    to the point of attempting the rtas syscall, but it's best to ensure
+    that the syscall() invocation here always fails in an easily
+    understood way.
+    
+    * Drop the local definition of __NR_rtas.
+    
+    * When targeting powerpc, use SYS_rtas, which should always be
+      defined.
+    
+    * When targeting other architectures, use an invalid syscall number to
+      ensure ENOSYS at runtime.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 620efff512ec1a4bca9b49379e2b42094a22e74c
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:23 2023 -0700
+
+    drop obsolete _syscall() usage
+    
+    This method of invoking a system call without library support has been
+    deprecated for years (decades?):
+    
+    https://man7.org/linux/man-pages/man2/_syscall.2.html
+    
+    It should be safe to drop this in favor of the syscall() facility
+    implemented by glibc and musl.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit bbfe6453e68a692c0222be559e1243211a331048
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:22 2023 -0700
+
+    librtas: internal.h cleanups
+    
+    Remove trailing whitespace and unnecessary 'extern' for function
+    declarations.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit e12a3bb2117a106cde2dbe9a1819f9eacf3cb2b1
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:21 2023 -0700
+
+    avoid reserved names for inclusion guards in internal header
+    
+    All identifiers that begin with an underscore and either an uppercase
+    letter or another underscore are reserved in the C standard.
+    
+    The identifier changed here is just an inclusion guard and nothing
+    should be referring to it directly. Alter it to reflect the header
+    file name, adding a corresponding comment to the #endif that
+    terminates the guard.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Fixes #4
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit efc3d7091117eb37941b84554945313e2828e5bc
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:20 2023 -0700
+
+    rename syscall.h to internal.h
+    
+    This is librtas's sole internal header and it has more than
+    syscall-related declarations. Rename it so its function is clear,
+    updating its inclusion guard to use a non-reserved identifier.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Fixes #4
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 9077f0833cc06606897cb023accac9ba268dad48
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:19 2023 -0700
+
+    avoid reserved names for inclusion guards in shipped headers
+    
+    All identifiers that begin with an underscore and either an uppercase
+    letter or another underscore are reserved in the C standard.
+    
+    The identifiers changed here are just inclusion guards and nothing
+    should be referring to them directly. Alter them to reflect the header
+    file names, adding corresponding comments to the #endif directives
+    where missing.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Fixes #4
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit de2dda2fa96cedbc80cd9ec777c79b1afc532d51
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Apr 19 15:11:18 2023 -0700
+
+    ci: bump GH actions/checkout to v3
+    
+    v2 is deprecated.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
 Changelog for librtas-2.0.4
 =======================================
 commit 33aa9aee37cfc4bdc93ba4aff25afb962b6a7606

@@ -1,4 +1,4 @@
-AC_INIT([librtas],[2.0.4],[See README])
+AC_INIT([librtas],[2.0.5],[See README])
 AC_PREREQ([2.69])
 AC_CONFIG_SRCDIR([librtas_src/librtas.h])
 
