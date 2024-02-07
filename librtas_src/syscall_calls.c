@@ -75,8 +75,8 @@ unsigned int handle_delay(int status, uint64_t * elapsed)
 		for (ms = 1; order > 0; order--)
 			ms = ms * 10;
 	} else if (status == RC_BUSY) {
-		/* Regular Delay */
-		ms = 1;
+		/* Retry */
+		return CALL_AGAIN;
 	} else {
 		/* Not a delay return code */
 		return 0;
