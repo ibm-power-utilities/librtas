@@ -94,7 +94,7 @@ unsigned int handle_delay(int status, uint64_t * elapsed)
 
 	dbg("Return status %d, delaying for %lu ms\n", status, ms);
 	usleep(ms * 1000);
-	return 1;
+	return CALL_AGAIN;
 }
 
 /**
