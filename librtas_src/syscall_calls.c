@@ -333,6 +333,7 @@ int rtas_cfg_connector(char *workarea)
  * @param timeout_ms timeout in milli-seconds
  * @return delay time
  */
+__attribute__ ((deprecated))
 int rtas_delay_timeout(uint64_t timeout_ms)
 {
 	int rc;
