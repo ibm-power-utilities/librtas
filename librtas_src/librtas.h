@@ -54,7 +54,7 @@ extern "C" {
 
 int rtas_activate_firmware(void);
 int rtas_cfg_connector(char *workarea);
-int rtas_delay_timeout(uint64_t timeout_ms);
+int rtas_delay_timeout(uint64_t timeout_ms) __attribute__ ((deprecated));
 int rtas_display_char(char c);
 int rtas_display_msg(char *buf);
 int rtas_errinjct(int etoken, int otoken, char *workarea);
