@@ -1,3 +1,233 @@
+Changelog for librtas-2.0.6
+=======================================
+commit 238bf041152b78aa0d9dce813d360ea0731c128c
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Wed Feb 7 17:12:44 2024 -0600
+
+    librtas: return CALL_AGAIN on RC_BUSY status in handle_delay()
+    
+    There is no need to delay before retrying on RC_BUSY return status. The
+    kernel used to get this wrong too.
+    
+    https://github.com/torvalds/linux/commit/38f7b7067dae0c101be573106018e8af22a90fdf
+    
+    Excerpt referenced from above commit:
+    
+    RTAS_BUSY (-2): RTAS has suspended a potentially long-running operation in
+    order to meet its latency obligation and give the OS the opportunity to
+    perform other work. RTAS can resume making progress as soon as the OS
+    reattempts the call.
+    
+    To avoid uselessly sleeping update handle_delay() to return CALL_AGAIN
+    immediately when it is passed RC_BUSY.
+    
+    Suggested-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit d4348be098c7dc9b2ed313e51daee30246601e8d
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Wed Feb 7 17:09:03 2024 -0600
+
+    librtas: use CALL_AGAIN for delay related return in handle_delay()
+    
+    The delay related return value of handle_delay() is hard coded. For
+    clarity use CALL_AGAIN macro which is documented return value in the
+    function comment header.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit e7eff65e74ebe268a184d53d5fe94ebff5f7b4eb
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Wed Feb 7 14:13:30 2024 -0800
+
+    librtas: deprecate rtas_delay_timeout()
+    
+    Despite its description rtas_delay_timeout() sets an internal timeout
+    value as opposed to returning the delay time as documented. This timeout
+    short cuts the logic in handle_delay(). Fortunately this is unsed by
+    default. The library should run operations to completion, otherwise we
+    risk leaving things in an unrecoverable state.
+    
+    Mark rtas_delay_timeout() with __attribute__ ((deprecated)) as
+    preperation for eventual removal.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit b8d34050883008a92bad84ae707de7c1b96119a8
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Wed Feb 7 15:20:24 2024 -0600
+
+    librtas: sync papr-sysparm.h with kernel
+    
+    The data member is __u8 as of 8ded03ae48b3
+    ("powerpc/pseries/papr-sysparm: use u8 arrays for payloads").
+    
+    Verified that the object code in librtas_src/sysparm.o is unchanged by
+    this.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit d8d4ee6f5052704ac82bb8aa8d8fe8816dac41cd
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Sep 25 11:42:26 2023 -0500
+
+    librtas/sysparm: prefer /dev/papr-sysparm when available
+    
+    Change rtas_get_sysparm() and rtas_set_sysparm() to prefer the
+    /dev/papr-sysparm character device expected in Linux v6.8.
+    
+    On the first invocation of either function, probe for the new ABI and
+    initialize internal function pointers according to the result. Use
+    pthread_once() to ensure that this initialization step is performed
+    atomically and only once.
+    
+    When /dev/papr-sysparm is available, use its PAPR_SYSPARM_IOC_GET and
+    PAPR_SYSPARM_IOC_SET ioctl commands to retrieve and update system
+    parameters. Most of the complexity of calling RTAS is handled
+    internally to the kernel and the ioctl follows Linux conventions,
+    returning 0 on success or -1 w/errno on failure. On failure,
+    back-convert the errno to an RTAS status value that callers will
+    recognize.
+    
+    For now, carry a copy of the kernel uapi header.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 57d5e1c07b40e56f6209e7b806208818464f8e8d
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Sat Aug 12 13:27:39 2023 -0500
+
+    librtas/vpd: prefer /dev/papr-vpd when available
+    
+    Change rtas_get_vpd() to prefer the /dev/papr-vpd character device
+    expected in Linux v6.8.
+    
+    On the first invocation of rtas_get_vpd(), probe for the new ABI and
+    initialize an internal function pointer according to the result. Use
+    pthread_once() to ensure that this probe step is performed atomically
+    and only once. It would not make sense to re-probe (and potentially
+    update the implementation) on every call, since the implementations
+    differ in the way state for the call sequence is maintained.
+    
+    Assuming the new ABI is available: upon first call to rtas_get_vpd(),
+    open /dev/papr-vpd and obtain a file descriptor using the
+    PAPR_VPD_CREATE_HANDLE ioctl() command. This file descriptor is a
+    reference to the VPD returned from a complete ibm,get-vpd call
+    sequence. Subsequent calls sequentially read the VPD from the fd,
+    which is closed once EOF is reached.
+    
+    To existing users of rtas_get_vpd(), the new implementation is
+    indistinguishable from the old one, with one exception:
+    
+    * When using the rtas() syscall on current systems, RTAS advances the
+      sequence number by a fixed interval on each call in a sequence. This
+      is visible in the values returned in the 'seq_next' out parameter.
+    
+    * When using /dev/papr-vpd, the value returned in 'seq_next' does not
+      change between calls; librtas treats it as a "handle" for a sequence
+      in progress.
+    
+    In PAPR there is no meaning attached to the value returned in the
+    'seq_next' out parameter, and there is no requirement that it must
+    change or increment on each call. No user should be relying on the
+    behavior of this aspect of the interface to judge the status of a
+    sequence.
+    
+    I have verified that an unmodified vpdupdate command from a distro
+    lsvpd package works correctly when linked to a librtas.so with this
+    change. This is the primary (and perhaps only) user of rtas_get_vpd().
+    
+    For now, carry a copy of the kernel uapi header.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit c914a1a701391c565203b10603ad0fbc52438bf7
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Sep 25 11:41:22 2023 -0500
+
+    librtas: vendor papr-miscdev.h
+    
+    This is a common header used by other kernel uapi headers that we will
+    copy into the source tree.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit c47176a5f1ce7bb16ba02b8c8520e02b285d7e9f
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Sep 25 11:32:33 2023 -0500
+
+    librtas: move system parameter code to separate module
+    
+    This code will gain the ability to access system parameters using a
+    different interface exposed by newer kernels. This will involve adding
+    a nontrivial amount of code, so move it out of syscall_calls.c.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ee06898b1e7807a6e201b281ffc8ee3fa96136f4
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Sat Aug 12 12:44:38 2023 -0500
+
+    librtas: move VPD code into separate module
+    
+    This code will gain the ability to retrieve VPD using a different
+    interface exposed by newer kernels. This will be a lot of additional
+    code, so move it out of syscall_calls.c.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 569da8e5f0d5009694dc2def350cb9cd2c1d81a6
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Sat Aug 12 12:41:36 2023 -0500
+
+    librtas: expose low-level RTAS call APIs internally
+    
+    Make these functions available outside of syscall_calls.c, marking
+    them hidden so that they aren't exposed in the library ABI.
+    
+    The implementations of librtas APIs will move into separate C files as
+    they gain support for new interfaces offered by the kernel.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0ca359b34221465dac6999ad957a41ac4f5edc92
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Mon Sep 25 21:11:59 2023 -0500
+
+    tools: add activate-firmware-regress script
+    
+    Add a utility that can quickly validate a development build against
+    the activate_firmware command from powerpc-utils, which exercises the
+    rtas_get_sysparm() API. This is a high-level test that needs superuser
+    priveleges to run, so it's not suitable for the development test
+    suite. (Note that despite its name, the way we invoke the command does
+    not alter any system or firmware configuration, it only queries a
+    system parameter.)
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 4c44465e6d54acdd31ac28334441468375496e4f
+Author: Nathan Lynch <nathanl@linux.ibm.com>
+Date:   Thu Aug 10 13:31:10 2023 -0500
+
+    tools: add vpdupdate-regress script
+    
+    Add a utility that can quickly validate a development build against
+    vpdupdate, which exercises the rtas_get_vpd() API. This is a
+    high-level test that needs superuser priveleges to run, so it's not
+    suitable for the development test suite.
+    
+    Signed-off-by: Nathan Lynch <nathanl@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
 Changelog for librtas-2.0.5
 =======================================
 commit 8aee694e8070be4f16db9d52556f1fd33421ed35
