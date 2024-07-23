@@ -28,11 +28,11 @@ LIBRTAS_LIBRARY_VERSION = $(LIBRTAS_CURRENT):$(LIBRTAS_REVISION):$(LIBRTAS_AGE)
 lib_LTLIBRARIES += librtas.la
 librtas_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION) -lpthread
 librtas_la_SOURCES = \
-	librtas_src/vpd.c \
 	librtas_src/ofdt.c \
 	librtas_src/syscall_calls.c \
 	librtas_src/syscall_rmo.c \
-	librtas_src/sysparm.c
+	librtas_src/sysparm.c \
+	librtas_src/vpd.c
 
 library_include_HEADERS += librtas_src/librtas.h
 noinst_HEADERS += \
