@@ -24,6 +24,7 @@
 #define LIBRTAS_INTERNAL_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define WORK_AREA_SIZE 4096
 #define MAX_ARGS 16
