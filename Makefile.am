@@ -44,7 +44,8 @@ noinst_HEADERS += \
 	librtas_src/papr-sysparm.h \
 	librtas_src/papr-vpd.h \
 	librtas_src/papr-platform-dump.h \
-	librtas_src/papr-indices.h
+	librtas_src/papr-indices.h \
+	librtas_src/papr-physical-attestation.h
 
 # See "Updating library version information" in the libtool manual for
 # how to maintain these values. They are *not* tied to the release
