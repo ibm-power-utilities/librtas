@@ -7,12 +7,20 @@
 #include <string.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include <linux/unistd.h>
 #include <linux/types.h>
 #include <sys/syscall.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include "internal.h"
 #include "librtas.h"
+#include "papr-indices.h"
+
+static const char indices_devpath[] = "/dev/papr-indices";
 
 /**
  * rtas_get_dynamic_sensor
@@ -108,7 +116,7 @@ int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
  * @param next
  * @return 0 on success, !0 otherwise
  */
-int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
+int get_indices_fallback(int is_sensor, int type, char *workarea, size_t size,
 		     int start, int *next)
 {
 	uint32_t kernbuf_pa;
@@ -138,4 +146,110 @@ int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	dbg("(%d, %d, %p, %zu, %d, %p) = %d, %d\n", is_sensor, type, workarea,
 	     size, start, next, rc ? rc : status, *next);
 	return rc ? rc : status;
+}
+
+static int get_indices_fd_new(int is_sensor, int type)
+{
+	struct papr_indices_io_block buf = {};
+	const int fd = open(indices_devpath, O_WRONLY);
+	int devfd = -1;
+
+	if (fd < 0)
+		return -1;
+
+	buf.indices.is_sensor = is_sensor;
+	buf.indices.indice_type = type;
+	devfd = ioctl(fd, PAPR_INDICES_IOC_GET, &buf);
+	close(fd);
+
+	return devfd;
+}
+
+static int get_indices_chardev(int is_sensor, int type, char *workarea,
+				size_t size, int start, int *next)
+{
+	int fd, rtas_status = 0;
+	ssize_t res;
+
+	if (size != RTAS_GET_INDICES_BUF_SIZE) {
+		dbg("Invalid buffer size %lu expects %d\n",
+				size, RTAS_GET_INDICES_BUF_SIZE);
+		return -EINVAL;
+	}
+
+	fd = (start == 1) ? get_indices_fd_new(is_sensor, type)
+				: (int)start;
+	/*
+	 * Ensure we return a fd > 0 in seq_next.
+	 */
+	if (fd == 1) {
+		int newfd = dup(fd);
+		close(fd);
+		fd = newfd;
+	}
+
+	if (fd < 0)
+		return -3; /* Synthesize ibm,get-vpd "parameter error" */
+
+	res = read(fd, workarea, size);
+	if (res < 0) {
+		/* Synthesize ibm,get-platfrom-dump "hardware error" */
+		rtas_status = -1;
+		close(fd);
+	} else if (res == 0) {
+		/*
+		 * read() returns 0 at the end of read
+		 * So reset the first 32 bit value (number of indices)
+		 * in the buffer which tells no data available to the
+		 * caller of rtas_get_indices().
+		 */
+		*(uint32_t *)workarea = 0;
+		rtas_status = 0; /* Done with sequence, no more data */
+		close(fd);
+		if (next)
+			*next = 1;
+	} else {
+		rtas_status = 1; /* More data available, call again */
+		if (next)
+			*next = fd;
+	}
+
+	return rtas_status;
+}
+
+static bool indices_can_use_chardev(void)
+{
+	struct stat statbuf;
+
+	if (stat(indices_devpath, &statbuf))
+		return false;
+
+	if (!S_ISCHR(statbuf.st_mode))
+		return false;
+
+	if (close(open(indices_devpath, O_RDONLY)))
+		return false;
+
+	return true;
+}
+
+static int (*get_indices_fn)(int is_sensor, int type, char *workarea,
+				size_t size, int start, int *next);
+
+static void indices_fn_setup(void)
+{
+	const bool use_chardev = indices_can_use_chardev();
+
+	get_indices_fn = use_chardev ?
+		get_indices_chardev : get_indices_fallback;
+}
+
+static pthread_once_t indices_fn_setup_once = PTHREAD_ONCE_INIT;
+
+int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
+			int start, int *next)
+{
+	pthread_once(&indices_fn_setup_once, indices_fn_setup);
+	return get_indices_fn(is_sensor, type, workarea, size,
+				start, next);
 }
