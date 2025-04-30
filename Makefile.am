@@ -29,6 +29,7 @@ lib_LTLIBRARIES += librtas.la
 librtas_la_LDFLAGS = -version-info $(LIBRTAS_LIBRARY_VERSION) -lpthread
 librtas_la_SOURCES = \
 	librtas_src/vpd.c \
+	librtas_src/platform-dump.c \
 	librtas_src/ofdt.c \
 	librtas_src/syscall_calls.c \
 	librtas_src/syscall_rmo.c \
