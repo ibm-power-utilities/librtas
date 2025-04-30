@@ -34,7 +34,7 @@ static const char indices_devpath[] = "/dev/papr-indices";
  * @param state reference to state variable
  * @return 0 on success, !0 otherwise
  */
-int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
+int get_dynamic_sensor_fallback(int sensor, void *loc_code, int *state)
 {
 	uint32_t loc_pa = 0;
 	void *locbuf;
@@ -217,6 +217,85 @@ static int get_indices_chardev(int is_sensor, int type, char *workarea,
 	return rtas_status;
 }
 
+/*
+ * Only to be used when converting an actual error from a syscall.
+ */
+static int chardev_backconvert_errno(int saved_errno)
+{
+	const struct {
+		int linux_errno;
+		int rtas_status;
+	} map[] = {
+#define errno_to_status(e, s) { .linux_errno = (e), .rtas_status = (s), }
+		errno_to_status(EINVAL,     -9999),
+		errno_to_status(EPERM,      -9002),
+		errno_to_status(EOPNOTSUPP,    -3),
+		errno_to_status(EIO,           -1),
+		errno_to_status(EFAULT,        -1),
+#undef errno_to_status
+	};
+
+	for (size_t i = 0; i < sizeof(map) / sizeof(map[0]); ++i)
+		if (map[i].linux_errno == saved_errno)
+			return map[i].rtas_status;
+	return -1;
+}
+
+static int dynamic_common_io_setup(unsigned long ioctalval,
+				void *loc_code,
+				struct papr_indices_io_block *buf)
+{
+	size_t length;
+	char *loc_str;
+	int fd, ret = -EINVAL;
+
+	fd = open(indices_devpath, O_RDWR);
+	if (fd < 0) {
+		/*
+		 * Should not be here. May be /dev/papr-indices removed
+		 */
+		return -1;
+	}
+
+	length = be32toh(*(uint32_t *)loc_code);
+
+	if (length < 1) {
+		dbg("Invalid length(%lu) of location code string\n", length);
+		goto out;
+	}
+
+	loc_str = (char *)((char *)loc_code + sizeof(uint32_t));
+	if (strlen(loc_str) != (length - 1)) {
+		dbg("location code string length is not matched with the passed length(%lu)\n", length);
+		goto out;
+	}
+
+	memcpy(&buf->dynamic_param.location_code_str, loc_str, length);
+
+	ret = ioctl(fd, ioctalval, buf);
+	if (ret != 0)
+		ret = chardev_backconvert_errno(errno);
+out:
+	close(fd);
+	return ret;
+}
+
+static int get_dynamic_sensor_chardev(int sensor, void *loc_code, int *state)
+{
+	struct papr_indices_io_block buf = {};
+	int ret;
+
+	buf.dynamic_param.token = sensor;
+	ret = dynamic_common_io_setup(PAPR_DYNAMIC_SENSOR_IOC_GET,
+				loc_code, &buf);
+	if (ret != 0)
+		return ret;
+
+	*state = buf.dynamic_param.state;
+
+	return 0;
+}
+
 static bool indices_can_use_chardev(void)
 {
 	struct stat statbuf;
@@ -235,6 +314,7 @@ static bool indices_can_use_chardev(void)
 
 static int (*get_indices_fn)(int is_sensor, int type, char *workarea,
 				size_t size, int start, int *next);
+static int (*get_dynamic_sensor_fn)(int sensor, void *loc_code, int *state);
 
 static void indices_fn_setup(void)
 {
@@ -242,6 +322,8 @@ static void indices_fn_setup(void)
 
 	get_indices_fn = use_chardev ?
 		get_indices_chardev : get_indices_fallback;
+	get_dynamic_sensor_fn = use_chardev ?
+		get_dynamic_sensor_chardev : get_dynamic_sensor_fallback;
 }
 
 static pthread_once_t indices_fn_setup_once = PTHREAD_ONCE_INIT;
@@ -252,4 +334,10 @@ int rtas_get_indices(int is_sensor, int type, char *workarea, size_t size,
 	pthread_once(&indices_fn_setup_once, indices_fn_setup);
 	return get_indices_fn(is_sensor, type, workarea, size,
 				start, next);
+}
+
+int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
+{
+	pthread_once(&indices_fn_setup_once, indices_fn_setup);
+	return get_dynamic_sensor_fn(sensor, loc_code, state);
 }
