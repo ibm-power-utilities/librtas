@@ -75,7 +75,7 @@ int get_dynamic_sensor_fallback(int sensor, void *loc_code, int *state)
  * @param loc_code
  * @return 0 on success, !0 otherwise
  */
-int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
+int set_dynamic_indicator_fallback(int indicator, int new_value, void *loc_code)
 {
 	uint32_t loc_pa = 0;
 	void *locbuf;
@@ -296,6 +296,20 @@ static int get_dynamic_sensor_chardev(int sensor, void *loc_code, int *state)
 	return 0;
 }
 
+static int set_dynamic_indicator_chardev(int indicator, int new_value,
+					void *loc_code)
+{
+	struct papr_indices_io_block buf = {};
+	int ret;
+
+	buf.dynamic_param.token = indicator;
+	buf.dynamic_param.state = new_value;
+	ret = dynamic_common_io_setup(PAPR_DYNAMIC_INDICATOR_IOC_SET,
+					loc_code, &buf);
+
+	return ret;
+}
+
 static bool indices_can_use_chardev(void)
 {
 	struct stat statbuf;
@@ -315,6 +329,8 @@ static bool indices_can_use_chardev(void)
 static int (*get_indices_fn)(int is_sensor, int type, char *workarea,
 				size_t size, int start, int *next);
 static int (*get_dynamic_sensor_fn)(int sensor, void *loc_code, int *state);
+static int (*set_dynamic_indicator_fn)(int indicator, int new_value,
+				void *loc_code);
 
 static void indices_fn_setup(void)
 {
@@ -324,6 +340,9 @@ static void indices_fn_setup(void)
 		get_indices_chardev : get_indices_fallback;
 	get_dynamic_sensor_fn = use_chardev ?
 		get_dynamic_sensor_chardev : get_dynamic_sensor_fallback;
+	set_dynamic_indicator_fn = use_chardev ?
+		set_dynamic_indicator_chardev : set_dynamic_indicator_fallback;
+
 }
 
 static pthread_once_t indices_fn_setup_once = PTHREAD_ONCE_INIT;
@@ -340,4 +359,10 @@ int rtas_get_dynamic_sensor(int sensor, void *loc_code, int *state)
 {
 	pthread_once(&indices_fn_setup_once, indices_fn_setup);
 	return get_dynamic_sensor_fn(sensor, loc_code, state);
+}
+
+int rtas_set_dynamic_indicator(int indicator, int new_value, void *loc_code)
+{
+	pthread_once(&indices_fn_setup_once, indices_fn_setup);
+	return set_dynamic_indicator_fn(indicator, new_value, loc_code);
 }
