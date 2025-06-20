@@ -130,7 +130,7 @@ static int
 phy_attestation_kernel(char *workarea, int seq_num, int *next_seq_num,
 			int *work_area_bytes)
 {
-	int size = *work_area_bytes;
+	int size = (work_area_bytes) ? *work_area_bytes : 0;
 	int fd = (seq_num == 1) ? phy_attest_fd_new(workarea, size)
 		: (int)seq_num;
 
@@ -163,14 +163,12 @@ phy_attestation_kernel(char *workarea, int seq_num, int *next_seq_num,
 		close(fd);
 		if (next_seq_num)
 			*next_seq_num = 1;
-		if (work_area_bytes)
-			*work_area_bytes = res;
+		*work_area_bytes = res;
 	} else {
 		rtas_status = 1; /* More data available, call again */
 		if (next_seq_num)
 			*next_seq_num = fd;
-		if (work_area_bytes)
-			*work_area_bytes = res;
+		*work_area_bytes = res;
 	}
 
 	return rtas_status;
