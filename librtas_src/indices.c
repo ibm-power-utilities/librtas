@@ -172,7 +172,7 @@ static int get_indices_chardev(int is_sensor, int type, char *workarea,
 	ssize_t res;
 
 	if (size != RTAS_GET_INDICES_BUF_SIZE) {
-		dbg("Invalid buffer size %lu expects %d\n",
+		dbg("Invalid buffer size %zu expects %d\n",
 				size, RTAS_GET_INDICES_BUF_SIZE);
 		return -EINVAL;
 	}
@@ -260,13 +260,13 @@ static int dynamic_common_io_setup(unsigned long ioctalval,
 	length = be32toh(*(uint32_t *)loc_code);
 
 	if (length < 1) {
-		dbg("Invalid length(%lu) of location code string\n", length);
+		dbg("Invalid length(%zu) of location code string\n", length);
 		goto out;
 	}
 
 	loc_str = (char *)((char *)loc_code + sizeof(uint32_t));
 	if (strlen(loc_str) != (length - 1)) {
-		dbg("location code string length is not matched with the passed length(%lu)\n", length);
+		dbg("location code string length is not matched with the passed length(%zu)\n", length);
 		goto out;
 	}
 
