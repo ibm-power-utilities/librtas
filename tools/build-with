@@ -267,24 +267,25 @@ set -eux
 case "$_arg_distro" in
     */alpine:*)
         apk add --no-cache ${pkgs[@]} ${apk_pkgs[@]}
-	adduser -D "$build_user"
+#	adduser -D "$build_user"
 	;;
     */debian:*)
 	apt-get update
 	apt-get -y --purge dist-upgrade
 	apt-get install -y --no-install-recommends ${pkgs[@]} ${apt_pkgs[@]}
-	useradd --create-home "$build_user"
+#	useradd --create-home "$build_user"
     ;;
     */fedora:*)
 	dnf install -y --setopt=install_weak_deps=False ${pkgs[@]} ${dnf_pkgs[@]}
-	useradd --create-home "$build_user"
+#	useradd --create-home "$build_user"
     ;;
 esac
 
 host="\$(${_arg_cc} -dumpmachine)"
 
 # run build as 'build' user
-su -s /bin/sh - "$build_user" << EOG
+# su -s /bin/sh - "$build_user"
+su -s /bin/sh << EOG
 set -eux
 
 # Report important program versions
