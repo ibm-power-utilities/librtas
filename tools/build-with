@@ -228,6 +228,8 @@ dnf_pkgs=(
     libabigail
     libcmocka-devel
     util-linux # needed for su
+    awk
+    diff
 )
 
 declare -a configure_args
