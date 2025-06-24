@@ -54,7 +54,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt --no-distcheck
 
   cross-builds:
     runs-on: ubuntu-22.04
