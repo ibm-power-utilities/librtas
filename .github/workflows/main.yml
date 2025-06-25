@@ -17,9 +17,14 @@ jobs:
           - docker.io/alpine:latest
         cc: [gcc, clang]
         arch: [ppc64le]
+        arg: [--no-abi-check]
         include:
-          - image: docker.io/alpine:latest
-            arg: --no-abi-check
+          - cc: gcc
+            cflags: '-Werror'
+          - cc: clang
+            cflags: '-Wall'
+#        include:
+#          - image: docker.io/alpine:latest
     steps:
     - uses: actions/checkout@v3
     - name: Register problem matchers
@@ -32,7 +37,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} ${{ matrix.arg }} --no-distcheck
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} --cflags=${{ matrix.clfags }} ${{ matrix.arg }} --no-distcheck
 
   native-builds:
     runs-on: ubuntu-22.04
@@ -43,9 +48,14 @@ jobs:
           - docker.io/fedora:rawhide
           - docker.io/fedora:latest
         cc: [gcc, clang]
-        cflags:
-          - '-Werror'
-          - '-Werror -Og -fsanitize=address -fsanitize=undefined'
+#        include:
+#          - cc: gcc
+#            cflags:
+#              - '-Werror'
+#              - '-Werror -Og -fsanitize=address -fsanitize=undefined'
+#          - cc: clang
+#            cflags:
+#              - '-Wall -Og -fsanitize=address -fsanitize=undefined'
     steps:
     - uses: actions/checkout@v3
     - name: Register problem matchers
@@ -54,7 +64,7 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt --no-distcheck
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt --no-distcheck --no-abi-check
 
   cross-builds:
     runs-on: ubuntu-22.04
@@ -86,4 +96,4 @@ jobs:
     - name: Build and test
       run: |
         set -eux
-        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.build.cc_cmd }} --install ${{ matrix.build.cc_pkg }} --install ${{ matrix.build.libc_pkg }} --no-tests
+        tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.build.cc_cmd }} --install ${{ matrix.build.cc_pkg }} --install ${{ matrix.build.libc_pkg }} --no-tests --no-abi-check

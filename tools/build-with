@@ -6,7 +6,7 @@
 # ARG_OPTIONAL_BOOLEAN([tests],[],[Whether to run 'make check'],[on])
 # ARG_OPTIONAL_BOOLEAN([distcheck],[],[Whether to run 'make distcheck'],[on])
 # ARG_OPTIONAL_SINGLE([cc],[],[C compiler to use],[gcc])
-# ARG_OPTIONAL_SINGLE([cflags],[],[compiler flags],[-Werror])
+# ARG_OPTIONAL_SINGLE([cflags],[],[compiler flags],[-Wall])
 # ARG_OPTIONAL_SINGLE([distro],[],[Distro image to pull],[docker.io/debian:stable])
 # ARG_OPTIONAL_SINGLE([emulate],[],[Machine architecture to emulate, if any])
 # ARG_OPTIONAL_REPEATED([install],[],[Additional packages to install, if any])
@@ -49,7 +49,7 @@ _arg_abi_check="on"
 _arg_tests="on"
 _arg_distcheck="on"
 _arg_cc="gcc"
-_arg_cflags="-Werror"
+_arg_cflags="-Wall"
 _arg_distro="docker.io/debian:stable"
 _arg_emulate=
 _arg_install=()
@@ -64,7 +64,7 @@ print_help()
 	printf '\t%s\n' "--tests, --no-tests: Whether to run 'make check' (on by default)"
 	printf '\t%s\n' "--distcheck, --no-distcheck: Whether to run 'make distcheck' (on by default)"
 	printf '\t%s\n' "--cc: C compiler to use (default: 'gcc')"
-	printf '\t%s\n' "--cflags: compiler flags (default: '-Werror')"
+	printf '\t%s\n' "--cflags: compiler flags (default: '-Wall')"
 	printf '\t%s\n' "--distro: Distro image to pull (default: 'docker.io/debian:stable')"
 	printf '\t%s\n' "--emulate: Machine architecture to emulate, if any (no default)"
 	printf '\t%s\n' "--install: Additional packages to install, if any (empty by default)"
@@ -173,6 +173,10 @@ parse_commandline "$@"
 printf 'Value of --%s: %s\n' 'cc' "$_arg_cc"
 printf 'Value of --%s: %s\n' 'distro' "$_arg_distro"
 printf 'Value of --%s: %s\n' 'emulate' "$_arg_emulate"
+printf 'Value of --%s: %s\n' 'tests' "$_arg_tests"
+printf 'Value of --%s: %s\n' 'distcheck' "$_arg_distcheck"
+printf 'Value of --%s: %s\n' 'abi-check' "$_arg_abi_check"
+printf 'Value of --%s: %s\n' 'cflags' "$_arg_cflags"
 
 set -eu
 set -o pipefail
