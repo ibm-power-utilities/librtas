@@ -280,6 +280,7 @@ case "$_arg_distro" in
 #	useradd --create-home "$build_user"
     ;;
     */fedora:*)
+	dnf update -y
 	dnf install -y --setopt=install_weak_deps=False ${pkgs[@]} ${dnf_pkgs[@]}
 #	useradd --create-home "$build_user"
     ;;
