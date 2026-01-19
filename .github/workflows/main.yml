@@ -7,7 +7,7 @@ on:
 
 jobs:
   qemu-ppc64le-builds:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -40,7 +40,7 @@ jobs:
         tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --emulate=${{ matrix.arch }} --cflags=${{ matrix.cflags }} ${{ matrix.arg }} --no-distcheck
 
   native-builds:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -67,7 +67,7 @@ jobs:
         tools/build-with --distro=${{ matrix.image }} --cc=${{ matrix.cc }} --cflags='${{ matrix.cflags }}' --install libasan --install libubsan --install compiler-rt --no-distcheck --no-abi-check
 
   cross-builds:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
