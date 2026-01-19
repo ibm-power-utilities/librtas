@@ -187,6 +187,7 @@ src_path="/source"
 declare -a runc_opts
 runc_opts=(
     --security-opt label=disable
+    --security-opt seccomp=unconfined
     --interactive
     --log-driver none
     --volume "$(pwd)":"${src_path}":ro
