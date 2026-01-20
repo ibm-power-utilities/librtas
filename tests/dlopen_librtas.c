@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#define CMOCKA_DISABLE_DEPRECTATION_WARNINGS
 #include <cmocka.h>
 
 static void test_dlsym(void **state, const char *symbol)
