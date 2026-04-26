@@ -1,3 +1,366 @@
+Changelog for librtas-2.0.7
+=======================================
+commit 83b68d9a84ebaa19fa6eb1448bfb6b3735d0a951
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Tue Jan 20 09:49:29 2026 -0800
+
+    tests: disable cmocka deprecation warnings
+    
+    The cm_print_error macro has been deprecated in favor of the new
+    cmocka_print_error macro in the cmocka API. However, the cmocka version
+    varies in the mix of container images used in our CI preventing us from
+    directly moving to the new preferred macro. Further, our CI enforces
+    -Werror in most cases causing build failures with newer cmocka versions
+    that have deprecated cm_print_error.
+    
+    Prevent these failures by disabling cmocka deprecation warnings by
+    defining the CMOCKA_DISABLE_DEPRECATION_WARNINGS macro.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0578fa44119ba391e096a926eef19c4820eb347f
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Mon Jan 19 14:41:22 2026 -0800
+
+    CI: update ubuntu runner from 22.04 to 24.04
+    
+    The 22.04 ubuntu release has a very outdated version of podman which has
+    shown issues with Fedora containers.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 1961fd83d89dfb016c2fcfe0e124a2e4049213a0
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Mon Jan 19 14:06:53 2026 -0800
+
+    CI: disable distcheck for debian cross builds
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 9c6203c65448c85d1ebaa86333ec64c0f96e0f74
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Mon Jan 19 13:46:44 2026 -0800
+
+    CI: disable seccomp to prevent tar EPERM
+    
+    See the following reference commit outlining the issue:
+    
+    https://github.com/docker/docker-ce-packaging/pull/1013/commits/01886f57cb0810c30d2c46902e0339c101df7b18
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit f9cf4e7c9e28e17e09bad24688491f516040d662
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Fri Jun 20 16:46:29 2025 -0700
+
+    physical-attestation: check work_area_bytes for null prior to dereference
+    
+    CI static checker warns of possible NULL pointer dereference.
+    
+    librtas_src/physical-attestation.c:133:14: warning: Either the condition 'work_area_bytes' is redundant or there is possible null pointer dereference: work_area_bytes. [nullPointerRedundantCheck]
+     int size = *work_area_bytes;
+                 ^
+    librtas_src/physical-attestation.c:166:7: note: Assuming that condition 'work_area_bytes' is not redundant
+      if (work_area_bytes)
+          ^
+    librtas_src/physical-attestation.c:133:14: note: Null pointer dereference
+     int size = *work_area_bytes;
+                 ^
+    librtas_src/physical-attestation.c:157:36: warning: Either the condition 'work_area_bytes' is redundant or there is possible null pointer dereference: work_area_bytes. [nullPointerRedundantCheck]
+     ssize_t res = read(fd, workarea, *work_area_bytes);
+                                       ^
+    librtas_src/physical-attestation.c:166:7: note: Assuming that condition 'work_area_bytes' is not redundant
+      if (work_area_bytes)
+          ^
+    librtas_src/physical-attestation.c:157:36: note: Null pointer dereference
+     ssize_t res = read(fd, workarea, *work_area_bytes);
+    
+    Fix by testing work_area_bytes prior to the first pointer dereference.
+    The later pointer checks are redundant and can be removed as size=0 will
+    result in RTAS_IO_ASSERT error being returned prior.
+    
+    Fixes: cac1c292be56a ("librtas: Use kernel interface when available for ibm,physical-attestation")
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 9d77f7d1c88661e343af3813f929d2d5f398d734
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Fri Jun 20 16:35:16 2025 -0700
+
+    librtas: fix format specifier mismatch for size_t in indices.c
+    
+    CI complains of several %lu format specifier mismatches to arguments of
+    size_t in indices.c. This is a result of size_t being either 4 bytes or
+    8 bytes depending on if the packages is built on a 32bit or 64bit
+    architecture respectively.
+    
+    Fix this by using the printf size_t format specifier %zu instead.
+    
+    Fixes: 1e254ede1c226 ("librtas: Use /dev/papr-indices when available for ibm,get-indices")
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit c1d5a862c5d8e2a2aaa26187f80393ddb47af74e
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Fri Jun 27 12:26:09 2025 -0700
+
+    CI: update fedora packages prior to dependency install
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 9dcc55f9235694fb4931038a26bc8388453ae518
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Wed Jun 25 16:29:28 2025 -0700
+
+    CI: relax -Werror to -Wall for clang builds
+    
+    The clang compiler has recently generated format specifier warnings that
+    on first glance seem to be inconsistent with the C standard, and imply
+    unsigned types being promoted to sign types when passed as args to
+    printf. The result is the with -Werror these warnings are promoted to
+    errors and fail numerous builds in the matrix.
+    
+    Relax -Werror to -Wall for clang builds while continuing to remain
+    pedantic with gcc builds for the time being.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 78af21e93d0d78b5aca194f5af6d4e22fa075d66
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Tue Jun 24 16:13:42 2025 -0700
+
+    CI: disable distcheck for native builds
+    
+    Builds are failing with chmod permission errors while running distcheck.
+    Disable for the time being until can be root caused further.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit a2de3bfca8d848545dcb542d4252de8f8da057a1
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Tue Jun 24 16:04:02 2025 -0700
+
+    CI: ommit build user to workaround chmod permission failures
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 831e6c1ec93984a03c3c9673b1c4b390a4078d35
+Author: Tyrel Datwyler <tyreld@linux.ibm.com>
+Date:   Tue Jun 24 15:30:39 2025 -0700
+
+    CI: install awk and diff in fedora containers
+    
+    Recent CI runs are failing fedora based container builds during package
+    configuration due to missing awk and diff tools.
+    
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit cac1c292be56aa9aa89d96490801285c707005c7
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:19 2025 -0700
+
+    librtas: Use kernel interface when available for ibm,physical-attestation
+    
+    rtas_physical_attestation() uses sys_rtas() to obtain response
+    buffer for each attestation command. This RTAS function passes
+    RTAS work area to send input attestation command and to retrieve
+    response buffer. But the allocation of work area is prohibited
+    under system lockdown.
+    
+    This patch adds changes to use new kernel ABI if
+    /dev/papr-physical-attestation is available. First execution of
+    rtas_physical_attestation() sets the new API if the device node
+    is available, otherise execute user space interface.
+    
+    Open /dev/papr-physical-attestation and obtain FD with
+    PAPR_PHY_ATTEST_IOC_HANDLE ioctl. The kernel completes the RTAS
+    sequence in this ioctl and exposes the reponse buffer with this
+    FD. The user space reads the complete buffer with read() calls.
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit dfdcb41449832bf8a10d0e21fc79435a87192712
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:18 2025 -0700
+
+    librtas: Move physical-attestation rtas call code to separate file
+    
+    New kernel interfaces to support system lockdown will be added for
+    this RTAS call. So move the physical-attestation rtas call code to
+    separate file to add code for new interfaces.
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 5ce468a9219367ea3f1f9e2c87eb3431a6cba55f
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:17 2025 -0700
+
+    librtas: Use /dev/papr-indices when available for set-dynamic-indicator
+    
+    Changes for rtas_set_dynamic_indicator() to use new kernel
+    interface provided by /dev/papr-indices entry. The kernel provides
+    PAPR_DYNAMIC_INDICATOR_IOC_SET ioctl for /dev/papr-indices to
+    execute ibm,set-dynamic-indicator RTAS Call.
+    
+    If /dev/papr-indices entry is available, the new kernel interface
+    is used with the following programming model:
+    
+     fd = open("/dev/papr-indices", O_RDWR);
+     copy location-code to
+            papr_indices_io_block.dynamic_param.location_code_str
+     papr_indices_io_block.dynamic_param.token = token-val;
+     papr_indices_io_block.dynamic_param.state = new-state;
+     ret = ioctl(fd, PAPR_DYNAMIC_INDICATOR_IOC_SET,
+            papr_indices_io_block);
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 259d52de329dca27ec6f0a8495c90183339bbfd1
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:16 2025 -0700
+
+    librtas: Use /dev/papr-indices when available for get-dynamic-sensor-state
+    
+    The current rtas_get_dynamic_sensor() allocates RTAS work area
+    and invokes sys_rtas() in the user space. But this interface will
+    not work under system lockdown due to restricted access to /dev/mem.
+    
+    This patch add changes to use new kernel interface provided by
+    /dev/papr-indices entry with PAPR_DYNAMIC_SENSOR_IOC_GET ioctl.
+    The new state of sensor token will be returned from the user
+    passed papr_indices_io_block to the ioctl.
+    
+    If /dev/papr-indices entry is available, the new kernel interface
+    is used with the following programming model:
+    
+     fd = open("/dev/papr-indices", O_RDWR);
+     copy location-code to
+            papr_indices_io_block.dynamic_param.location_code_str
+     papr_indices_io_block.dynamic_param.token = token-val;
+     ret = ioctl(fd, PAPR_DYNAMIC_SENSOR_IOC_GET,
+            papr_indices_io_block);
+     state = papr_indices_io_block.dynamic_param.state
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 1e254ede1c2268d2dbf03e2b602a04af2c8ad8c6
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:15 2025 -0700
+
+    librtas: Use /dev/papr-indices when available for ibm,get-indices
+    
+    rtas_get_indices() uses sys_rtas() call to obtain indices
+    and location codes for a specified indicator or sensor token.
+    But this RTAS function needs RMO buffer allocation which is
+    prohibited under system lockdown. This patch adds changes to
+    use new kernel interfaces such as open/ioctl/read when
+    /dev/papr-indices is available.
+    
+    For the first execution of rtas_get_indices(), initialize an
+    internal function pointer and use the new interfaces depends on
+    the presence of above device node.
+    
+    Open /dev/papr-indices and obtain FD with PAPR_INDICES_IOC_GET
+    ioctl command. The kernel obtained all indices data under ioctl()
+    and exposed to user space with this file descriptor. The hypervisor
+    returns indices data in certain format depends on the RTAS call
+    buffer and the kernel expects the user space to parse this data.
+    Hence the kernel returns RTAS_GET_INDICES_BUF_SIZE (4096) buffer
+    for each read(). Then read() for each rtas_get_indices() continuous
+    until the read() returns 0 which means end of kernel buffer.
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 73c32586614f2476d97356928eaacba8a978a196
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:14 2025 -0700
+
+    librtas: Add kernel uapi header papr-indices.h
+    
+    This header file provides ioctls for the following RTAS calls to
+    use new kernel interfaces if /dev/papr-indices is available:
+    ibm,get-indices
+    ibm,set-dynamic-indicator
+    ibm,get-dynamic-sensor-state
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit ef255a3cb550db36c4ea4940a29ca01029e33c49
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:13 2025 -0700
+
+    librtas: move get/set indices RTAS calls code to separate file
+    
+    This code will gain the ability to access indices (indicator and
+    sensor) using different interfaces exposed by newer kernels. This
+    will involve adding a nontrivial amount of code, so move it out of
+    syscall_calls.c.
+    
+    So moving the following RTAS calls code:
+    ibm,get-indices
+    ibm,set-dynamic-indicator
+    ibm,get-dynamic-sensor-state
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 0102c576d73e7cfa3d61128ce39d42833a45a987
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:12 2025 -0700
+
+    librtas/platform-dump: prefer /dev/papr-platform-dump when available
+    
+    rtas_platform_dump() uses sys_rtas() call to obtain platform dump.
+    But it needs /dev/mem access in the user space which is restricted
+    under system lockdown. So this patch adds changes to use new kernel
+    ABI for system lockdown feature.
+    
+    Kernel provides new interfaces such as open/ioctl/read with
+    /dev/papr-platform-dump char based driver. For the first invocation
+    of rtas_platform_dump() call, initialize an internal function
+    pointer depends on the presence of above device node. If not
+    fallback to the the current implementation. pthread_once() is used
+    to this setup is done only once.
+    
+    Open /dev/papr-platform-dump and obtain FD with
+    PAPR_PLATFORM_DUMP_IOC_CREATE_HANDLE ioctl command. This file
+    descriptor is reference to the dump sequence obtained with the
+    specified dump tag. Then read() call for each rtas_platform_dump()
+    with the FD retrieves the dump data as a sequence until the read()
+    returns 0.
+    
+    The hypervisor uses sequence number passed with ibm,platform-dump
+    RTAS call to make sure the complete dump is transferred. First
+    RTAS call is invoked with sequence number 0 to start obtaining the
+    dump and then RTAS advances the sequence number by a fixed interval
+    on each call in a sequence until the dump is completed. The current
+    implementation in the user space tracks this sequence number
+    returned for each RTAS and passes to the next RTAS. Whereas with
+    the new ABI, the kernel uses it internally for the corresponding
+    dump tag and librtas uses it as a FD for the subsequent read calls.
+    
+    Also added the copy of kernel uapi header papr-platform-dump.h.
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
+commit 07f499240d0a373fac8e025dace5f84673811d6d
+Author: Haren Myneni <haren@linux.ibm.com>
+Date:   Tue Apr 29 20:10:11 2025 -0700
+
+    librtas: Move platform-dump rtas call code to separate file
+    
+    New kernel interfaces to support system lockdown will be added for
+    this RTAS call. So move the platform-dump rtas call code to
+    separate file to add code for new interfaces.
+    
+    Signed-off-by: Haren Myneni <haren@linux.ibm.com>
+    Signed-off-by: Tyrel Datwyler <tyreld@linux.ibm.com>
+
 Changelog for librtas-2.0.6
 =======================================
 commit 238bf041152b78aa0d9dce813d360ea0731c128c
