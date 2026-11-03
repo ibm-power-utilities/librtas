@@ -74,12 +74,12 @@ parse_fru_id_scn(struct rtas_event *re)
     re->offset += RE_FRU_HDR_SZ;
 
     if (fruid_has_part_no(fru_id)) {
-        rtas_copy(fru_id->part_no, re, 7);
+        rtas_copy(fru_id->part_no, re, 8);
         fru_id->part_no[7] = '\0';
     }
 
     if (fruid_has_proc_id(fru_id)) {
-        rtas_copy(fru_id->procedure_id, re, 7);
+        rtas_copy(fru_id->procedure_id, re, 8);
         fru_id->procedure_id[7] = '\0';
     }
 
